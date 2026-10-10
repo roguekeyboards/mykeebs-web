@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import { Visibility, type Keyboard, type KeyboardInput } from '@rogueserenity/kbdb-api-client';
 import { lookupsApi } from '$lib/api/client';
 import { todayDateInput } from '$lib/format';
+import { pcbInput, plateInput, type KeyboardParts } from '$lib/keyboard-parts';
 import { MAX_IMAGES } from '$lib/image-limit';
 import KeyboardForm from './KeyboardForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';
@@ -36,10 +37,15 @@ const keyboard: Keyboard = {
 	design: {
 		topCase: { material: 'Aluminum', color: 'E-white' },
 		bottomCase: { material: 'Polycarbonate' },
-		weight: { material: 'Brass', color: 'Mirror' },
-		plates: ['POM', 'Carbon fiber']
+		weight: { material: 'Brass', color: 'Mirror' }
 	},
-	pcb: { thickness: 1.2, firmware: 'QMK', assembly: 'Hotswap', connectivity: 'Wired' },
+	plates: [
+		{ id: 'plate-1', material: 'POM' },
+		{ id: 'plate-2', material: 'Carbon fiber', color: 'Black', thickness: 1.5 }
+	],
+	pcbs: [
+		{ id: 'pcb-1', thickness: 1.2, firmware: 'QMK', assembly: 'Hotswap', connectivity: 'Wired' }
+	],
 	purchase: {
 		vendor: 'Group buy direct',
 		price: 450,
@@ -75,16 +81,49 @@ async function submit(name = 'Add keyboard') {
 	await page.getByRole('button', { name }).click();
 }
 
-function submitted(onSubmit: ReturnType<typeof vi.fn>): [KeyboardInput, File[] | undefined] {
+type PartInput<T> = T & { id?: string };
+type Submitted = KeyboardInput & {
+	plates: PartInput<ReturnType<typeof plateInput>>[];
+	pcbs: PartInput<ReturnType<typeof pcbInput>>[];
+};
+
+function submission(
+	onSubmit: ReturnType<typeof vi.fn>,
+	call: number
+): [Submitted, File[] | undefined] {
+	const [input, files, parts] = onSubmit.mock.calls[call] as [
+		KeyboardInput,
+		File[] | undefined,
+		KeyboardParts
+	];
+	return [
+		{
+			...input,
+			plates: parts.plates.map((p) => ({ id: p.id, ...plateInput(p) })),
+			pcbs: parts.pcbs.map((p) => ({ id: p.id, ...pcbInput(p) }))
+		},
+		files
+	];
+}
+
+function submitted(onSubmit: ReturnType<typeof vi.fn>): [Submitted, File[] | undefined] {
 	expect(onSubmit).toHaveBeenCalledOnce();
-	return onSubmit.mock.calls[0] as [KeyboardInput, File[] | undefined];
+	return submission(onSubmit, 0);
 }
 
 async function openSection(section: string) {
-	await page.getByText(new RegExp(`^${section} —`)).click();
+	await page
+		.getByText(new RegExp(`^${section} —`))
+		.last()
+		.click();
 }
 
 const dirty = () => page.getByTestId('dirty');
+
+const part = (name: string) => page.getByRole('group', { name, exact: true });
+
+const keyboardPurchase = () =>
+	page.getByRole('group').filter({ has: page.getByLabelText('Base price') });
 
 describe('KeyboardForm.svelte', () => {
 	beforeEach(() => {
@@ -136,7 +175,8 @@ describe('KeyboardForm.svelte', () => {
 				size: undefined,
 				layout: undefined,
 				design: undefined,
-				pcb: undefined,
+				plates: [],
+				pcbs: [],
 				purchase: undefined,
 				notes: undefined,
 				visibility: Visibility.Private
@@ -157,16 +197,23 @@ describe('KeyboardForm.svelte', () => {
 		await openSection('Design');
 		await page.getByLabelText('Top case material').selectOptions('Aluminum');
 		await page.getByLabelText('Bottom case color').fill(' Navy ');
-		await page.getByRole('checkbox', { name: 'POM' }).click();
-		await page.getByRole('checkbox', { name: 'FR4' }).click();
 
-		await openSection('PCB');
-		await page.getByLabelText('Thickness (mm)').fill('1.6');
-		await page.getByLabelText('Connectivity').selectOptions('Wireless');
+		await openSection('Plates');
+		await page.getByRole('button', { name: '+ Add plate' }).click();
+		await part('Plate 1').getByLabelText('Material').selectOptions('POM');
+		await page.getByRole('button', { name: '+ Add plate' }).click();
+		await part('Plate 2').getByLabelText('Material').selectOptions('FR4');
+		await part('Plate 2').getByLabelText('Color').fill(' Green ');
+
+		await openSection('PCBs');
+		await page.getByRole('button', { name: '+ Add PCB' }).click();
+		await part('PCB 1').getByLabelText('Thickness (mm)').fill('1.6');
+		await part('PCB 1').getByLabelText('Assembly').selectOptions('Solder');
+		await part('PCB 1').getByLabelText('Connectivity').selectOptions('Wireless');
 
 		await openSection('Purchase');
-		await page.getByLabelText('Vendor').selectOptions('NovelKeys');
-		await page.getByLabelText('Price').fill('399.5');
+		await keyboardPurchase().getByLabelText('Vendor').selectOptions('NovelKeys');
+		await page.getByLabelText('Base price').fill('399.5');
 
 		await page.getByLabelText('Notes').fill(' First Alice ');
 		await submit();
@@ -180,10 +227,10 @@ describe('KeyboardForm.svelte', () => {
 			design: {
 				topCase: { material: 'Aluminum', color: undefined },
 				bottomCase: { material: undefined, color: 'Navy' },
-				weight: undefined,
-				plates: ['POM', 'FR4']
+				weight: undefined
 			},
-			pcb: { thickness: 1.6, firmware: undefined, assembly: undefined, connectivity: 'Wireless' },
+			plates: [{ material: 'POM' }, { material: 'FR4', color: 'Green' }],
+			pcbs: [{ thickness: 1.6, assembly: 'Solder', connectivity: 'Wireless' }],
 			purchase: {
 				vendor: 'NovelKeys',
 				price: 399.5,
@@ -200,8 +247,10 @@ describe('KeyboardForm.svelte', () => {
 		const { onSubmit } = renderForm({ initial: keyboard });
 
 		await expect.element(page.getByRole('heading', { name: 'Edit keyboard' })).toBeInTheDocument();
-		await expect.element(page.getByLabelText('Vendor')).toHaveValue('Group buy direct');
-		await expect.element(page.getByRole('checkbox', { name: 'Carbon fiber' })).toBeChecked();
+		await expect
+			.element(keyboardPurchase().getByLabelText('Vendor'))
+			.toHaveValue('Group buy direct');
+		await expect.element(part('Plate 2').getByLabelText('Material')).toHaveValue('Carbon fiber');
 		await submit('Save changes');
 
 		const [input] = submitted(onSubmit);
@@ -213,10 +262,15 @@ describe('KeyboardForm.svelte', () => {
 			design: {
 				topCase: { material: 'Aluminum', color: 'E-white' },
 				bottomCase: { material: 'Polycarbonate', color: undefined },
-				weight: { material: 'Brass', color: 'Mirror' },
-				plates: ['POM', 'Carbon fiber']
+				weight: { material: 'Brass', color: 'Mirror' }
 			},
-			pcb: { thickness: 1.2, firmware: 'QMK', assembly: 'Hotswap', connectivity: 'Wired' },
+			plates: [
+				{ id: 'plate-1', material: 'POM' },
+				{ id: 'plate-2', material: 'Carbon fiber', color: 'Black', thickness: 1.5 }
+			],
+			pcbs: [
+				{ id: 'pcb-1', thickness: 1.2, firmware: 'QMK', assembly: 'Hotswap', connectivity: 'Wired' }
+			],
 			purchase: {
 				vendor: 'Group buy direct',
 				price: 450,
@@ -232,19 +286,154 @@ describe('KeyboardForm.svelte', () => {
 	it('summarizes each section and opens the ones an existing keyboard fills', async () => {
 		renderForm({ initial: keyboard });
 
-		await expect
-			.element(page.getByText('— top case · bottom case · weight · 2 plates'))
-			.toBeVisible();
-		await expect.element(page.getByText('— QMK · Wired')).toBeVisible();
+		await expect.element(page.getByText('— top case · bottom case · weight')).toBeVisible();
+		await expect.element(page.getByText('— POM · Carbon fiber')).toBeVisible();
+		await expect.element(page.getByText('— Hotswap · QMK · Wired · 1.2mm')).toBeVisible();
 		await expect.element(page.getByText('— Group buy direct · Delivered')).toBeVisible();
-		await expect.element(page.getByLabelText('Thickness (mm)')).toBeVisible();
+		await expect.element(part('PCB 1').getByLabelText('Thickness (mm)')).toBeVisible();
 	});
 
 	it('starts with every section collapsed and unset for a new keyboard', async () => {
 		renderForm();
 
-		await expect.element(page.getByText('— Not set').nth(2)).toBeInTheDocument();
-		await expect.element(page.getByLabelText('Thickness (mm)')).not.toBeVisible();
+		await expect.element(page.getByText('— Not set').nth(1)).toBeInTheDocument();
+		await expect.element(page.getByText('— None').nth(1)).toBeInTheDocument();
+		await expect.element(page.getByText('+ Add plate')).not.toBeVisible();
+	});
+
+	it("labels the keyboard's own price as the base price", async () => {
+		renderForm({ initial: keyboard });
+
+		await expect
+			.element(page.getByLabelText('Base price'))
+			.toHaveAccessibleDescription('Excludes plates and PCBs bought separately.');
+	});
+
+	describe('plates and PCBs', () => {
+		it("keeps each part's id, and leaves out a removed one", async () => {
+			const { onSubmit } = renderForm({ initial: keyboard });
+
+			await page.getByRole('button', { name: 'Remove plate 1' }).click();
+			await part('PCB 1').getByLabelText('Firmware').selectOptions('VIA');
+			await submit('Save changes');
+
+			const [input] = submitted(onSubmit);
+			expect(input.plates).toEqual([
+				{ id: 'plate-2', material: 'Carbon fiber', color: 'Black', thickness: 1.5 }
+			]);
+			expect(input.pcbs).toEqual([
+				{ id: 'pcb-1', thickness: 1.2, firmware: 'VIA', assembly: 'Hotswap', connectivity: 'Wired' }
+			]);
+		});
+
+		it('adds a new part without an id next to the existing ones', async () => {
+			const { onSubmit } = renderForm({ initial: keyboard });
+
+			await page.getByRole('button', { name: '+ Add plate' }).click();
+			await part('Plate 3').getByLabelText('Material').selectOptions('Aluminum');
+			await submit('Save changes');
+
+			const plates = submitted(onSubmit)[0].plates!;
+			expect(plates.map((p) => p.id)).toEqual(['plate-1', 'plate-2', undefined]);
+			expect(plates[2]).toEqual({ material: 'Aluminum' });
+		});
+
+		it('requires a material on every plate', async () => {
+			const { onSubmit } = renderForm({ initial: keyboard });
+
+			await page.getByRole('button', { name: '+ Add plate' }).click();
+			await submit('Save changes');
+
+			await expect
+				.element(page.getByRole('alert').filter({ hasText: 'Every plate needs a material.' }))
+				.toBeInTheDocument();
+			await expect.element(part('Plate 3').getByLabelText('Material')).toBeInvalid();
+			await expect.element(part('Plate 1').getByLabelText('Material')).not.toBeInvalid();
+			expect(onSubmit).not.toHaveBeenCalled();
+		});
+
+		it('requires an assembly and connectivity on every PCB', async () => {
+			const { onSubmit } = renderForm({ initial: keyboard });
+
+			await page.getByRole('button', { name: '+ Add PCB' }).click();
+			await part('PCB 2').getByLabelText('Assembly').selectOptions('Hotswap');
+			await submit('Save changes');
+
+			await expect
+				.element(
+					page
+						.getByRole('alert')
+						.filter({ hasText: 'Every PCB needs an assembly and connectivity.' })
+				)
+				.toBeInTheDocument();
+			await expect.element(part('PCB 2').getByLabelText('Connectivity')).toBeInvalid();
+			await expect.element(part('PCB 2').getByLabelText('Assembly')).not.toBeInvalid();
+			await expect.element(part('PCB 1').getByLabelText('Connectivity')).not.toBeInvalid();
+			expect(onSubmit).not.toHaveBeenCalled();
+
+			await part('PCB 2').getByLabelText('Connectivity').selectOptions('Wired');
+			await submit('Save changes');
+			expect(submitted(onSubmit)[0].pcbs?.[1]).toEqual({
+				assembly: 'Hotswap',
+				connectivity: 'Wired'
+			});
+		});
+
+		it('gives a part bought separately its own purchase', async () => {
+			const { onSubmit } = renderForm({ initial: keyboard });
+
+			await expect.element(part('PCB 1').getByText('— Came with the keyboard')).toBeVisible();
+			await part('PCB 1')
+				.getByText(/^Purchase —/)
+				.click();
+			await part('PCB 1').getByLabelText('Vendor').selectOptions('CannonKeys');
+			await part('PCB 1').getByLabelText('Price').fill('65');
+			await part('PCB 1').getByLabelText('Order status').selectOptions('Ordered');
+			await expect
+				.element(part('PCB 1').getByLabelText('Order date'))
+				.toHaveValue(todayDateInput());
+			await submit('Save changes');
+
+			const [input] = submitted(onSubmit);
+			expect(input.pcbs?.[0].purchase).toEqual({
+				vendor: 'CannonKeys',
+				price: 65,
+				orderDate: new Date(todayDateInput()),
+				orderStatus: 'Ordered'
+			});
+			expect(input.purchase?.price).toBe(450);
+		});
+
+		it("round-trips a part's purchase, and drops it once cleared", async () => {
+			const withPurchase: Keyboard = {
+				...keyboard,
+				plates: [
+					{
+						id: 'plate-1',
+						material: 'POM',
+						purchase: { vendor: 'CannonKeys', price: 30, currency: 'USD', orderStatus: 'Planned' }
+					}
+				]
+			};
+			const first = renderForm({ initial: withPurchase });
+			await expect.element(part('Plate 1').getByLabelText('Vendor')).toBeVisible();
+			await expect.element(part('Plate 1').getByText('— CannonKeys · Planned')).toBeVisible();
+			await submit('Save changes');
+			expect(submitted(first.onSubmit)[0].plates?.[0].purchase).toEqual({
+				vendor: 'CannonKeys',
+				price: 30,
+				orderStatus: 'Planned'
+			});
+
+			await part('Plate 1').getByLabelText('Vendor').selectOptions('—');
+			await part('Plate 1').getByLabelText('Order status').selectOptions('—');
+			await part('Plate 1').getByLabelText('Price').fill('');
+			await submit('Save changes');
+			expect(submission(first.onSubmit, 1)[0].plates[0]).toEqual({
+				id: 'plate-1',
+				material: 'POM'
+			});
+		});
 	});
 
 	it('offers only the layouts that fit the chosen size', async () => {
@@ -282,39 +471,49 @@ describe('KeyboardForm.svelte', () => {
 			renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Order status').selectOptions('Planned');
-			await expect.element(page.getByLabelText('Order date')).not.toBeInTheDocument();
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
+			await expect.element(keyboardPurchase().getByLabelText('Order date')).not.toBeInTheDocument();
 
-			await page.getByLabelText('Order status').selectOptions('Ordered');
-			await expect.element(page.getByLabelText('Order date')).toHaveValue(todayDateInput());
-			await expect.element(page.getByLabelText('Delivery date')).not.toBeInTheDocument();
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Ordered');
+			await expect
+				.element(keyboardPurchase().getByLabelText('Order date'))
+				.toHaveValue(todayDateInput());
+			await expect
+				.element(keyboardPurchase().getByLabelText('Delivery date'))
+				.not.toBeInTheDocument();
 		});
 
 		it('asks for a delivery date, defaulting to today, once delivered', async () => {
 			renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Order status').selectOptions('Delivered');
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Delivered');
 
-			await expect.element(page.getByLabelText('Order date')).toHaveValue(todayDateInput());
-			await expect.element(page.getByLabelText('Delivery date')).toHaveValue(todayDateInput());
+			await expect
+				.element(keyboardPurchase().getByLabelText('Order date'))
+				.toHaveValue(todayDateInput());
+			await expect
+				.element(keyboardPurchase().getByLabelText('Delivery date'))
+				.toHaveValue(todayDateInput());
 		});
 
 		it('keeps a date the user already picked when the status moves on', async () => {
 			renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Order status').selectOptions('Ordered');
-			await page.getByLabelText('Order date').fill('2026-03-04');
-			await page.getByLabelText('Order status').selectOptions('Delivered');
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Ordered');
+			await keyboardPurchase().getByLabelText('Order date').fill('2026-03-04');
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Delivered');
 
-			await expect.element(page.getByLabelText('Order date')).toHaveValue('2026-03-04');
+			await expect
+				.element(keyboardPurchase().getByLabelText('Order date'))
+				.toHaveValue('2026-03-04');
 		});
 
 		it('drops dates the new status would not have', async () => {
 			const { onSubmit } = renderForm({ initial: keyboard });
 
-			await page.getByLabelText('Order status').selectOptions('Planned');
+			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
@@ -352,14 +551,31 @@ describe('KeyboardForm.svelte', () => {
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
 
-		it('ignores the order of plates', async () => {
+		it("tracks edits to a part's fields", async () => {
 			renderForm({ initial: keyboard });
 
-			await page.getByRole('checkbox', { name: 'POM' }).click();
+			await part('Plate 2').getByLabelText('Color').fill('White');
 			await expect.element(dirty()).toHaveTextContent('true');
-			await page.getByRole('checkbox', { name: 'POM' }).click();
+			await part('Plate 2').getByLabelText('Color').fill('Black');
 
 			await expect.element(dirty()).toHaveTextContent('false');
+		});
+
+		it('stays dirty when a removed part is replaced by an identical new one', async () => {
+			renderForm({ initial: { ...keyboard, plates: [{ id: 'plate-1', material: 'POM' }] } });
+
+			await page.getByRole('button', { name: 'Remove plate 1' }).click();
+			await page.getByRole('button', { name: '+ Add plate' }).click();
+			await part('Plate 1').getByLabelText('Material').selectOptions('POM');
+
+			await expect.element(dirty()).toHaveTextContent('true');
+		});
+
+		it('turns dirty when a part is added or removed', async () => {
+			renderForm({ initial: keyboard });
+
+			await page.getByRole('button', { name: 'Remove PCB 1' }).click();
+			await expect.element(dirty()).toHaveTextContent('true');
 		});
 
 		it('turns dirty when a photo is staged', async () => {
@@ -521,24 +737,32 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	describe('cleared number fields', () => {
-		it.each(['Thickness (mm)', 'Price'])(
-			'%s leaves the form clean once typed into and cleared',
-			async (label) => {
-				renderForm();
-				await openSection(label === 'Price' ? 'Purchase' : 'PCB');
+		it('base price leaves the form clean once typed into and cleared', async () => {
+			renderForm();
+			await openSection('Purchase');
 
-				await page.getByLabelText(label).fill('5');
-				await expect.element(dirty()).toHaveTextContent('true');
-				await page.getByLabelText(label).fill('');
+			await page.getByLabelText('Base price').fill('5');
+			await expect.element(dirty()).toHaveTextContent('true');
+			await page.getByLabelText('Base price').fill('');
 
-				await expect.element(dirty()).toHaveTextContent('false');
-			}
-		);
+			await expect.element(dirty()).toHaveTextContent('false');
+		});
+
+		it('plate thickness leaves the form clean once typed into and cleared', async () => {
+			renderForm({ initial: keyboard });
+			const thickness = part('Plate 1').getByLabelText('Thickness (mm)');
+
+			await thickness.fill('5');
+			await expect.element(dirty()).toHaveTextContent('true');
+			await thickness.fill('');
+
+			await expect.element(dirty()).toHaveTextContent('false');
+		});
 
 		it('drops a cleared price rather than keeping the old value', async () => {
 			const { onSubmit } = renderForm({ initial: keyboard });
 
-			await page.getByLabelText('Price').fill('');
+			await page.getByLabelText('Base price').fill('');
 			await submit('Save changes');
 
 			expect(submitted(onSubmit)[0].purchase?.price).toBeNullable();
@@ -547,10 +771,10 @@ describe('KeyboardForm.svelte', () => {
 		it('drops a cleared thickness rather than keeping the old value', async () => {
 			const { onSubmit } = renderForm({ initial: keyboard });
 
-			await page.getByLabelText('Thickness (mm)').fill('');
+			await part('PCB 1').getByLabelText('Thickness (mm)').fill('');
 			await submit('Save changes');
 
-			expect(submitted(onSubmit)[0].pcb?.thickness).toBeNullable();
+			expect(submitted(onSubmit)[0].pcbs?.[0].thickness).toBeNullable();
 		});
 	});
 

@@ -24,7 +24,7 @@ export function collectionStats(lists: {
 	return {
 		keyboards: keyboards.map((k) => ({
 			status: k.purchase?.orderStatus ?? '',
-			price: k.purchase?.price
+			price: k.totalCost
 		})),
 		switches: switches.map((s) => ({
 			status: s.purchase?.orderStatus ?? '',
@@ -36,8 +36,8 @@ export function collectionStats(lists: {
 		// Undefined when kbdb withheld every price, which hides the totals
 		// rather than showing a misleading $0.00.
 		currency: [
-			...[...keycapSets, ...builds].map((i) => i.currency),
-			...[...keyboards, ...switches].map((i) => i.purchase?.currency)
+			...[...keyboards, ...keycapSets, ...builds].map((i) => i.currency),
+			...switches.map((i) => i.purchase?.currency)
 		].find(Boolean)
 	};
 }

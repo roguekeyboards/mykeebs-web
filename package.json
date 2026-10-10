@@ -46,7 +46,7 @@
 	"dependencies": {
 		"@jsquash/webp": "^1.5.0",
 		"@lucide/svelte": "^1.52.0",
-		"@rogueserenity/kbdb-api-client": "^1.45.0"
+		"@rogueserenity/kbdb-api-client": "^1.48.0"
 	},
 	"allowScripts": {
 		"esbuild": true,

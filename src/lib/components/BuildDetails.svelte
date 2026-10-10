@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Build } from '@rogueserenity/kbdb-api-client';
 	import { formatDate, formatPrice } from '$lib/format';
+	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
 
 	let {
 		build,
@@ -84,14 +85,20 @@
 {/if}
 
 <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-	{#if build.plate || build.caseMountType || build.stabs || build.foam != null}
+	{#if build.plate || build.pcb || build.caseMountType || build.stabs || build.foam != null}
 		<div>
 			<h3 class="section-label">Build details</h3>
 			<dl class="spec-list">
 				{#if build.plate}
 					<div class="spec-row">
 						<dt>Plate</dt>
-						<dd>{build.plate}</dd>
+						<dd>{plateLabel(build.plate)}</dd>
+					</div>
+				{/if}
+				{#if build.pcb}
+					<div class="spec-row">
+						<dt>PCB</dt>
+						<dd>{pcbLabel(build.pcb)}</dd>
 					</div>
 				{/if}
 				{#if build.caseMountType?.type}

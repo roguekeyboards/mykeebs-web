@@ -41,4 +41,60 @@ describe('KeyboardDetails.svelte', () => {
 		await expect.element(page.getByRole('img', { name: 'Agar' })).toBeInTheDocument();
 		expect(onImageError).toHaveBeenCalledOnce();
 	});
+
+	describe('plates, PCBs and prices', () => {
+		const parts: Keyboard = {
+			id: 'k',
+			brand: 'Bowl',
+			name: 'Manta',
+			plates: [
+				{ id: 'p1', material: 'POM' },
+				{
+					id: 'p2',
+					material: 'Aluminum',
+					color: 'Silver',
+					thickness: 1.5,
+					purchase: { vendor: 'CannonKeys', price: 40, currency: 'USD', orderStatus: 'Ordered' }
+				}
+			],
+			pcbs: [{ id: 'c1', firmware: 'QMK', assembly: 'Hotswap' }],
+			purchase: { vendor: 'Bowl', price: 300, currency: 'USD' },
+			totalCost: 340,
+			currency: 'USD'
+		};
+
+		function renderParts(showPrice: boolean) {
+			render(KeyboardDetails, { keyboard: parts, onImageClick: vi.fn(), showPrice });
+		}
+
+		it('lists each part, with its own purchase or as part of the keyboard', async () => {
+			renderParts(true);
+
+			const items = page.getByRole('listitem');
+			await expect.element(items.nth(0)).toHaveTextContent(/^\s*POM\s*Came with the keyboard\s*$/);
+			await expect.element(items.nth(1)).not.toHaveTextContent('Came with the keyboard');
+			await expect.element(items.nth(1)).toHaveTextContent('Aluminum · Silver · 1.5mm');
+			await expect.element(items.nth(1)).toHaveTextContent('CannonKeys');
+			await expect.element(items.nth(1)).toHaveTextContent('$40.00');
+			await expect.element(items.nth(2)).toHaveTextContent('Hotswap · QMK');
+		});
+
+		it('shows the total cost next to the base price', async () => {
+			renderParts(true);
+
+			await expect.element(page.getByText('Total cost')).toBeInTheDocument();
+			await expect.element(page.getByText('$340.00')).toBeInTheDocument();
+			await expect.element(page.getByText('Base price')).toBeInTheDocument();
+			await expect.element(page.getByText('$300.00')).toBeInTheDocument();
+		});
+
+		it('hides part prices and the total along with the base price', async () => {
+			renderParts(false);
+
+			await expect.element(page.getByText('CannonKeys')).toBeInTheDocument();
+			await expect.element(page.getByText('$40.00')).not.toBeInTheDocument();
+			await expect.element(page.getByText('Total cost')).not.toBeInTheDocument();
+			await expect.element(page.getByText('Base price')).not.toBeInTheDocument();
+		});
+	});
 });

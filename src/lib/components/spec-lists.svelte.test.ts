@@ -39,9 +39,12 @@ describe('spec lists hold only dt and dd in each row', () => {
 				id: 'k',
 				brand: 'KBDFans',
 				name: 'Agar',
-				design: { topCase: { material: 'Polycarbonate', color: 'White' }, plates: ['PC'] },
-				pcb: { thickness: 1.6, firmware: 'QMK' },
-				purchase
+				design: { topCase: { material: 'Polycarbonate', color: 'White' } },
+				plates: [{ id: 'p', material: 'PC', purchase }],
+				pcbs: [{ id: 'c', thickness: 1.6, firmware: 'QMK' }],
+				purchase,
+				totalCost: 250,
+				currency: 'USD'
 			},
 			onImageClick: vi.fn(),
 			showPrice: true
@@ -93,7 +96,8 @@ describe('spec lists hold only dt and dd in each row', () => {
 				id: 'b',
 				visibility: Visibility.Public,
 				keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
-				plate: 'Aluminum',
+				plate: { id: 'p', material: 'Aluminum', thickness: 1.5 },
+				pcb: { id: 'c', firmware: 'QMK' },
 				foam: true,
 				totalCost: 300,
 				currency: 'USD'

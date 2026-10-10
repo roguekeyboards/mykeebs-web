@@ -6,8 +6,8 @@ function sw(purchase: Switch['purchase']): Switch {
 	return { id: 's', brand: 'HMX', name: 'Aperol', type: 'Linear', purchase };
 }
 
-function kb(id: string, purchase: Keyboard['purchase']): Keyboard {
-	return { id, brand: 'Mode', name: 'Sonnet', purchase };
+function kb(id: string, fields: Pick<Keyboard, 'purchase' | 'totalCost' | 'currency'>): Keyboard {
+	return { id, brand: 'Mode', name: 'Sonnet', ...fields };
 }
 
 function set(purchase: Pick<KeycapSet, 'orderStatus' | 'totalCost' | 'currency'>): KeycapSet {
@@ -25,10 +25,34 @@ describe('collectionStats', () => {
 		expect(stats.switches).toEqual([{ status: 'Delivered', price: 31.5 }]);
 	});
 
+	it('reads a keyboard price from its total cost, parts included', () => {
+		const stats = collectionStats({
+			...empty,
+			keyboards: [
+				kb('k', {
+					purchase: { orderStatus: 'Delivered', price: 300, currency: 'USD' },
+					totalCost: 420,
+					currency: 'USD'
+				})
+			]
+		});
+		expect(stats.keyboards).toEqual([{ status: 'Delivered', price: 420 }]);
+	});
+
+	it("takes a keyboard's currency from its total cost, even with no base price", () => {
+		const stats = collectionStats({
+			...empty,
+			keyboards: [
+				kb('k', { purchase: { orderStatus: 'Delivered' }, totalCost: 120, currency: 'GBP' })
+			]
+		});
+		expect(stats.currency).toBe('GBP');
+	});
+
 	it('takes the currency from whichever item carries a price', () => {
 		const stats = collectionStats({
 			...empty,
-			keyboards: [kb('k', { orderStatus: 'Delivered' })],
+			keyboards: [kb('k', { purchase: { orderStatus: 'Delivered' } })],
 			switches: [sw({ price: 20, currency: 'EUR' })]
 		});
 		expect(stats.currency).toBe('EUR');
@@ -37,7 +61,7 @@ describe('collectionStats', () => {
 	it('has no currency when kbdb withheld every price', () => {
 		const stats = collectionStats({
 			...empty,
-			keyboards: [kb('k', { orderStatus: 'Delivered' })],
+			keyboards: [kb('k', { purchase: { orderStatus: 'Delivered' } })],
 			switches: [sw({ orderStatus: 'Delivered' })],
 			builds: [{ id: 'b', keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' } }]
 		});
@@ -48,8 +72,8 @@ describe('collectionStats', () => {
 describe('countsFor and totalsFor', () => {
 	const stats = collectionStats({
 		keyboards: [
-			kb('k1', { orderStatus: 'Delivered', price: 100, currency: 'USD' }),
-			kb('k2', { orderStatus: 'Ordered', price: 50, currency: 'USD' })
+			kb('k1', { purchase: { orderStatus: 'Delivered' }, totalCost: 100, currency: 'USD' }),
+			kb('k2', { purchase: { orderStatus: 'Ordered' }, totalCost: 50, currency: 'USD' })
 		],
 		switches: [
 			sw({ orderStatus: 'Delivered', price: 30, currency: 'USD' }),
