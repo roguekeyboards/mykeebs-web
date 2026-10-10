@@ -6,6 +6,8 @@
 		BuildInput,
 		BuildKeycapKitEntry,
 		BuildSwitchEntry,
+		BuildPCBRef,
+		BuildPlateRef,
 		Keyboard,
 		KeycapSet,
 		Switch
@@ -15,6 +17,7 @@
 	import { lookupsApi, keyboardsApi, switchesApi, keycapSetsApi } from '$lib/api/client';
 	import { primaryKitImageUrl } from '$lib/keycap-set';
 	import { kitKey, type StaleBuildRefs } from '$lib/build-refs';
+	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
 	import { getUserContext } from '$lib/user-context';
 	import ItemPicker, { type ItemPickerCache } from '$lib/components/ItemPicker.svelte';
 	import { X } from '@lucide/svelte';
@@ -69,30 +72,39 @@
 				}
 			: undefined
 	);
-	let keyboardPlates = $state<string[]>([]);
-	let plate = $state(seed?.plate ?? '');
+	let keyboardPlates = $state<BuildPlateRef[]>(seed?.plate ? [seed.plate] : []);
+	let keyboardPcbs = $state<BuildPCBRef[]>(seed?.pcb ? [seed.pcb] : []);
+	let plate = $state(seed?.plate?.id ?? '');
+	let pcb = $state(seed?.pcb?.id ?? '');
 	let keyboardPickerOpen = $state(false);
 	const refocusKeyboardTrigger = { value: false };
 
-	async function loadKeyboardPlates(keyboardId: string) {
+	function setKeyboardParts(kb: Keyboard) {
+		keyboardPlates = kb.plates ?? [];
+		keyboardPcbs = kb.pcbs ?? [];
+	}
+
+	async function loadKeyboardParts(keyboardId: string) {
 		const userId = userContext.userId;
 		if (!userId) return;
 		try {
 			const full = await keyboardsApi.getKeyboard({ userId, keyboardId });
-			if (keyboard?.id === keyboardId) keyboardPlates = full.design?.plates ?? [];
+			if (keyboard?.id === keyboardId) setKeyboardParts(full);
 		} catch {
-			if (keyboard?.id === keyboardId) keyboardPlates = [];
+			// Keep the build's own plate and PCB to choose from.
 		}
 	}
 
 	$effect(() => {
-		if (initial?.keyboard) loadKeyboardPlates(initial.keyboard.id);
+		if (initial?.keyboard) loadKeyboardParts(initial.keyboard.id);
 	});
 
 	function pickKeyboard(kb: Keyboard) {
 		keyboard = { id: kb.id, brand: kb.brand, name: kb.name, imageUrl: kb.images?.[0]?.url };
-		keyboardPlates = kb.design?.plates ?? [];
+		setKeyboardParts(kb);
+		loadKeyboardParts(kb.id);
 		plate = '';
+		pcb = '';
 		keyboardPickerOpen = false;
 		refocusKeyboardTrigger.value = true;
 	}
@@ -360,7 +372,8 @@
 	}
 
 	const initialKeyboardId = seed?.keyboard.id ?? '';
-	const initialPlate = seed?.plate ?? '';
+	const initialPlate = seed?.plate?.id ?? '';
+	const initialPcb = seed?.pcb?.id ?? '';
 	const initialCaseMountType = seed?.caseMountType?.type ?? '';
 	const initialDurometer = seed?.caseMountType?.durometer ?? '';
 	const initialStabsName = seed?.stabs?.name ?? '';
@@ -381,6 +394,7 @@
 		return (
 			(keyboard?.id ?? '') !== initialKeyboardId ||
 			plate !== initialPlate ||
+			pcb !== initialPcb ||
 			caseMountType !== initialCaseMountType ||
 			durometer !== initialDurometer ||
 			stabsName !== initialStabsName ||
@@ -439,7 +453,8 @@
 
 		const input: BuildInput = {
 			keyboard: keyboard.id,
-			plate: plate.trim() || undefined,
+			plate: plate || undefined,
+			pcb: pcb || undefined,
 			caseMountType: hasCaseMountType
 				? {
 						type: caseMountType.trim() || undefined,
@@ -625,16 +640,31 @@
 		{/if}
 	</div>
 
-	{#if keyboard && keyboardPlates.length > 0}
-		<label class="flex flex-col gap-1.5">
-			<span class="field-label">Plate</span>
-			<select name="plate" class="field-select w-full" bind:value={plate}>
-				<option value="">—</option>
-				{#each optionsWith(keyboardPlates, plate) as value (value)}
-					<option {value}>{value}</option>
-				{/each}
-			</select>
-		</label>
+	{#if keyboard && (keyboardPlates.length > 0 || keyboardPcbs.length > 0)}
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			{#if keyboardPlates.length > 0}
+				<label class="flex flex-col gap-1.5">
+					<span class="field-label">Plate</span>
+					<select name="plate" class="field-select w-full" bind:value={plate}>
+						<option value="">—</option>
+						{#each keyboardPlates as option (option.id)}
+							<option value={option.id}>{plateLabel(option)}</option>
+						{/each}
+					</select>
+				</label>
+			{/if}
+			{#if keyboardPcbs.length > 0}
+				<label class="flex flex-col gap-1.5">
+					<span class="field-label">PCB</span>
+					<select name="pcb" class="field-select w-full" bind:value={pcb}>
+						<option value="">—</option>
+						{#each keyboardPcbs as option (option.id)}
+							<option value={option.id}>{pcbLabel(option)}</option>
+						{/each}
+					</select>
+				</label>
+			{/if}
+		</div>
 	{/if}
 
 	<details class="field-group" bind:open={caseMountOpen}>

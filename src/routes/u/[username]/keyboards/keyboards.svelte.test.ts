@@ -2,7 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ResponseError, Visibility, type Keyboard } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, keyboardsApi } from '$lib/api/client';
+import { buildsApi, keyboardsApi, lookupsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
 
@@ -22,7 +22,13 @@ vi.mock('$lib/api/client', () => ({
 		updateKeyboard: vi.fn(),
 		deleteKeyboard: vi.fn(),
 		createKeyboardImage: vi.fn(),
-		deleteKeyboardImage: vi.fn()
+		deleteKeyboardImage: vi.fn(),
+		createKeyboardPlate: vi.fn(),
+		updateKeyboardPlate: vi.fn(),
+		deleteKeyboardPlate: vi.fn(),
+		createKeyboardPCB: vi.fn(),
+		updateKeyboardPCB: vi.fn(),
+		deleteKeyboardPCB: vi.fn()
 	},
 	buildsApi: { getBuild: vi.fn() },
 	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) }
@@ -65,6 +71,24 @@ async function openManta() {
 	await expect.element(page.getByRole('dialog', { name: 'Manta' })).toBeInTheDocument();
 }
 
+function plateMaterials(values: string[]) {
+	vi.mocked(lookupsApi.getLookup).mockImplementation(
+		async ({ category }) =>
+			({ category, values: category === 'keyboard_plate_material' ? values : [] }) as never
+	);
+}
+
+async function addPlate(material: string) {
+	await dialog()
+		.getByText(/^Plates —/)
+		.click();
+	await dialog().getByRole('button', { name: '+ Add plate' }).click();
+	await dialog()
+		.getByRole('group', { name: 'Plate 1', exact: true })
+		.getByLabelText('Material')
+		.selectOptions(material);
+}
+
 async function fillNewKeyboard() {
 	await page.getByRole('button', { name: 'Add keyboard' }).click();
 	await dialog().getByLabelText('Brand').fill('Bowl');
@@ -87,10 +111,31 @@ describe('keyboards page', () => {
 
 		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('65% · WK');
 		await expect.element(page.getByRole('button', { name: 'Add keyboard' })).toBeInTheDocument();
-		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).toBeInTheDocument();
+		await expect
+			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
+			.toBeInTheDocument();
 		await expect
 			.element(page.getByRole('option', { name: 'Sort: Visibility' }))
 			.toBeInTheDocument();
+	});
+
+	it("shows each keyboard's total cost, parts included, rather than its base price", async () => {
+		api.listKeyboards.mockResolvedValue({
+			items: [
+				{
+					...manta,
+					purchase: { price: 300, currency: 'USD' },
+					totalCost: 420,
+					currency: 'USD'
+				}
+			]
+		});
+		renderPage();
+
+		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('$420.00');
+		await expect
+			.element(page.getByRole('button', { name: /Manta/ }))
+			.not.toHaveTextContent('$300.00');
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
@@ -102,7 +147,9 @@ describe('keyboards page', () => {
 			.not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).not.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
+			.not.toBeInTheDocument();
 	});
 
 	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {
@@ -177,6 +224,68 @@ describe('keyboards page', () => {
 			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
 		});
 
+		it('adds its plates and PCBs once the keyboard exists', async () => {
+			plateMaterials(['POM']);
+			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
+			api.createKeyboardPlate.mockResolvedValue({ id: 'p1', material: 'POM' });
+			renderPage();
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+			expect(api.createKeyboardPlate).toHaveBeenCalledWith({
+				userId: 'user-1',
+				keyboardId: 'kb-2',
+				keyboardPlateInput: { material: 'POM' }
+			});
+			expect(api.createKeyboard.mock.invocationCallOrder[0]).toBeLessThan(
+				api.createKeyboardPlate.mock.invocationCallOrder[0]
+			);
+		});
+
+		it('opens the new keyboard for editing when a part fails to save', async () => {
+			plateMaterials(['POM']);
+			const created = { id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' };
+			api.createKeyboard.mockResolvedValue(created);
+			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
+			api.getKeyboard.mockResolvedValue(created);
+			renderPage();
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.toBeInTheDocument();
+			await expect
+				.element(page.getByRole('alert').filter({ hasText: "some of its plates or PCBs weren't" }))
+				.toBeInTheDocument();
+			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Deacon TKL');
+		});
+
+		it("doesn't call a created keyboard a failed create when reloading it fails", async () => {
+			plateMaterials(['POM']);
+			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
+			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
+			api.getKeyboard.mockRejectedValue(new Error('network'));
+			renderPage();
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.toBeInTheDocument();
+			await expect
+				.element(page.getByRole('alert').filter({ hasText: 'Could not create this keyboard.' }))
+				.not.toBeInTheDocument();
+			expect(api.createKeyboard).toHaveBeenCalledOnce();
+		});
+
 		it('says so when the create fails', async () => {
 			api.createKeyboard.mockRejectedValue(new Error('network'));
 			renderPage();
@@ -193,6 +302,7 @@ describe('keyboards page', () => {
 	describe('editing a keyboard', () => {
 		it('saves and returns to the updated keyboard', async () => {
 			api.updateKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
+			api.getKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
 			renderPage();
 			await openManta();
 
@@ -207,6 +317,103 @@ describe('keyboards page', () => {
 					keyboardInput: expect.objectContaining({ name: 'Manta R2' })
 				})
 			);
+		});
+
+		it('saves changed parts by id and leaves the rest alone', async () => {
+			const withParts: Keyboard = {
+				...manta,
+				plates: [
+					{ id: 'p1', material: 'POM' },
+					{ id: 'p2', material: 'PC' }
+				],
+				pcbs: [{ id: 'c1', assembly: 'Hotswap', connectivity: 'Wired' }]
+			};
+			api.listKeyboards.mockResolvedValue({ items: [withParts] });
+			api.updateKeyboard.mockResolvedValue(withParts);
+			api.getKeyboard.mockResolvedValue(withParts);
+			renderPage();
+			await openManta();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog()
+				.getByRole('group', { name: 'Plate 2', exact: true })
+				.getByLabelText('Color')
+				.fill('Clear');
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.not.toBeInTheDocument();
+			expect(api.updateKeyboardPlate).toHaveBeenCalledExactlyOnceWith({
+				userId: 'user-1',
+				keyboardId: 'kb-1',
+				plateId: 'p2',
+				keyboardPlateInput: { material: 'PC', color: 'Clear' }
+			});
+			expect(api.deleteKeyboardPlate).not.toHaveBeenCalled();
+			expect(api.updateKeyboardPCB).not.toHaveBeenCalled();
+		});
+
+		it('names the builds that keep a part from being removed, and saves nothing else', async () => {
+			const withPlate: Keyboard = { ...manta, plates: [{ id: 'p1', material: 'POM' }] };
+			api.listKeyboards.mockResolvedValue({ items: [withPlate] });
+			api.deleteKeyboardPlate.mockRejectedValue(conflict(['b1']));
+			vi.mocked(buildsApi.getBuild).mockResolvedValue({
+				id: 'b1',
+				keyboard: { id: 'kb-1', brand: 'Bowl', name: 'Manta' },
+				buildDate: new Date('2026-08-03')
+			});
+			renderPage();
+			await openManta();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Name').fill('Manta R2');
+			await dialog().getByRole('button', { name: 'Remove plate 1' }).click();
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await expect
+				.element(
+					page
+						.getByRole('alert')
+						.filter({ hasText: "Can't remove the POM plate: it's used by Manta (Aug 3, 2026)." })
+				)
+				.toBeInTheDocument();
+			expect(api.updateKeyboard).not.toHaveBeenCalled();
+			await vi.waitFor(() =>
+				expect(api.getKeyboard).toHaveBeenCalledWith({ userId: 'user-1', keyboardId: 'kb-1' })
+			);
+			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Manta R2');
+		});
+
+		it('picks up a removal that went through, so saving again does not repeat it', async () => {
+			const withPlates: Keyboard = {
+				...manta,
+				plates: [
+					{ id: 'p1', material: 'POM' },
+					{ id: 'p2', material: 'PC' }
+				]
+			};
+			api.listKeyboards.mockResolvedValue({ items: [withPlates] });
+			api.deleteKeyboardPlate.mockResolvedValue(null);
+			api.updateKeyboard.mockRejectedValueOnce(new Error('network')).mockResolvedValue(manta);
+			api.getKeyboard.mockResolvedValue({ ...manta, plates: [{ id: 'p2', material: 'PC' }] });
+			renderPage();
+			await openManta();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByRole('button', { name: 'Remove plate 1' }).click();
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+			await expect
+				.element(page.getByRole('alert').filter({ hasText: 'Could not save your changes.' }))
+				.toBeInTheDocument();
+			await vi.waitFor(() => expect(api.getKeyboard).toHaveBeenCalled());
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.not.toBeInTheDocument();
+			expect(api.deleteKeyboardPlate).toHaveBeenCalledOnce();
+			expect(api.updateKeyboardPlate).not.toHaveBeenCalled();
 		});
 
 		it('says so when the save fails', async () => {
@@ -318,6 +525,7 @@ describe('keyboards page', () => {
 
 		it('stops asking once an edit is saved', async () => {
 			api.updateKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
+			api.getKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
 			renderPage();
 			await openManta();
 			await dialog().getByRole('button', { name: 'Edit' }).click();

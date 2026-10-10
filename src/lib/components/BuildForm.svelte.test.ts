@@ -2,6 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import { keyboardsApi } from '$lib/api/client';
 import { kitKey, type StaleBuildRefs } from '$lib/build-refs';
 import { MAX_IMAGES } from '$lib/image-limit';
 import BuildFormWithUser from './test-support/BuildFormWithUser.svelte';
@@ -358,5 +359,69 @@ describe('BuildForm.svelte keyboard', () => {
 		await expect
 			.element(page.getByRole('button', { name: 'Choose keyboard…' }))
 			.toHaveAccessibleDescription('A keyboard is required.');
+	});
+});
+
+describe('BuildForm.svelte plate and PCB', () => {
+	function renderParts(getKeyboard: () => Promise<unknown>) {
+		vi.mocked(keyboardsApi.getKeyboard).mockImplementationOnce(getKeyboard as never);
+		const onSubmit = vi.fn();
+		render(BuildFormWithUser, {
+			formProps: {
+				initial: {
+					...build,
+					plate: { id: 'p2', material: 'POM', color: 'Black', thickness: 1.2 },
+					pcb: { id: 'c1', assembly: 'Hotswap', firmware: 'QMK' }
+				},
+				saving: false,
+				error: null,
+				onSubmit,
+				onCancel: vi.fn()
+			}
+		});
+		return onSubmit;
+	}
+
+	const plate = () => page.getByLabelText('Plate');
+	const pcb = () => page.getByLabelText('PCB');
+
+	it("offers the keyboard's parts by id, labelled to tell same-material plates apart", async () => {
+		const onSubmit = renderParts(async () => ({
+			id: 'kb',
+			brand: 'Bowl',
+			name: 'Manta',
+			plates: [
+				{ id: 'p1', material: 'POM', thickness: 1.5 },
+				{ id: 'p2', material: 'POM', color: 'Black', thickness: 1.2 }
+			],
+			pcbs: [
+				{ id: 'c1', assembly: 'Hotswap', firmware: 'QMK' },
+				{ id: 'c2', assembly: 'Solder', connectivity: 'Wireless' }
+			]
+		}));
+
+		await expect.element(plate().getByRole('option', { name: 'POM · 1.5mm' })).toBeInTheDocument();
+		await expect.element(plate()).toHaveValue('p2');
+		await expect.element(pcb()).toHaveValue('c1');
+		await expect.element(page.getByTestId('dirty')).toHaveTextContent('false');
+
+		await plate().selectOptions('POM · 1.5mm');
+		await pcb().selectOptions('Solder · Wireless');
+		await expect.element(page.getByTestId('dirty')).toHaveTextContent('true');
+		await page.getByRole('button', { name: 'Save changes' }).click();
+
+		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+		expect(onSubmit.mock.calls[0][0]).toMatchObject({ plate: 'p1', pcb: 'c2' });
+	});
+
+	it("keeps the build's own plate and PCB when the keyboard can't be loaded", async () => {
+		const onSubmit = renderParts(() => Promise.reject(new Error('network')));
+
+		await expect.element(plate()).toHaveValue('p2');
+		await expect.element(pcb()).toHaveValue('c1');
+		await page.getByRole('button', { name: 'Save changes' }).click();
+
+		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+		expect(onSubmit.mock.calls[0][0]).toMatchObject({ plate: 'p2', pcb: 'c1' });
 	});
 });

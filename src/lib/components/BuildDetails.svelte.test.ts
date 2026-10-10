@@ -67,4 +67,22 @@ describe('BuildDetails.svelte', () => {
 		expect(onKeyboardClick).toHaveBeenCalledWith('kb');
 		expect(onSwitchClick).toHaveBeenCalledWith('sw');
 	});
+
+	it('describes the plate and PCB the build uses', async () => {
+		render(BuildDetails, {
+			build: {
+				...build,
+				plate: { id: 'p', material: 'POM', color: 'Black', thickness: 1.5 },
+				pcb: { id: 'c', assembly: 'Hotswap', firmware: 'VIA', connectivity: 'Wired' }
+			},
+			onKeyboardClick: vi.fn(),
+			onSwitchClick: vi.fn(),
+			onKeycapKitClick: vi.fn(),
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('POM · Black · 1.5mm')).toBeInTheDocument();
+		await expect.element(page.getByText('Hotswap · VIA · Wired')).toBeInTheDocument();
+	});
 });

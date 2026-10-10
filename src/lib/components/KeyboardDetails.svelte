@@ -2,6 +2,8 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Keyboard } from '@rogueserenity/kbdb-api-client';
 	import PurchaseDetails from '$lib/components/PurchaseDetails.svelte';
+	import { formatPrice } from '$lib/format';
+	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
 
 	let {
 		keyboard,
@@ -16,6 +18,9 @@
 	} = $props();
 
 	const failedUrls = new SvelteSet<string>();
+	const totalCost = $derived(
+		showPrice ? formatPrice(keyboard.totalCost, keyboard.currency) : undefined
+	);
 
 	function materialColorText(part: { material?: string; color?: string } | undefined) {
 		return part ? [part.color, part.material].filter(Boolean).join(' ') : undefined;
@@ -34,6 +39,15 @@
 		<p class="text-muted mt-2 text-sm">{keyboard.notes}</p>
 	{/if}
 </div>
+
+{#if totalCost}
+	<dl class="spec-list mt-6 sm:w-1/2">
+		<div class="spec-row">
+			<dt>Total cost</dt>
+			<dd>{totalCost}</dd>
+		</div>
+	</dl>
+{/if}
 
 {#if keyboard.images && keyboard.images.length > 0}
 	<div class="mt-6">
@@ -88,52 +102,50 @@
 						<dd>{materialColorText(keyboard.design.weight)}</dd>
 					</div>
 				{/if}
-				{#if keyboard.design.plates && keyboard.design.plates.length > 0}
-					<div class="spec-row">
-						<dt>Plates</dt>
-						<dd>{keyboard.design.plates.join(', ')}</dd>
-					</div>
-				{/if}
 			</dl>
 		</div>
 	{/if}
 
-	{#if keyboard.pcb}
+	{#if keyboard.plates && keyboard.plates.length > 0}
 		<div>
-			<h3 class="section-label">PCB</h3>
-			<dl class="spec-list">
-				{#if keyboard.pcb.thickness != null}
-					<div class="spec-row">
-						<dt>Thickness</dt>
-						<dd>{keyboard.pcb.thickness}mm</dd>
-					</div>
-				{/if}
-				{#if keyboard.pcb.firmware}
-					<div class="spec-row">
-						<dt>Firmware</dt>
-						<dd>{keyboard.pcb.firmware}</dd>
-					</div>
-				{/if}
-				{#if keyboard.pcb.assembly}
-					<div class="spec-row">
-						<dt>Assembly</dt>
-						<dd>{keyboard.pcb.assembly}</dd>
-					</div>
-				{/if}
-				{#if keyboard.pcb.connectivity}
-					<div class="spec-row">
-						<dt>Connectivity</dt>
-						<dd>{keyboard.pcb.connectivity}</dd>
-					</div>
-				{/if}
-			</dl>
+			<h3 class="section-label">Plates</h3>
+			<ul class="flex flex-col gap-4">
+				{#each keyboard.plates as plate (plate.id)}
+					<li>
+						<p class="text-sm font-medium">{plateLabel(plate)}</p>
+						{#if plate.purchase}
+							<PurchaseDetails purchase={plate.purchase} {showPrice} />
+						{:else}
+							<p class="text-faint text-xs">Came with the keyboard</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
+
+	{#if keyboard.pcbs && keyboard.pcbs.length > 0}
+		<div>
+			<h3 class="section-label">PCBs</h3>
+			<ul class="flex flex-col gap-4">
+				{#each keyboard.pcbs as pcb (pcb.id)}
+					<li>
+						<p class="text-sm font-medium">{pcbLabel(pcb)}</p>
+						{#if pcb.purchase}
+							<PurchaseDetails purchase={pcb.purchase} {showPrice} />
+						{:else}
+							<p class="text-faint text-xs">Came with the keyboard</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
 		</div>
 	{/if}
 
 	{#if keyboard.purchase}
 		<div>
 			<h3 class="section-label">Purchase</h3>
-			<PurchaseDetails purchase={keyboard.purchase} {showPrice} />
+			<PurchaseDetails purchase={keyboard.purchase} {showPrice} priceLabel="Base price" />
 		</div>
 	{/if}
 </div>

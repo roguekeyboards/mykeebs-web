@@ -1,12 +1,22 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
 	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
+	import PurchaseFields from './PurchaseFields.svelte';
 	import { lookupsApi } from '$lib/api/client';
 	import { X } from '@lucide/svelte';
-	import { toDateInput, todayDateInput } from '$lib/format';
+	import {
+		pcbDraft,
+		pcbInput,
+		pcbLabel,
+		plateDraft,
+		plateInput,
+		purchaseDraft,
+		purchaseInput,
+		purchaseSummary,
+		type KeyboardParts
+	} from '$lib/keyboard-parts';
 	import { limitNotice, MAX_IMAGES, takeWithinLimit } from '$lib/image-limit';
 
 	let {
@@ -21,7 +31,11 @@
 		initial?: Keyboard;
 		saving: boolean;
 		error: string | null;
-		onSubmit: (input: KeyboardInput, stagedImages?: File[]) => void;
+		onSubmit: (
+			input: KeyboardInput,
+			stagedImages: File[] | undefined,
+			parts: KeyboardParts
+		) => void;
 		onCancel: () => void;
 		onImageUpload?: (file: File) => Promise<void>;
 		onImageRemove?: (imageId: string) => Promise<void>;
@@ -40,58 +54,31 @@
 	let bottomCaseColor = $state(seed?.design?.bottomCase?.color ?? '');
 	let weightMaterial = $state(seed?.design?.weight?.material ?? '');
 	let weightColor = $state(seed?.design?.weight?.color ?? '');
-	let plates = new SvelteSet<string>(seed?.design?.plates ?? []);
-	let thickness = $state<number | undefined>(seed?.pcb?.thickness);
-	let firmware = $state(seed?.pcb?.firmware ?? '');
-	let assembly = $state(seed?.pcb?.assembly ?? '');
-	let connectivity = $state(seed?.pcb?.connectivity ?? '');
-	let vendor = $state(seed?.purchase?.vendor ?? '');
-	let price = $state<number | undefined>(seed?.purchase?.price);
-	let orderDate = $state(toDateInput(seed?.purchase?.orderDate));
-	let deliveryDate = $state(toDateInput(seed?.purchase?.deliveryDate));
-	let orderStatus = $state(seed?.purchase?.orderStatus ?? '');
+	let plates = $state((seed?.plates ?? []).map(plateDraft));
+	let pcbs = $state((seed?.pcbs ?? []).map(pcbDraft));
+	let purchase = $state(purchaseDraft(seed?.purchase));
 	let notes = $state(seed?.notes ?? '');
 	let visibility = $state<Visibility>(seed?.visibility ?? Visibility.Private);
 
-	let showOrderDate = $derived(
-		orderStatus.trim() !== '' && orderStatus.trim().toLowerCase() !== 'planned'
-	);
-	let isDelivered = $derived(orderStatus.trim().toLowerCase() === 'delivered');
-
-	// Only clears in response to a status change, never on mount: an existing
-	// item may legitimately carry dates its current status wouldn't set.
-	let lastOrderStatus = seed?.purchase?.orderStatus ?? '';
-	$effect(() => {
-		if (orderStatus === lastOrderStatus) return;
-		lastOrderStatus = orderStatus;
-		if (!showOrderDate) orderDate = '';
-		else if (!orderDate) orderDate = todayDateInput();
-		if (!isDelivered) deliveryDate = '';
-		else if (!deliveryDate) deliveryDate = todayDateInput();
-	});
-
 	let designOpen = $state(Boolean(seed?.design));
-	let pcbOpen = $state(Boolean(seed?.pcb));
+	let platesOpen = $state(plates.length > 0);
+	let pcbsOpen = $state(pcbs.length > 0);
 	let purchaseOpen = $state(Boolean(seed?.purchase));
 
 	let designSummary = $derived(
 		[
 			topCaseColor.trim() || topCaseMaterial.trim() ? 'top case' : undefined,
 			bottomCaseColor.trim() || bottomCaseMaterial.trim() ? 'bottom case' : undefined,
-			weightColor.trim() || weightMaterial.trim() ? 'weight' : undefined,
-			plates.size > 0 ? `${plates.size} plate${plates.size === 1 ? '' : 's'}` : undefined
+			weightColor.trim() || weightMaterial.trim() ? 'weight' : undefined
 		]
 			.filter(Boolean)
 			.join(' · ') || 'Not set'
 	);
-	let pcbSummary = $derived(
-		[firmware.trim() || undefined, connectivity.trim() || undefined].filter(Boolean).join(' · ') ||
-			'Not set'
+	let platesSummary = $derived(
+		plates.map((p) => p.material.trim() || 'New plate').join(' · ') || 'None'
 	);
-	let purchaseSummary = $derived(
-		[vendor.trim() || undefined, orderStatus.trim() || undefined].filter(Boolean).join(' · ') ||
-			'Not set'
-	);
+	let pcbsSummary = $derived(pcbs.map((p) => pcbLabel(p)).join(' · ') || 'None');
+	let keyboardPurchaseSummary = $derived(purchaseSummary(purchase) ?? 'Not set');
 
 	type LayoutValue = { name: string; sizes: string[] };
 
@@ -117,13 +104,8 @@
 		if (size && layout && !availableLayouts.includes(layout)) layout = '';
 	});
 
-	function optionsWith(loaded: string[], current: string): string[];
-	function optionsWith(loaded: string[], current: string[]): string[];
-	function optionsWith(loaded: string[], current: string | string[]): string[] {
-		const missing = (Array.isArray(current) ? current : [current]).filter(
-			(v) => v && !loaded.includes(v)
-		);
-		return missing.length > 0 ? [...missing, ...loaded] : loaded;
+	function optionsWith(loaded: string[], current: string): string[] {
+		return current && !loaded.includes(current) ? [current, ...loaded] : loaded;
 	}
 
 	$effect(() => {
@@ -246,16 +228,13 @@
 	const initialBottomCaseColor = seed?.design?.bottomCase?.color ?? '';
 	const initialWeightMaterial = seed?.design?.weight?.material ?? '';
 	const initialWeightColor = seed?.design?.weight?.color ?? '';
-	const initialPlates = [...(seed?.design?.plates ?? [])].sort();
-	const initialThickness = seed?.pcb?.thickness;
-	const initialFirmware = seed?.pcb?.firmware ?? '';
-	const initialAssembly = seed?.pcb?.assembly ?? '';
-	const initialConnectivity = seed?.pcb?.connectivity ?? '';
-	const initialVendor = seed?.purchase?.vendor ?? '';
-	const initialPrice = seed?.purchase?.price;
-	const initialOrderDate = toDateInput(seed?.purchase?.orderDate);
-	const initialDeliveryDate = toDateInput(seed?.purchase?.deliveryDate);
-	const initialOrderStatus = seed?.purchase?.orderStatus ?? '';
+	const partsSnapshot = () =>
+		JSON.stringify([
+			plates.map((p) => [p.id, plateInput(p)]),
+			pcbs.map((p) => [p.id, pcbInput(p)]),
+			purchaseInput(purchase)
+		]);
+	const initialParts = partsSnapshot();
 	const initialNotes = seed?.notes ?? '';
 	const initialVisibility = seed?.visibility ?? Visibility.Private;
 
@@ -271,16 +250,7 @@
 			bottomCaseColor !== initialBottomCaseColor ||
 			weightMaterial !== initialWeightMaterial ||
 			weightColor !== initialWeightColor ||
-			JSON.stringify([...plates].sort()) !== JSON.stringify(initialPlates) ||
-			thickness != initialThickness ||
-			firmware !== initialFirmware ||
-			assembly !== initialAssembly ||
-			connectivity !== initialConnectivity ||
-			vendor !== initialVendor ||
-			price != initialPrice ||
-			orderDate !== initialOrderDate ||
-			deliveryDate !== initialDeliveryDate ||
-			orderStatus !== initialOrderStatus ||
+			partsSnapshot() !== initialParts ||
 			notes !== initialNotes ||
 			visibility !== initialVisibility ||
 			stagedImages.length > 0
@@ -310,17 +280,19 @@
 		const hasTopCase = topCaseMaterial.trim() || topCaseColor.trim();
 		const hasBottomCase = bottomCaseMaterial.trim() || bottomCaseColor.trim();
 		const hasWeight = weightMaterial.trim() || weightColor.trim();
-		const plateList = [...plates];
-		const hasDesign = hasTopCase || hasBottomCase || hasWeight || plateList.length > 0;
+		const hasDesign = hasTopCase || hasBottomCase || hasWeight;
 
-		const hasPcb = thickness != null || firmware.trim() || assembly.trim() || connectivity.trim();
+		if (plates.some((p) => !p.material.trim())) {
+			validationError = 'Every plate needs a material.';
+			platesOpen = true;
+			return;
+		}
 
-		const hasPurchase =
-			vendor.trim() ||
-			price != null ||
-			orderDate.trim() ||
-			deliveryDate.trim() ||
-			orderStatus.trim();
+		if (pcbs.some((p) => !p.assembly.trim() || !p.connectivity.trim())) {
+			validationError = 'Every PCB needs an assembly and connectivity.';
+			pcbsOpen = true;
+			return;
+		}
 
 		const input: KeyboardInput = {
 			brand: brand.trim(),
@@ -346,34 +318,18 @@
 									material: weightMaterial.trim() || undefined,
 									color: weightColor.trim() || undefined
 								}
-							: undefined,
-						plates: plateList.length > 0 ? plateList : undefined
+							: undefined
 					}
 				: undefined,
-			pcb: hasPcb
-				? {
-						thickness,
-						firmware: firmware.trim() || undefined,
-						assembly: assembly.trim() || undefined,
-						connectivity: connectivity.trim() || undefined
-					}
-				: undefined,
-			purchase: hasPurchase
-				? {
-						vendor: vendor.trim() || undefined,
-						price,
-						orderDate: orderDate.trim() ? new Date(orderDate.trim()) : undefined,
-						deliveryDate: deliveryDate.trim() ? new Date(deliveryDate.trim()) : undefined,
-						orderStatus: orderStatus.trim() || undefined
-					}
-				: undefined,
+			purchase: purchaseInput(purchase),
 			notes: notes.trim() || undefined,
 			visibility
 		};
 
 		onSubmit(
 			input,
-			stagedImages.length > 0 ? stagedImages.map((staged) => staged.file) : undefined
+			stagedImages.length > 0 ? stagedImages.map((staged) => staged.file) : undefined,
+			{ plates, pcbs }
 		);
 	}
 </script>
@@ -584,125 +540,219 @@
 				/>
 			</label>
 			<div class="hidden sm:block"></div>
-
-			<div class="flex flex-col gap-1.5 sm:col-span-3">
-				<span class="field-label">Plates</span>
-				<div class="flex flex-wrap gap-x-4 gap-y-2">
-					{#each optionsWith(plateMaterials, [...plates]) as value (value)}
-						<label class="flex items-center gap-2 text-sm">
-							<input
-								name="plates"
-								{value}
-								type="checkbox"
-								class="field-checkbox"
-								checked={plates.has(value)}
-								onchange={(event) => {
-									if (event.currentTarget.checked) plates.add(value);
-									else plates.delete(value);
-								}}
-							/>
-							{value}
-						</label>
-					{/each}
-				</div>
-			</div>
 		</div>
 	</details>
 
-	<details class="field-group" bind:open={pcbOpen}>
+	<details class="field-group" bind:open={platesOpen}>
 		<summary>
-			PCB
-			<span class="field-group-hint">— {pcbSummary}</span>
+			Plates
+			<span class="field-group-hint">— {platesSummary}</span>
 		</summary>
-		<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Thickness (mm)</span>
-				<input
-					name="thickness"
-					type="number"
-					class="field-input"
-					min="0"
-					step="0.1"
-					bind:value={thickness}
-				/>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Firmware</span>
-				<select name="firmware" class="field-select w-full" bind:value={firmware}>
-					<option value="">—</option>
-					{#each optionsWith(firmwares, firmware) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Assembly</span>
-				<select name="assembly" class="field-select w-full" bind:value={assembly}>
-					<option value="">—</option>
-					{#each optionsWith(assemblies, assembly) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Connectivity</span>
-				<select name="connectivity" class="field-select w-full" bind:value={connectivity}>
-					<option value="">—</option>
-					{#each optionsWith(connectivities, connectivity) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
+		<div class="field-group-body flex flex-col gap-4">
+			{#each plates as plate, index (plate.key)}
+				<fieldset
+					class="relative flex flex-col gap-4 rounded-lg border p-4"
+					style="border-color: var(--border)"
+				>
+					<legend class="field-label px-1">Plate {index + 1}</legend>
+					<button
+						type="button"
+						class="btn-icon absolute top-2 right-2 h-7 w-7"
+						aria-label="Remove plate {index + 1}"
+						onclick={() => plates.splice(index, 1)}
+					>
+						<X class="h-4 w-4" />
+					</button>
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label"
+								>Material <span aria-hidden="true" style="color: var(--danger)">*</span></span
+							>
+							<select
+								name="plates[{index}].material"
+								class="field-select w-full"
+								aria-required="true"
+								aria-invalid={validationError !== null && !plate.material.trim()}
+								aria-describedby={validationError !== null && !plate.material.trim()
+									? validationId
+									: undefined}
+								bind:value={plate.material}
+							>
+								<option value="">—</option>
+								{#each optionsWith(plateMaterials, plate.material) as value (value)}
+									<option {value}>{value}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label">Color</span>
+							<input
+								name="plates[{index}].color"
+								type="text"
+								class="field-input"
+								bind:value={plate.color}
+								autocomplete="off"
+							/>
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label">Thickness (mm)</span>
+							<input
+								name="plates[{index}].thickness"
+								type="number"
+								class="field-input"
+								min="0"
+								step="0.1"
+								bind:value={plate.thickness}
+							/>
+						</label>
+					</div>
+					<details class="field-group" bind:open={plate.purchaseOpen}>
+						<summary>
+							Purchase
+							<span class="field-group-hint"
+								>— {purchaseSummary(plate.purchase) ?? 'Came with the keyboard'}</span
+							>
+						</summary>
+						<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<PurchaseFields
+								bind:purchase={plate.purchase}
+								{vendors}
+								{orderStatuses}
+								namePrefix="plates[{index}].purchase."
+							/>
+						</div>
+					</details>
+				</fieldset>
+			{/each}
+			<button type="button" class="btn self-start" onclick={() => plates.push(plateDraft())}>
+				+ Add plate
+			</button>
+		</div>
+	</details>
+
+	<details class="field-group" bind:open={pcbsOpen}>
+		<summary>
+			PCBs
+			<span class="field-group-hint">— {pcbsSummary}</span>
+		</summary>
+		<div class="field-group-body flex flex-col gap-4">
+			{#each pcbs as pcb, index (pcb.key)}
+				<fieldset
+					class="relative flex flex-col gap-4 rounded-lg border p-4"
+					style="border-color: var(--border)"
+				>
+					<legend class="field-label px-1">PCB {index + 1}</legend>
+					<button
+						type="button"
+						class="btn-icon absolute top-2 right-2 h-7 w-7"
+						aria-label="Remove PCB {index + 1}"
+						onclick={() => pcbs.splice(index, 1)}
+					>
+						<X class="h-4 w-4" />
+					</button>
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label">Thickness (mm)</span>
+							<input
+								name="pcbs[{index}].thickness"
+								type="number"
+								class="field-input"
+								min="0"
+								step="0.1"
+								bind:value={pcb.thickness}
+							/>
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label">Firmware</span>
+							<select
+								name="pcbs[{index}].firmware"
+								class="field-select w-full"
+								bind:value={pcb.firmware}
+							>
+								<option value="">—</option>
+								{#each optionsWith(firmwares, pcb.firmware) as value (value)}
+									<option {value}>{value}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label"
+								>Assembly <span aria-hidden="true" style="color: var(--danger)">*</span></span
+							>
+							<select
+								name="pcbs[{index}].assembly"
+								class="field-select w-full"
+								aria-required="true"
+								aria-invalid={validationError !== null && !pcb.assembly.trim()}
+								aria-describedby={validationError !== null && !pcb.assembly.trim()
+									? validationId
+									: undefined}
+								bind:value={pcb.assembly}
+							>
+								<option value="">—</option>
+								{#each optionsWith(assemblies, pcb.assembly) as value (value)}
+									<option {value}>{value}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class="field-label"
+								>Connectivity <span aria-hidden="true" style="color: var(--danger)">*</span></span
+							>
+							<select
+								name="pcbs[{index}].connectivity"
+								class="field-select w-full"
+								aria-required="true"
+								aria-invalid={validationError !== null && !pcb.connectivity.trim()}
+								aria-describedby={validationError !== null && !pcb.connectivity.trim()
+									? validationId
+									: undefined}
+								bind:value={pcb.connectivity}
+							>
+								<option value="">—</option>
+								{#each optionsWith(connectivities, pcb.connectivity) as value (value)}
+									<option {value}>{value}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+					<details class="field-group" bind:open={pcb.purchaseOpen}>
+						<summary>
+							Purchase
+							<span class="field-group-hint"
+								>— {purchaseSummary(pcb.purchase) ?? 'Came with the keyboard'}</span
+							>
+						</summary>
+						<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<PurchaseFields
+								bind:purchase={pcb.purchase}
+								{vendors}
+								{orderStatuses}
+								namePrefix="pcbs[{index}].purchase."
+							/>
+						</div>
+					</details>
+				</fieldset>
+			{/each}
+			<button type="button" class="btn self-start" onclick={() => pcbs.push(pcbDraft())}>
+				+ Add PCB
+			</button>
 		</div>
 	</details>
 
 	<details class="field-group" bind:open={purchaseOpen}>
 		<summary>
 			Purchase
-			<span class="field-group-hint">— {purchaseSummary}</span>
+			<span class="field-group-hint">— {keyboardPurchaseSummary}</span>
 		</summary>
 		<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Vendor</span>
-				<select name="vendor" class="field-select w-full" bind:value={vendor}>
-					<option value="">—</option>
-					{#each optionsWith(vendors, vendor) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Order status</span>
-				<select name="orderStatus" class="field-select w-full" bind:value={orderStatus}>
-					<option value="">—</option>
-					{#each optionsWith(orderStatuses, orderStatus) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Price</span>
-				<input
-					name="price"
-					type="number"
-					class="field-input"
-					min="0"
-					step="0.01"
-					bind:value={price}
-				/>
-			</label>
-			{#if showOrderDate}
-				<label class="flex flex-col gap-1.5">
-					<span class="field-label">Order date</span>
-					<input name="orderDate" type="date" class="field-input" bind:value={orderDate} />
-				</label>
-			{/if}
-			{#if isDelivered}
-				<label class="flex flex-col gap-1.5">
-					<span class="field-label">Delivery date</span>
-					<input name="deliveryDate" type="date" class="field-input" bind:value={deliveryDate} />
-				</label>
-			{/if}
+			<PurchaseFields
+				bind:purchase
+				{vendors}
+				{orderStatuses}
+				priceLabel="Base price"
+				priceHint="Excludes plates and PCBs bought separately."
+			/>
 		</div>
 	</details>
 

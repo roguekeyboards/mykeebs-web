@@ -11,6 +11,8 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import DeleteBlocked from '$lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '$lib/delete-blocked';
+	import type { KeyboardParts } from '$lib/keyboard-parts';
+	import { blockedRemovalMessage, removeParts, saveParts } from '$lib/keyboard-parts-save';
 	import { stepIndex } from '$lib/step-index';
 	import { uploadImage } from '$lib/upload';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -84,42 +86,66 @@
 		confirmingDelete = false;
 	}
 
-	async function handleCreate(input: KeyboardInput, stagedImages?: File[]) {
+	async function handleCreate(
+		input: KeyboardInput,
+		stagedImages: File[] | undefined,
+		parts: KeyboardParts
+	) {
 		const userId = userContext.userId;
 		if (!userId) return;
 
 		saving = true;
 		saveError = null;
+		let keyboard: Keyboard;
 		try {
-			const keyboard = await keyboardsApi.createKeyboard({ userId, keyboardInput: input });
-			if (stagedImages && stagedImages.length > 0) {
-				// The keyboard already exists, so an upload failure isn't a failed
-				// create and saveError no longer applies to it.
-				for (const file of stagedImages) {
-					await uploadKeyboardImage(keyboard.id ?? '', file).catch(() => {});
-				}
-			}
-			await grid?.refresh();
-			closeModal();
+			keyboard = await keyboardsApi.createKeyboard({ userId, keyboardInput: input });
 		} catch {
 			saveError = 'Could not create this keyboard.';
+			saving = false;
+			return;
+		}
+		try {
+			const partsSaved = await saveParts(keyboardsApi, userId, keyboard, parts).then(
+				() => true,
+				() => false
+			);
+			for (const file of stagedImages ?? []) {
+				await uploadKeyboardImage(keyboard.id, file).catch(() => {});
+			}
+			await grid?.refresh().catch(() => {});
+			if (partsSaved) {
+				closeModal();
+			} else {
+				const fresh = await keyboardsApi
+					.getKeyboard({ userId, keyboardId: keyboard.id })
+					.catch(() => keyboard);
+				modal = { mode: 'edit', keyboard: fresh };
+				saveError =
+					"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.";
+			}
 		} finally {
 			saving = false;
 		}
 	}
 
-	async function handleUpdate(keyboardId: string, input: KeyboardInput) {
+	async function handleUpdate(saved: Keyboard, input: KeyboardInput, parts: KeyboardParts) {
 		const userId = userContext.userId;
 		if (!userId) return;
 
 		saving = true;
 		saveError = null;
 		try {
-			const keyboard = await keyboardsApi.updateKeyboard({
-				userId,
-				keyboardId,
-				keyboardInput: input
-			});
+			const blocked = await removeParts(keyboardsApi, userId, saved, parts);
+			if (blocked.length > 0) {
+				saveError = await blockedRemovalMessage(blocked, (buildId) =>
+					buildsApi.getBuild({ userId, buildId })
+				);
+				await refreshEditingKeyboard(saved.id).catch(() => {});
+				return;
+			}
+			await keyboardsApi.updateKeyboard({ userId, keyboardId: saved.id, keyboardInput: input });
+			await saveParts(keyboardsApi, userId, saved, parts);
+			const keyboard = await keyboardsApi.getKeyboard({ userId, keyboardId: saved.id });
 			await grid?.refresh();
 			modal = { mode: 'view', keyboard };
 		} catch (err) {
@@ -130,6 +156,7 @@
 				console.error('updateKeyboard failed', err);
 			}
 			saveError = 'Could not save your changes.';
+			await refreshEditingKeyboard(saved.id).catch(() => {});
 		} finally {
 			saving = false;
 		}
@@ -210,7 +237,7 @@
 				{ label: 'Name', getValue: (keyboard) => keyboard.name },
 				{ label: 'Brand', getValue: (keyboard) => keyboard.brand },
 				{ label: 'Order status', getValue: (keyboard) => keyboard.purchase?.orderStatus },
-				{ label: 'Price', getValue: (keyboard) => keyboard.purchase?.price },
+				{ label: 'Total cost', getValue: (keyboard) => keyboard.totalCost ?? undefined },
 				{ label: 'Visibility', getValue: (keyboard) => keyboard.visibility }
 			]
 		: [
@@ -245,10 +272,10 @@
 						{[keyboard.size, keyboard.layout].filter(Boolean).join(' · ')}
 					</p>
 				{/if}
-				{#if formatPrice(keyboard.purchase?.price, keyboard.purchase?.currency) || keyboard.purchase?.orderStatus || keyboard.visibility}
+				{#if formatPrice(keyboard.totalCost, keyboard.currency) || keyboard.purchase?.orderStatus || keyboard.visibility}
 					<div class="mt-1 flex flex-wrap items-center gap-2">
 						<p class="text-faint font-mono text-xs">
-							{formatPrice(keyboard.purchase?.price, keyboard.purchase?.currency)}
+							{formatPrice(keyboard.totalCost, keyboard.currency)}
 						</p>
 						<div class="ml-auto flex shrink-0 items-center gap-1.5">
 							{#if keyboard.purchase?.orderStatus}
@@ -343,7 +370,7 @@
 			initial={keyboard}
 			{saving}
 			error={saveError}
-			onSubmit={(input) => handleUpdate(keyboard.id ?? '', input)}
+			onSubmit={(input, _images, parts) => handleUpdate(keyboard, input, parts)}
 			onCancel={() => {
 				modal = { mode: 'view', keyboard };
 			}}
