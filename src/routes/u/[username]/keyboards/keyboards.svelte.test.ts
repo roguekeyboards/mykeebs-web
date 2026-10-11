@@ -473,7 +473,7 @@ describe('keyboards page', () => {
 				'https://bucket.example/c',
 				expect.objectContaining({
 					method: 'PUT',
-					headers: { 'Content-Type': 'image/webp' }
+					headers: { 'Content-Type': 'image/webp', 'If-None-Match': '*' }
 				})
 			);
 		});

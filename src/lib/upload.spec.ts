@@ -16,7 +16,7 @@ describe('uploadToSignedUrl', () => {
 
 		expect(fetchMock).toHaveBeenCalledWith('https://bucket.example/signed', {
 			method: 'PUT',
-			headers: { 'Content-Type': 'image/png' },
+			headers: { 'Content-Type': 'image/png', 'If-None-Match': '*' },
 			body: file
 		});
 	});
@@ -49,7 +49,7 @@ describe('uploadImage', () => {
 		expect(requestUpload).toHaveBeenCalledWith({ contentType: 'image/webp', sizeBytes: webp.size });
 		expect(fetchMock).toHaveBeenCalledWith('https://bucket.example/signed', {
 			method: 'PUT',
-			headers: { 'Content-Type': 'image/webp' },
+			headers: { 'Content-Type': 'image/webp', 'If-None-Match': '*' },
 			body: webp
 		});
 	});
