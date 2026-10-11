@@ -313,7 +313,10 @@ describe('keyboard builds page', () => {
 			});
 			expect(fetchMock).toHaveBeenCalledWith(
 				'https://bucket.example/b',
-				expect.objectContaining({ method: 'PUT', headers: { 'Content-Type': 'image/webp' } })
+				expect.objectContaining({
+					method: 'PUT',
+					headers: { 'Content-Type': 'image/webp', 'If-None-Match': '*' }
+				})
 			);
 		});
 
