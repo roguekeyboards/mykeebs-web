@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isPending, uploadErrorMessage, viewableImages } from '$lib/image-moderation';
+	import { isPending, primaryImageUrl, uploadErrorMessage } from '$lib/image-moderation';
 	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '$lib/components/RejectedImage.svelte';
 	import { tick, untrack } from 'svelte';
@@ -107,7 +107,7 @@
 			id: kb.id,
 			brand: kb.brand,
 			name: kb.name,
-			imageUrl: viewableImages(kb.images)[0]?.url
+			imageUrl: primaryImageUrl(kb.images)
 		};
 		setKeyboardParts(kb);
 		loadKeyboardParts(kb.id);
@@ -618,7 +618,7 @@
 				itemKey={(kb) => kb.id ?? ''}
 				getLabel={(kb) => kb.name}
 				getSublabel={(kb) => kb.brand}
-				getImageUrl={(kb) => viewableImages(kb.images)[0]?.url}
+				getImageUrl={(kb) => primaryImageUrl(kb.images)}
 				placeholder="Search keyboards…"
 				cache={keyboardPickerCache}
 				onPick={pickKeyboard}

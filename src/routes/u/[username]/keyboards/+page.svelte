@@ -21,7 +21,7 @@
 		uploadStaged
 	} from '$lib/upload';
 	import PageNotice from '$lib/components/PageNotice.svelte';
-	import { anyPending, viewableImages } from '$lib/image-moderation';
+	import { anyPending, primaryImageUrl, viewableImages } from '$lib/image-moderation';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
 	import KeyboardDetails from '$lib/components/KeyboardDetails.svelte';
 	import KeyboardForm from '$lib/components/KeyboardForm.svelte';
@@ -272,7 +272,7 @@
 			]}
 >
 	{#snippet card(keyboard)}
-		{@const imageUrl = viewableImages(keyboard.images)[0]?.url}
+		{@const imageUrl = primaryImageUrl(keyboard.images)}
 		{@const imageFailed = imageUrl != null && failedImages.has(imageUrl)}
 		<button
 			type="button"

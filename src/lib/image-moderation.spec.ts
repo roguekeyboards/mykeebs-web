@@ -3,6 +3,7 @@ import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
 import {
 	anyPending,
 	isPending,
+	primaryImageUrl,
 	rejectionText,
 	UPLOADS_UNAVAILABLE,
 	uploadErrorMessage,
@@ -26,6 +27,27 @@ describe('viewableImages', () => {
 
 	it('is empty for no images', () => {
 		expect(viewableImages(undefined)).toEqual([]);
+	});
+});
+
+describe('primaryImageUrl', () => {
+	it('is the first image', () => {
+		expect(primaryImageUrl([{ url: 'first.png' }, { url: 'second.png' }])).toBe('first.png');
+	});
+
+	it('skips a rejected image, which has no url', () => {
+		expect(
+			primaryImageUrl([
+				{ status: ImageStatus.Rejected, rejectionReason: 'Explicit' },
+				{ url: 'second.png', status: ImageStatus.Pending }
+			])
+		).toBe('second.png');
+	});
+
+	it('is undefined with no viewable image', () => {
+		expect(primaryImageUrl([])).toBeUndefined();
+		expect(primaryImageUrl(undefined)).toBeUndefined();
+		expect(primaryImageUrl([{ status: ImageStatus.Rejected }])).toBeUndefined();
 	});
 });
 

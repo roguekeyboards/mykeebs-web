@@ -4,10 +4,10 @@
 	import type { Build, BuildInput } from '@rogueserenity/kbdb-api-client';
 	import { resolve } from '$app/paths';
 	import { buildsApi } from '$lib/api/client';
-	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
+	import { stagedUploadMessage, uploadImage, uploadStaged } from '$lib/upload';
+	import { primaryImageUrl } from '$lib/image-moderation';
 	import PageNotice from '$lib/components/PageNotice.svelte';
 	import { groupByKeyboard, type KeyboardBuildGroup } from '$lib/build-groups';
-	import { primaryBuildImageUrl } from '$lib/build';
 	import { perItemImageRefetcher, withFreshImages } from '$lib/stale-images';
 	import {
 		STALE_REFS_MESSAGE,
@@ -88,8 +88,11 @@
 			);
 			await grid?.refresh().catch(() => {});
 			closeModal();
-			const { message } = stagedUploadOutcome('build', photoFailure, false);
-			if (message) notice = { message, keyboardId: build.keyboard.id };
+			if (photoFailure)
+				notice = {
+					message: stagedUploadMessage('build', photoFailure, false),
+					keyboardId: build.keyboard.id
+				};
 		} catch (err) {
 			staleRefs = await staleBuildRefsFromError(err, input);
 			saveError = staleRefs ? STALE_REFS_MESSAGE : 'Could not create this build.';
@@ -140,7 +143,7 @@
 >
 	{#snippet card(group)}
 		{@const build = group.current}
-		{@const imageUrl = primaryBuildImageUrl(build)}
+		{@const imageUrl = primaryImageUrl(build.images)}
 		{@const imageFailed = imageUrl != null && failedImages.has(imageUrl)}
 		<a
 			href={resolve('/u/[username]/builds/[keyboardId]', {

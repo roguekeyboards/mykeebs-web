@@ -8,6 +8,10 @@ export function viewableImages<T extends ModeratedImage>(
 	return (images ?? []).filter((image): image is T & { url: string } => image.url !== undefined);
 }
 
+export function primaryImageUrl(images: ModeratedImage[] | undefined): string | undefined {
+	return images?.find((image) => image.url !== undefined)?.url;
+}
+
 export function isPending(image: ModeratedImage | undefined): boolean {
 	return image?.status === ImageStatus.Pending;
 }

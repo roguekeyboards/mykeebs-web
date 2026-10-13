@@ -23,8 +23,7 @@
 	import { fetchAllPages } from '$lib/pagination';
 	import { stepIndex } from '$lib/step-index';
 	import { uploadImage } from '$lib/upload';
-	import { viewableImages } from '$lib/image-moderation';
-	import { primaryBuildImageUrl } from '$lib/build';
+	import { primaryImageUrl, viewableImages } from '$lib/image-moderation';
 	import { getUserContext } from '$lib/user-context';
 	import Modal from '$lib/components/Modal.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -346,7 +345,7 @@
 	<p class="p-16 text-center text-lg" role="alert" style="color: var(--danger)">{view.message}</p>
 {:else}
 	{@const { keyboard, builds } = view}
-	{@const headerImageUrl = viewableImages(keyboard?.images)[0]?.url}
+	{@const headerImageUrl = primaryImageUrl(keyboard?.images)}
 	<div class="flex items-center gap-3 px-4">
 		{#if keyboard && headerImageUrl}
 			<img
@@ -369,7 +368,7 @@
 	{:else}
 		<ol class="kc-build-timeline mt-8 px-4">
 			{#each builds as build, index (build.id)}
-				{@const imageUrl = primaryBuildImageUrl(build)}
+				{@const imageUrl = primaryImageUrl(build.images)}
 				<li class="kc-build-timeline-item">
 					<button
 						type="button"
