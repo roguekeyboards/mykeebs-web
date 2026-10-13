@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
 import { goto } from '$app/navigation';
 import { profilesApi } from '$lib/api/client';
 import { refreshProfile, saveProfile } from '$lib/profile/profile.svelte';
@@ -363,6 +363,40 @@ describe('Profile edit page photo', () => {
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not remove your photo.' }))
+			.toBeInTheDocument();
+	});
+
+	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+		api.setProfileImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
+		render(ProfileEditPage);
+
+		await userEvent.upload(fileInput(), png);
+
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' }))
+			.toBeInTheDocument();
+	});
+
+	it('marks a photo that is pending review', async () => {
+		profileState.data = {
+			...existing,
+			avatar: { url: 'https://img.example/new.png', status: ImageStatus.Pending }
+		};
+		render(ProfileEditPage);
+
+		await expect.element(page.getByText(/^Pending review/)).toBeInTheDocument();
+	});
+
+	it('explains a rejected photo and still offers to remove it', async () => {
+		profileState.data = {
+			...existing,
+			avatar: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' }
+		};
+		render(ProfileEditPage);
+
+		await expect.element(page.getByText(/Removed by moderation: Explicit/)).toBeInTheDocument();
+		await expect
+			.element(page.getByRole('button', { name: 'Remove', exact: true }))
 			.toBeInTheDocument();
 	});
 });

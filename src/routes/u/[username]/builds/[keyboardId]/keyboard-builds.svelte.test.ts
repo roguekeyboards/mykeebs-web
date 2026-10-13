@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
 import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '$lib/api/client';
 import { STALE_REFS_MESSAGE } from '$lib/build-refs';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
@@ -404,5 +404,23 @@ describe('keyboard builds page', () => {
 			await expect.element(page.getByText('This kit no longer exists.')).toBeInTheDocument();
 			await expect.element(page.getByRole('dialog', { name: 'Keycap kit' })).toBeInTheDocument();
 		});
+	});
+});
+
+describe('keyboard builds page image moderation', () => {
+	it('leaves a rejected photo out of the full-size gallery', async () => {
+		builds.getBuild.mockResolvedValue({
+			...current,
+			images: [
+				{ imageId: 'img-r', status: ImageStatus.Rejected, rejectionReason: 'Explicit' },
+				...current.images!
+			]
+		});
+		renderPage();
+		await openCurrent();
+
+		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
+		await dialog().getByRole('button', { name: 'View full size image' }).first().click();
+		await vi.waitFor(() => expect(shown()).toBe('https://img.example/1.png'));
 	});
 });

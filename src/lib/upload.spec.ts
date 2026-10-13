@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { uploadImage, uploadToSignedUrl } from './upload';
+import { ResponseError } from '@rogueserenity/kbdb-api-client';
+import {
+	stagedUploadFollowUp,
+	stagedUploadMessage,
+	stagedUploadOutcome,
+	uploadImage,
+	uploadStaged,
+	uploadToSignedUrl
+} from './upload';
 
 const file = new File(['png'], 'a.png', { type: 'image/png' });
 
@@ -63,5 +71,107 @@ describe('uploadImage', () => {
 			})
 		).rejects.toThrow('undecodable');
 		expect(requestUpload).not.toHaveBeenCalled();
+	});
+});
+
+describe('uploadStaged', () => {
+	const files = ['a', 'b', 'c'].map(
+		(name) => new File([name], `${name}.png`, { type: 'image/png' })
+	);
+	const unavailable = () => new ResponseError(new Response(null, { status: 429 }));
+
+	it('uploads every file in order and reports nothing when all succeed', async () => {
+		const upload = vi.fn<(file: File) => Promise<void>>(async () => {});
+
+		expect(await uploadStaged(files, upload)).toBeNull();
+		expect(upload.mock.calls.map(([f]) => f.name)).toEqual(['a.png', 'b.png', 'c.png']);
+	});
+
+	it('keeps going past an ordinary failure and counts it', async () => {
+		const upload = vi.fn(async (f: File) => {
+			if (f.name === 'b.png') throw new Error('upload failed: 403');
+		});
+
+		expect(await uploadStaged(files, upload)).toEqual({
+			failed: 1,
+			total: 3,
+			unavailable: false
+		});
+		expect(upload).toHaveBeenCalledTimes(3);
+	});
+
+	it('stops at a 429 and counts the rest as failed', async () => {
+		const upload = vi.fn(async (f: File) => {
+			if (f.name === 'b.png') throw unavailable();
+		});
+
+		expect(await uploadStaged(files, upload)).toEqual({
+			failed: 2,
+			total: 3,
+			unavailable: true
+		});
+		expect(upload).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('stagedUploadMessage', () => {
+	it('says uploads are unavailable after a 429', () => {
+		expect(stagedUploadMessage('keyboard', { failed: 2, total: 2, unavailable: true })).toBe(
+			"The keyboard was added, but its photos weren't. Uploads unavailable, try again later."
+		);
+	});
+
+	it('counts the photos when only some failed', () => {
+		expect(stagedUploadMessage('build', { failed: 1, total: 3, unavailable: false })).toBe(
+			"The build was added, but 1 of its 3 photos wasn't. Add it again."
+		);
+		expect(stagedUploadMessage('build', { failed: 2, total: 3, unavailable: true })).toBe(
+			"The build was added, but 2 of its 3 photos weren't. Uploads unavailable, try again later."
+		);
+	});
+
+	it('speaks of a single photo', () => {
+		expect(stagedUploadMessage('switch', { failed: 1, total: 1, unavailable: false })).toBe(
+			"The switch was added, but its photo wasn't. Add it again."
+		);
+	});
+});
+
+describe('stagedUploadOutcome', () => {
+	it('does nothing when every photo uploaded', () => {
+		expect(stagedUploadOutcome('switch', null, true)).toEqual({ reopen: false, message: null });
+	});
+
+	it('reopens the item after an ordinary failure, where it can', () => {
+		const failure = { failed: 1, total: 1, unavailable: false };
+
+		expect(stagedUploadOutcome('switch', failure, true)).toEqual({
+			reopen: true,
+			message: "The switch was added, but its photo wasn't. Add it again."
+		});
+		expect(stagedUploadOutcome('build', failure, false)).toEqual({
+			reopen: false,
+			message: "The build was added, but its photo wasn't. Add it again by editing the build."
+		});
+	});
+
+	it("doesn't reopen after a 429, since retrying won't help", () => {
+		expect(stagedUploadOutcome('switch', { failed: 1, total: 1, unavailable: true }, true)).toEqual(
+			{
+				reopen: false,
+				message: "The switch was added, but its photo wasn't. Uploads unavailable, try again later."
+			}
+		);
+	});
+});
+
+describe('stagedUploadFollowUp', () => {
+	it('follows on from another failure in the same create', () => {
+		expect(stagedUploadFollowUp('keyboard', { failed: 1, total: 1, unavailable: false })).toBe(
+			"Its photo wasn't added either. Add it again."
+		);
+		expect(stagedUploadFollowUp('keyboard', { failed: 2, total: 3, unavailable: true })).toBe(
+			"2 of its 3 photos weren't added either. Uploads unavailable, try again later."
+		);
 	});
 });

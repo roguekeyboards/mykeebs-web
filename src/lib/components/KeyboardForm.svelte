@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { isPending, uploadErrorMessage } from '$lib/image-moderation';
+	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '$lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
 	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
@@ -191,8 +194,8 @@
 		try {
 			for (const file of files) await onImageUpload(file);
 			imageError = notice;
-		} catch {
-			imageError = 'Could not upload that image.';
+		} catch (err) {
+			imageError = uploadErrorMessage(err);
 		} finally {
 			imageBusy = false;
 			if (fileInput) fileInput.value = '';
@@ -344,13 +347,20 @@
 			{#if initial}
 				{#each initial.images ?? [] as image, index (image.imageId)}
 					<div class="relative">
-						<img
-							src={image.url}
-							alt={initial.name}
-							class="kc-thumb h-20 w-20 object-contain"
-							loading="lazy"
-							decoding="async"
-						/>
+						{#if image.url === undefined}
+							<RejectedImage reason={image.rejectionReason} class="h-20 w-20" />
+						{:else}
+							<img
+								src={image.url}
+								alt={initial.name}
+								class="kc-thumb h-20 w-20 object-contain"
+								loading="lazy"
+								decoding="async"
+							/>
+							{#if isPending(image)}
+								<PendingReviewBadge />
+							{/if}
+						{/if}
 						<button
 							type="button"
 							class="btn-icon absolute -top-2 -right-2 h-6 w-6 text-xs"

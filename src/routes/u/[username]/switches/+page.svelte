@@ -4,14 +4,16 @@
 	import type { Switch as SwitchModel, SwitchInput } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
 	import { switchesApi, buildsApi } from '$lib/api/client';
-	import { anyImageFailed, staleImageRefetcher, withFreshSwitchImageUrl } from '$lib/stale-images';
+	import { anyImageFailed, staleImageRefetcher, withFreshImage } from '$lib/stale-images';
 	import { formatPrice } from '$lib/format';
 	import { getUserContext } from '$lib/user-context';
 	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import DeleteBlocked from '$lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '$lib/delete-blocked';
-	import { uploadImage } from '$lib/upload';
+	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
+	import PageNotice from '$lib/components/PageNotice.svelte';
+	import { isPending } from '$lib/image-moderation';
 	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
 	import OrderStatusBadge from '$lib/components/OrderStatusBadge.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -35,6 +37,7 @@
 	let grid = $state<ReturnType<typeof CollectionGrid<SwitchModel>> | null>(null);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let notice = $state<string | null>(null);
 	let deleting = $state(false);
 	let deleteError = $state<string | null>(null);
 	let blockingBuilds = $state<string[] | null>(null);
@@ -44,19 +47,21 @@
 	const staleImages = staleImageRefetcher(
 		(switchId) => switchesApi.getSwitch({ userId: userContext.userId, switchId }),
 		(fresh, id) => {
-			grid?.updateItem(id, (row) => withFreshSwitchImageUrl(row, fresh));
+			grid?.updateItem(id, (row) => withFreshImage(row, fresh));
 			if (modal.mode === 'view' && modal.sw.id === id)
-				modal = { mode: 'view', sw: withFreshSwitchImageUrl(modal.sw, fresh) };
+				modal = { mode: 'view', sw: withFreshImage(modal.sw, fresh) };
 		}
 	);
 
 	function openSwitch(sw: SwitchModel) {
 		staleImages.reset();
 		modal = { mode: 'view', sw };
-		if (anyImageFailed([sw.image?.url], failedImages)) staleImages.refetch(sw.id);
+		if (isPending(sw.image) || anyImageFailed([sw.image?.url], failedImages))
+			staleImages.refetch(sw.id);
 	}
 
 	function openCreate() {
+		notice = null;
 		saveError = null;
 		modal = { mode: 'create' };
 	}
@@ -83,13 +88,18 @@
 		saveError = null;
 		try {
 			const sw = await switchesApi.createSwitch({ userId, switchInput: input });
-			if (stagedImage) {
-				// The switch already exists, so an upload failure isn't a failed
-				// create and saveError no longer applies to it.
-				await uploadSwitchImage(sw.id ?? '', stagedImage).catch(() => {});
+			const photoFailure = await uploadStaged(stagedImage ? [stagedImage] : [], (file) =>
+				uploadSwitchImage(sw.id, file)
+			);
+			await grid?.refresh().catch(() => {});
+			const photos = stagedUploadOutcome('switch', photoFailure, true);
+			if (photos.reopen) {
+				modal = { mode: 'edit', sw };
+				saveError = photos.message;
+			} else {
+				closeModal();
+				notice = photos.message;
 			}
-			await grid?.refresh();
-			closeModal();
 		} catch {
 			saveError = 'Could not create this switch.';
 		} finally {
@@ -138,6 +148,7 @@
 	}
 
 	async function handleImageUpload(switchId: string, file: File) {
+		staleImages.cancel();
 		await uploadSwitchImage(switchId, file);
 		await refreshEditingSwitch(switchId);
 	}
@@ -177,6 +188,10 @@
 </script>
 
 <svelte:head><title>{pageTitle('Switches', `@${userContext.username}`)}</title></svelte:head>
+
+{#if notice}
+	<PageNotice onDismiss={() => (notice = null)}>{notice}</PageNotice>
+{/if}
 
 <CollectionGrid
 	bind:this={grid}

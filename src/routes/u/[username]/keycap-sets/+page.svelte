@@ -9,14 +9,16 @@
 	} from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
 	import { keycapSetsApi, buildsApi } from '$lib/api/client';
-	import { anyImageFailed, staleImageRefetcher, withFreshKitImageUrls } from '$lib/stale-images';
+	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '$lib/stale-images';
 	import { adjacentKitId, primaryKitImageUrl } from '$lib/keycap-set';
 	import { getUserContext } from '$lib/user-context';
 	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import DeleteBlocked from '$lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '$lib/delete-blocked';
-	import { uploadImage } from '$lib/upload';
+	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
+	import PageNotice from '$lib/components/PageNotice.svelte';
+	import { anyPending } from '$lib/image-moderation';
 	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
 	import OrderStatusBadge from '$lib/components/OrderStatusBadge.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -59,6 +61,7 @@
 	let confirmingDelete = $state(false);
 	let kitSaving = $state(false);
 	let kitSaveError = $state<string | null>(null);
+	let kitNotice = $state<string | null>(null);
 	let kitDeleting = $state(false);
 	let kitDeleteError = $state<string | null>(null);
 	let kitBlockingBuilds = $state<string[] | null>(null);
@@ -91,9 +94,9 @@
 	const staleImages = staleImageRefetcher(
 		(keycapSetId) => keycapSetsApi.getKeycapSet({ userId: userContext.userId, keycapSetId }),
 		(fresh, id) => {
-			grid?.updateItem(id, (row) => withFreshKitImageUrls(row, fresh));
+			grid?.updateItem(id, (row) => withFreshKitImages(row, fresh));
 			if (modal.mode === 'view' && modal.set.id === id)
-				modal = { mode: 'view', set: withFreshKitImageUrls(modal.set, fresh) };
+				modal = { mode: 'view', set: withFreshKitImages(modal.set, fresh) };
 		}
 	);
 
@@ -101,6 +104,7 @@
 		staleImages.reset();
 		modal = { mode: 'view', set };
 		if (
+			anyPending(set.kits?.map((kit) => kit.image)) ||
 			anyImageFailed(
 				set.kits?.map((kit) => kit.image?.url),
 				failedImages
@@ -120,6 +124,7 @@
 	}
 
 	function closeModal() {
+		kitNotice = null;
 		modal = { mode: 'closed' };
 		kitModal = { mode: 'closed' };
 		kitImageViewerOpen = false;
@@ -218,17 +223,20 @@
 	}
 
 	function openAddKit() {
+		kitNotice = null;
 		resetKitState();
 		kitModal = { mode: 'create' };
 	}
 
 	function openViewKit(kit: KeycapKit) {
+		kitNotice = null;
 		resetKitState();
 		kitImageViewerOpen = false;
 		kitModal = { mode: 'view', kitId: kit.kitId };
 	}
 
 	function openEditKit(kitId: string) {
+		kitNotice = null;
 		resetKitState();
 		kitModal = { mode: 'edit', kitId };
 	}
@@ -252,13 +260,20 @@
 				keycapSetId,
 				keycapKitInput: input
 			});
-			if (stagedImage) {
-				// The kit already exists, so an upload failure isn't a failed
-				// create and kitSaveError no longer applies to it.
-				await uploadKitImage(keycapSetId, kit.kitId, stagedImage).catch(() => {});
+			const photoFailure = await uploadStaged(stagedImage ? [stagedImage] : [], (file) =>
+				uploadKitImage(keycapSetId, kit.kitId, file)
+			);
+			await refreshViewedSet(keycapSetId).catch(() => {});
+			const shown =
+				modal.mode === 'view' ? modal.set.kits?.find((k) => k.kitId === kit.kitId) : undefined;
+			const photos = stagedUploadOutcome('kit', photoFailure, shown !== undefined);
+			if (photos.reopen) {
+				kitModal = { mode: 'edit', kitId: kit.kitId };
+				kitSaveError = photos.message;
+			} else {
+				closeKitModal();
+				kitNotice = photos.message;
 			}
-			await refreshViewedSet(keycapSetId);
-			closeKitModal();
 		} catch {
 			kitSaveError = 'Could not create this kit.';
 		} finally {
@@ -302,6 +317,7 @@
 	async function handleKitImageUpload(kitId: string, file: File) {
 		if (modal.mode !== 'view') return;
 		const keycapSetId = modal.set.id;
+		staleImages.cancel();
 		await uploadKitImage(keycapSetId, kitId, file);
 		await refreshViewedSet(keycapSetId);
 	}
@@ -423,6 +439,9 @@
 	{/snippet}
 	{#if modal.mode === 'view'}
 		{@const set = modal.set}
+		{#if kitNotice}
+			<PageNotice class="mb-4" onDismiss={() => (kitNotice = null)}>{kitNotice}</PageNotice>
+		{/if}
 		<KeycapSetDetails
 			{set}
 			{failedImages}
@@ -535,7 +554,7 @@
 		{@const imageFailed = kit.image?.url != null && failedImages.has(kit.image.url)}
 		<KeycapKitDetails
 			name={kit.name}
-			imageUrl={kit.image?.url}
+			image={kit.image}
 			{imageFailed}
 			onImageError={() => {
 				if (kit.image?.url) failedImages.add(kit.image.url);

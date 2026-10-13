@@ -2,6 +2,9 @@
 	import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
 	import OrderStatusBadge from './OrderStatusBadge.svelte';
 	import { formatPrice } from '$lib/format';
+	import { isPending } from '$lib/image-moderation';
+	import PendingReviewBadge from './PendingReviewBadge.svelte';
+	import RejectedImage from './RejectedImage.svelte';
 
 	let {
 		set,
@@ -61,14 +64,21 @@
 				onclick={() => onKitClick(kit)}
 			>
 				{#if kit.image?.url && !imageFailed}
-					<img
-						src={kit.image.url}
-						alt=""
-						class="kc-thumb-tile aspect-square w-full object-contain"
-						loading="lazy"
-						decoding="async"
-						onerror={() => kit.image?.url && onImageError(kit.image.url)}
-					/>
+					<div class="relative">
+						<img
+							src={kit.image.url}
+							alt=""
+							class="kc-thumb-tile aspect-square w-full object-contain"
+							loading="lazy"
+							decoding="async"
+							onerror={() => kit.image?.url && onImageError(kit.image.url)}
+						/>
+						{#if isPending(kit.image)}
+							<PendingReviewBadge />
+						{/if}
+					</div>
+				{:else if kit.image && !kit.image.url}
+					<RejectedImage reason={kit.image.rejectionReason} class="aspect-square w-full text-sm" />
 				{:else}
 					<div
 						class="kc-thumb-tile text-faint flex aspect-square w-full items-center justify-center text-sm"

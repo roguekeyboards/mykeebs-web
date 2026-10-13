@@ -1,55 +1,75 @@
-import type { KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import type { KeycapSet } from '@rogueserenity/kbdb-api-client';
+import type { ModeratedImage } from './image-moderation';
 
-// Callers copy only image URLs from the refetch, so a late response can't undo an edit.
+// Callers copy only image state from the refetch (withFreshImages and friends), so a
+// late response can't undo an edit. cancel() drops a refetch still in flight, so it
+// can't land on a photo uploaded since.
 export function staleImageRefetcher<T>(
 	fetchItem: (id: string) => Promise<T>,
 	onFresh: (item: T, id: string) => void
 ) {
 	let refetchedId: string | null = null;
+	let generation = 0;
 
 	return {
 		reset() {
 			refetchedId = null;
 		},
+		cancel() {
+			refetchedId = null;
+			generation++;
+		},
 		async refetch(id: string) {
 			if (refetchedId === id) return;
 			refetchedId = id;
+			const started = generation;
 			let item: T;
 			try {
 				item = await fetchItem(id);
 			} catch {
 				return;
 			}
-			onFresh(item, id);
+			if (started === generation) onFresh(item, id);
 		}
 	};
 }
 
-type WithImages = { images?: { imageId: string; url: string }[] };
+// A rejected image comes back without a url, so the moderation fields travel with it.
+function withFresh<I extends ModeratedImage>(image: I, fresh: ModeratedImage): I {
+	return { ...image, url: fresh.url, status: fresh.status, rejectionReason: fresh.rejectionReason };
+}
 
-export function withFreshImageUrls<T extends WithImages>(current: T, fresh: T): T {
-	const urls = new Map(fresh.images?.map((image) => [image.imageId, image.url]));
+type IdentifiedImage = { imageId: string } & ModeratedImage;
+
+export function withFreshImages<T extends { images?: IdentifiedImage[] }>(
+	current: T,
+	fresh: { images?: IdentifiedImage[] }
+): T {
+	const images = new Map(fresh.images?.map((image) => [image.imageId, image]));
 	return {
 		...current,
-		images: current.images?.map((image) => ({
-			...image,
-			url: urls.get(image.imageId) ?? image.url
-		}))
+		images: current.images?.map((image) => {
+			const freshImage = images.get(image.imageId);
+			return freshImage ? withFresh(image, freshImage) : image;
+		})
 	};
 }
 
-export function withFreshSwitchImageUrl(current: Switch, fresh: Switch): Switch {
+export function withFreshImage<T extends { image?: ModeratedImage }>(
+	current: T,
+	fresh: { image?: ModeratedImage }
+): T {
 	if (!current.image || !fresh.image) return current;
-	return { ...current, image: { ...current.image, url: fresh.image.url } };
+	return { ...current, image: withFresh(current.image, fresh.image) };
 }
 
-export function withFreshKitImageUrls(current: KeycapSet, fresh: KeycapSet): KeycapSet {
-	const urls = new Map(fresh.kits?.map((kit) => [kit.kitId, kit.image?.url]));
+export function withFreshKitImages(current: KeycapSet, fresh: KeycapSet): KeycapSet {
+	const kits = new Map(fresh.kits?.map((kit) => [kit.kitId, kit]));
 	return {
 		...current,
 		kits: current.kits?.map((kit) => {
-			const url = urls.get(kit.kitId);
-			return kit.image && url ? { ...kit, image: { ...kit.image, url } } : kit;
+			const freshKit = kits.get(kit.kitId);
+			return freshKit ? withFreshImage(kit, freshKit) : kit;
 		})
 	};
 }

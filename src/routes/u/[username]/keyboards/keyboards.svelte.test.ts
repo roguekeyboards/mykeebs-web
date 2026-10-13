@@ -1,7 +1,12 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, Visibility, type Keyboard } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	ResponseError,
+	Visibility,
+	type Keyboard
+} from '@rogueserenity/kbdb-api-client';
 import { buildsApi, keyboardsApi, lookupsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
@@ -168,6 +173,78 @@ describe('keyboards page', () => {
 		await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));
 	});
 
+	describe('image moderation', () => {
+		const rejected = {
+			imageId: 'img-r',
+			status: ImageStatus.Rejected,
+			rejectionReason: 'Explicit'
+		};
+
+		it('leaves a rejected photo out of the full-size gallery', async () => {
+			const withRejected = { ...manta, images: [manta.images![0], rejected, manta.images![1]] };
+			api.listKeyboards.mockResolvedValue({ items: [withRejected] });
+			renderPage();
+			await openManta();
+
+			const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
+			await expect
+				.element(dialog().getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+				.toBeInTheDocument();
+
+			await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
+			await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));
+			await page.getByRole('button', { name: 'Next photo' }).click();
+			await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#1`));
+		});
+
+		it('re-fetches a keyboard with a pending photo when it is opened', async () => {
+			const pending = {
+				...manta,
+				images: [{ imageId: 'img-1', url: `${PIXEL}#1`, status: ImageStatus.Pending }]
+			};
+			api.listKeyboards.mockResolvedValue({ items: [pending] });
+			api.getKeyboard.mockResolvedValue({
+				...manta,
+				images: [{ imageId: 'img-1', status: ImageStatus.Rejected, rejectionReason: 'Explicit' }]
+			});
+			renderPage();
+			await openManta();
+
+			await expect
+				.element(dialog().getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+				.toBeInTheDocument();
+			expect(api.getKeyboard).toHaveBeenCalledTimes(1);
+		});
+
+		it("doesn't re-fetch a keyboard with no pending photo", async () => {
+			renderPage();
+			await openManta();
+
+			await expect.element(dialog().getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+			expect(api.getKeyboard).not.toHaveBeenCalled();
+		});
+
+		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+			api.createKeyboardImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+			renderPage();
+			await openManta();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['c'], 'c.png', { type: 'image/png' })
+			);
+
+			await expect
+				.element(
+					dialog().getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' })
+				)
+				.toBeInTheDocument();
+		});
+	});
+
 	describe('adding a keyboard', () => {
 		it('creates it, uploads the staged photos as WebP in order, and closes', async () => {
 			const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
@@ -205,7 +282,7 @@ describe('keyboards page', () => {
 			expect(api.listKeyboards).toHaveBeenCalledTimes(2);
 		});
 
-		it('still closes when a photo upload fails, since the keyboard exists', async () => {
+		it('opens the new keyboard for editing when a photo upload fails', async () => {
 			vi.stubGlobal(
 				'fetch',
 				vi.fn(async () => new Response(null, { status: 403 }))
@@ -221,7 +298,45 @@ describe('keyboards page', () => {
 			);
 			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
 
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.toBeInTheDocument();
+			await expect
+				.element(
+					dialog()
+						.getByRole('alert')
+						.filter({ hasText: "The keyboard was added, but its photo wasn't. Add it again." })
+				)
+				.toBeInTheDocument();
+		});
+
+		it('closes and says so when uploads are unavailable, without trying the rest', async () => {
+			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
+			api.createKeyboardImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+			renderPage();
+
+			await fillNewKeyboard();
+			await userEvent.upload(page.elementLocator(document.querySelector('input[type="file"]')!), [
+				new File(['a'], 'a.png', { type: 'image/png' }),
+				new File(['b'], 'b.png', { type: 'image/png' })
+			]);
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
 			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+			await expect
+				.element(
+					page.getByRole('alert').filter({
+						hasText:
+							"The keyboard was added, but its photos weren't. Uploads unavailable, try again later."
+					})
+				)
+				.toBeInTheDocument();
+			expect(api.createKeyboardImage).toHaveBeenCalledTimes(1);
+
+			await page.getByRole('button', { name: 'Dismiss' }).click();
+			await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
 		});
 
 		it('adds its plates and PCBs once the keyboard exists', async () => {
@@ -264,6 +379,35 @@ describe('keyboards page', () => {
 				.element(page.getByRole('alert').filter({ hasText: "some of its plates or PCBs weren't" }))
 				.toBeInTheDocument();
 			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Deacon TKL');
+		});
+
+		it('says once that the keyboard was added when both a part and a photo fail', async () => {
+			plateMaterials(['POM']);
+			const created = { id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' };
+			api.createKeyboard.mockResolvedValue(created);
+			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
+			api.createKeyboardImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+			api.getKeyboard.mockResolvedValue(created);
+			renderPage();
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['a'], 'a.png', { type: 'image/png' })
+			);
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await expect
+				.element(
+					dialog().getByRole('alert').filter({
+						hasText:
+							"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save. Its photo wasn't added either. Uploads unavailable, try again later."
+					})
+				)
+				.toBeInTheDocument();
 		});
 
 		it("doesn't call a created keyboard a failed create when reloading it fails", async () => {

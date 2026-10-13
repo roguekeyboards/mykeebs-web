@@ -2,6 +2,9 @@
 	import type { Build } from '@rogueserenity/kbdb-api-client';
 	import { formatDate, formatPrice } from '$lib/format';
 	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
+	import { isPending, viewableImages } from '$lib/image-moderation';
+	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '$lib/components/RejectedImage.svelte';
 
 	let {
 		build,
@@ -18,6 +21,8 @@
 		onImageClick: (index: number) => void;
 		showPrice: boolean;
 	} = $props();
+
+	const viewable = $derived(viewableImages(build.images));
 
 	const sortedKeycapKits = $derived(
 		[...(build.keycapSets ?? [])]
@@ -64,21 +69,30 @@
 	<div class="mt-6">
 		<h3 class="section-label">Images</h3>
 		<div class="flex flex-wrap gap-3">
-			{#each build.images as image, index (image.imageId)}
-				<button
-					type="button"
-					class="kc-thumb h-20 w-20 shrink-0 overflow-hidden"
-					aria-label="View full size image"
-					onclick={() => onImageClick(index)}
-				>
-					<img
-						src={image.url}
-						alt="Build"
-						class="h-full w-full object-contain"
-						loading="lazy"
-						decoding="async"
-					/>
-				</button>
+			{#each build.images as image (image.imageId)}
+				{#if image.url === undefined}
+					<RejectedImage reason={image.rejectionReason} class="h-20 w-20 shrink-0" />
+				{:else}
+					<button
+						type="button"
+						class="kc-thumb relative h-20 w-20 shrink-0 overflow-hidden"
+						aria-label={isPending(image)
+							? 'View full size image, pending review'
+							: 'View full size image'}
+						onclick={() => onImageClick(viewable.findIndex((v) => v.imageId === image.imageId))}
+					>
+						<img
+							src={image.url}
+							alt="Build"
+							class="h-full w-full object-contain"
+							loading="lazy"
+							decoding="async"
+						/>
+						{#if isPending(image)}
+							<PendingReviewBadge />
+						{/if}
+					</button>
+				{/if}
 			{/each}
 		</div>
 	</div>

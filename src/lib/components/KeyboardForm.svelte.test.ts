@@ -1,7 +1,13 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Visibility, type Keyboard, type KeyboardInput } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	ResponseError,
+	Visibility,
+	type Keyboard,
+	type KeyboardInput
+} from '@rogueserenity/kbdb-api-client';
 import { lookupsApi } from '$lib/api/client';
 import { todayDateInput } from '$lib/format';
 import { pcbInput, plateInput, type KeyboardParts } from '$lib/keyboard-parts';
@@ -684,6 +690,56 @@ describe('KeyboardForm.svelte', () => {
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
 				.toBeInTheDocument();
+		});
+
+		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+			renderForm({
+				initial: keyboard,
+				onImageUpload: vi
+					.fn()
+					.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+			});
+
+			await userEvent.upload(fileInput(), [png('a.png')]);
+
+			await expect
+				.element(
+					page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' })
+				)
+				.toBeInTheDocument();
+		});
+
+		it('marks a photo that is pending review', async () => {
+			renderForm({
+				initial: {
+					...keyboard,
+					images: [
+						{ imageId: 'img-1', url: 'https://img.example/1.png', status: ImageStatus.Pending }
+					]
+				}
+			});
+
+			await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+		});
+
+		it('shows a rejected photo by its reason, removable and counted toward the limit', async () => {
+			const onImageRemove = vi.fn(async () => {});
+			const initial = withImages(MAX_IMAGES - 1);
+			initial.images!.push({
+				imageId: 'rejected',
+				status: ImageStatus.Rejected,
+				rejectionReason: 'Explicit'
+			});
+			renderForm({ initial, onImageRemove });
+
+			await expect
+				.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByRole('button', { name: '+ Add photo' })).toBeDisabled();
+			await page
+				.getByRole('button', { name: `Remove image ${MAX_IMAGES} of ${MAX_IMAGES}` })
+				.click();
+			expect(onImageRemove).toHaveBeenCalledWith('rejected');
 		});
 
 		it(`disables adding photos once there are ${MAX_IMAGES}`, async () => {

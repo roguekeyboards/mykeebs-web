@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { isPending, uploadErrorMessage } from '$lib/image-moderation';
+	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '$lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
 	import type { Switch as SwitchModel, SwitchInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
@@ -166,8 +169,8 @@
 		imageBusy = true;
 		try {
 			await onImageUpload(file);
-		} catch {
-			imageError = 'Could not upload that image.';
+		} catch (err) {
+			imageError = uploadErrorMessage(err);
 		} finally {
 			imageBusy = false;
 			if (fileInput) fileInput.value = '';
@@ -325,12 +328,19 @@
 
 	<div class="flex items-center gap-4">
 		{#if initial?.image?.url}
-			<img
-				src={initial.image.url}
-				alt={initial.name}
-				class="kc-thumb h-20 w-20 shrink-0 object-contain"
-				decoding="async"
-			/>
+			<div class="relative shrink-0">
+				<img
+					src={initial.image.url}
+					alt={initial.name}
+					class="kc-thumb h-20 w-20 object-contain"
+					decoding="async"
+				/>
+				{#if isPending(initial.image)}
+					<PendingReviewBadge />
+				{/if}
+			</div>
+		{:else if initial?.image}
+			<RejectedImage reason={initial.image.rejectionReason} class="h-20 w-20 shrink-0" />
 		{:else if stagedImagePreview}
 			<img
 				src={stagedImagePreview}
@@ -342,13 +352,9 @@
 		<div class="flex flex-col gap-2">
 			<div class="flex gap-2">
 				<button type="button" class="btn" disabled={imageBusy} onclick={() => fileInput?.click()}>
-					{imageBusy
-						? 'Working…'
-						: initial?.image?.url || stagedImage
-							? 'Change photo'
-							: 'Add photo'}
+					{imageBusy ? 'Working…' : initial?.image || stagedImage ? 'Change photo' : 'Add photo'}
 				</button>
-				{#if initial?.image?.url}
+				{#if initial?.image}
 					<button type="button" class="btn" disabled={imageBusy} onclick={removeImage}>
 						Remove
 					</button>

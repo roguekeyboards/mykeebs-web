@@ -1,7 +1,12 @@
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { KeycapKit, KeycapKitInput } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	ResponseError,
+	type KeycapKit,
+	type KeycapKitInput
+} from '@rogueserenity/kbdb-api-client';
 import KeycapKitForm from './KeycapKitForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';
 
@@ -92,5 +97,56 @@ describe('KeycapKitForm.svelte cleared price', () => {
 
 		await expect.element(name).toBeInvalid();
 		await expect.element(name).toHaveAccessibleDescription('Name is required.');
+	});
+});
+
+describe('KeycapKitForm.svelte image moderation', () => {
+	function renderKit(initial: KeycapKit, props: Record<string, unknown> = {}) {
+		render(KeycapKitForm, {
+			initial,
+			isPrimary: false,
+			saving: false,
+			error: null,
+			onSubmit: () => {},
+			onCancel: () => {},
+			...props
+		});
+	}
+
+	it('marks a photo that is pending review', async () => {
+		renderKit({ ...kit, image: { url: 'https://img.example/k.png', status: ImageStatus.Pending } });
+
+		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+	});
+
+	it('shows a rejected photo by its reason, and offers to remove it', async () => {
+		const onImageRemove = vi.fn(async () => {});
+		renderKit(
+			{ ...kit, image: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' } },
+			{ onImageRemove }
+		);
+
+		await expect
+			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+			.toBeInTheDocument();
+		await page.getByRole('button', { name: 'Remove', exact: true }).click();
+		expect(onImageRemove).toHaveBeenCalled();
+	});
+
+	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+		renderKit(kit, {
+			onImageUpload: vi
+				.fn()
+				.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+		});
+
+		await userEvent.upload(
+			page.elementLocator(document.querySelector('input[type="file"]')!),
+			new File(['png'], 'a.png', { type: 'image/png' })
+		);
+
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' }))
+			.toBeInTheDocument();
 	});
 });

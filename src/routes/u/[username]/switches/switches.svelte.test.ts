@@ -1,7 +1,12 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, Visibility, type Switch } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	ResponseError,
+	Visibility,
+	type Switch
+} from '@rogueserenity/kbdb-api-client';
 import { buildsApi, switchesApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import SwitchesPage from './+page.svelte';
@@ -154,7 +159,7 @@ describe('switches page', () => {
 			expect(api.listSwitches).toHaveBeenCalledTimes(2);
 		});
 
-		it('still closes when the photo upload fails, since the switch exists', async () => {
+		it('opens the new switch for editing when the photo upload fails', async () => {
 			vi.stubGlobal(
 				'fetch',
 				vi.fn(async () => new Response(null, { status: 403 }))
@@ -171,7 +176,40 @@ describe('switches page', () => {
 			await userEvent.upload(fileInput(), png('oil-king.png'));
 			await dialog().getByRole('button', { name: 'Add switch' }).click();
 
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit switch' }))
+				.toBeInTheDocument();
+			await expect
+				.element(
+					dialog()
+						.getByRole('alert')
+						.filter({ hasText: "The switch was added, but its photo wasn't. Add it again." })
+				)
+				.toBeInTheDocument();
+		});
+
+		it('closes and says so when uploads are unavailable', async () => {
+			api.createSwitch.mockResolvedValue({
+				id: 'sw-2',
+				brand: 'Gateron',
+				name: 'Oil King'
+			} as never);
+			api.setSwitchImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
+			renderPage();
+
+			await fillNewSwitch();
+			await userEvent.upload(fileInput(), png('oil-king.png'));
+			await dialog().getByRole('button', { name: 'Add switch' }).click();
+
 			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+			await expect
+				.element(
+					page.getByRole('alert').filter({
+						hasText:
+							"The switch was added, but its photo wasn't. Uploads unavailable, try again later."
+					})
+				)
+				.toBeInTheDocument();
 		});
 
 		it('says so when the create fails', async () => {
@@ -337,5 +375,47 @@ describe('switches page', () => {
 				.element(page.getByRole('alert').filter({ hasText: 'Could not delete this switch.' }))
 				.toBeInTheDocument();
 		});
+	});
+});
+
+describe('switches page image moderation', () => {
+	it("doesn't let a check on the old photo land on its replacement", async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response(null, { status: 200 }))
+		);
+		api.listSwitches.mockResolvedValue({
+			items: [{ ...aperol, image: { url: PIXEL, status: ImageStatus.Pending } }]
+		});
+		api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/s' } as never);
+		let resolveOld: (sw: Switch) => void = () => {};
+		api.getSwitch
+			.mockImplementationOnce(() => new Promise<Switch>((resolve) => (resolveOld = resolve)))
+			.mockResolvedValue({ ...aperol, image: { url: PIXEL, status: ImageStatus.Pending } });
+		renderPage();
+		await openAperol();
+		await dialog().getByRole('button', { name: 'Edit' }).click();
+
+		await userEvent.upload(fileInput(), png('new.png'));
+		await vi.waitFor(() => expect(api.getSwitch).toHaveBeenCalledTimes(2));
+		resolveOld({ ...aperol, image: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' } });
+		await dialog().getByRole('button', { name: 'Close' }).click();
+
+		await expect.element(page.getByRole('img', { name: 'Aperol' })).toBeInTheDocument();
+	});
+
+	it('re-fetches a switch with a pending photo when it is opened', async () => {
+		api.listSwitches.mockResolvedValue({
+			items: [{ ...aperol, image: { url: PIXEL, status: ImageStatus.Pending } }]
+		});
+		api.getSwitch.mockResolvedValue({
+			...aperol,
+			image: { url: PIXEL, status: ImageStatus.Approved }
+		});
+		renderPage();
+		await openAperol();
+
+		await expect.element(dialog().getByTitle('Pending review')).not.toBeInTheDocument();
+		expect(api.getSwitch).toHaveBeenCalledTimes(1);
 	});
 });

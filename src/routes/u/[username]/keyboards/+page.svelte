@@ -4,7 +4,7 @@
 	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
 	import { keyboardsApi, buildsApi } from '$lib/api/client';
-	import { anyImageFailed, staleImageRefetcher, withFreshImageUrls } from '$lib/stale-images';
+	import { anyImageFailed, staleImageRefetcher, withFreshImages } from '$lib/stale-images';
 	import { formatPrice } from '$lib/format';
 	import { getUserContext } from '$lib/user-context';
 	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
@@ -14,7 +14,14 @@
 	import type { KeyboardParts } from '$lib/keyboard-parts';
 	import { blockedRemovalMessage, removeParts, saveParts } from '$lib/keyboard-parts-save';
 	import { stepIndex } from '$lib/step-index';
-	import { uploadImage } from '$lib/upload';
+	import {
+		stagedUploadFollowUp,
+		stagedUploadOutcome,
+		uploadImage,
+		uploadStaged
+	} from '$lib/upload';
+	import PageNotice from '$lib/components/PageNotice.svelte';
+	import { anyPending, primaryImageUrl, viewableImages } from '$lib/image-moderation';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
 	import KeyboardDetails from '$lib/components/KeyboardDetails.svelte';
 	import KeyboardForm from '$lib/components/KeyboardForm.svelte';
@@ -36,9 +43,13 @@
 	let failedImages = new SvelteSet<string>();
 	let galleryViewerOpen = $state(false);
 	let galleryIndex = $state(0);
+	const galleryImages = $derived(
+		modal.mode === 'view' ? viewableImages(modal.keyboard.images) : []
+	);
 	let grid = $state<ReturnType<typeof CollectionGrid<Keyboard>> | null>(null);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let notice = $state<string | null>(null);
 	let deleting = $state(false);
 	let deleteError = $state<string | null>(null);
 	let blockingBuilds = $state<string[] | null>(null);
@@ -48,9 +59,9 @@
 	const staleImages = staleImageRefetcher(
 		(keyboardId) => keyboardsApi.getKeyboard({ userId: userContext.userId, keyboardId }),
 		(fresh, id) => {
-			grid?.updateItem(id, (row) => withFreshImageUrls(row, fresh));
+			grid?.updateItem(id, (row) => withFreshImages(row, fresh));
 			if (modal.mode === 'view' && modal.keyboard.id === id)
-				modal = { mode: 'view', keyboard: withFreshImageUrls(modal.keyboard, fresh) };
+				modal = { mode: 'view', keyboard: withFreshImages(modal.keyboard, fresh) };
 		}
 	);
 
@@ -58,6 +69,7 @@
 		staleImages.reset();
 		modal = { mode: 'view', keyboard };
 		if (
+			anyPending(keyboard.images) ||
 			anyImageFailed(
 				keyboard.images?.map((image) => image.url),
 				failedImages
@@ -67,6 +79,7 @@
 	}
 
 	function openCreate() {
+		notice = null;
 		saveError = null;
 		modal = { mode: 'create' };
 	}
@@ -109,19 +122,27 @@
 				() => true,
 				() => false
 			);
-			for (const file of stagedImages ?? []) {
-				await uploadKeyboardImage(keyboard.id, file).catch(() => {});
-			}
+			const photoFailure = await uploadStaged(stagedImages ?? [], (file) =>
+				uploadKeyboardImage(keyboard.id, file)
+			);
 			await grid?.refresh().catch(() => {});
-			if (partsSaved) {
+			const photos = stagedUploadOutcome('keyboard', photoFailure, true);
+			if (partsSaved && !photos.reopen) {
 				closeModal();
+				notice = photos.message;
 			} else {
 				const fresh = await keyboardsApi
 					.getKeyboard({ userId, keyboardId: keyboard.id })
 					.catch(() => keyboard);
 				modal = { mode: 'edit', keyboard: fresh };
-				saveError =
-					"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.";
+				saveError = partsSaved
+					? photos.message
+					: [
+							"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.",
+							photoFailure && stagedUploadFollowUp('keyboard', photoFailure)
+						]
+							.filter(Boolean)
+							.join(' ');
 			}
 		} finally {
 			saving = false;
@@ -221,6 +242,10 @@
 
 <svelte:head><title>{pageTitle('Keyboards', `@${userContext.username}`)}</title></svelte:head>
 
+{#if notice}
+	<PageNotice onDismiss={() => (notice = null)}>{notice}</PageNotice>
+{/if}
+
 <CollectionGrid
 	bind:this={grid}
 	userId={userContext.userId}
@@ -247,7 +272,7 @@
 			]}
 >
 	{#snippet card(keyboard)}
-		{@const imageUrl = keyboard.images?.[0]?.url}
+		{@const imageUrl = primaryImageUrl(keyboard.images)}
 		{@const imageFailed = imageUrl != null && failedImages.has(imageUrl)}
 		<button
 			type="button"
@@ -381,8 +406,8 @@
 	{/if}
 </Modal>
 
-{#if modal.mode === 'view' && modal.keyboard.images && modal.keyboard.images.length > 0}
-	{@const images = modal.keyboard.images}
+{#if modal.mode === 'view' && galleryImages.length > 0}
+	{@const images = galleryImages}
 	<ImageViewer
 		open={galleryViewerOpen}
 		src={images[Math.min(galleryIndex, images.length - 1)].url}

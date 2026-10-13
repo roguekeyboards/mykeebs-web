@@ -7,6 +7,7 @@
 		Build,
 		BuildInput,
 		Keyboard,
+		KeycapKitImage,
 		Switch as SwitchModel
 	} from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
@@ -17,12 +18,12 @@
 		type StaleBuildRefs
 	} from '$lib/build-refs';
 	import { formatDate, formatPrice, type PurchaseLike } from '$lib/format';
-	import { perItemImageRefetcher, updateWhere, withFreshImageUrls } from '$lib/stale-images';
+	import { perItemImageRefetcher, updateWhere, withFreshImages } from '$lib/stale-images';
 	import { newestFirst } from '$lib/build-groups';
 	import { fetchAllPages } from '$lib/pagination';
 	import { stepIndex } from '$lib/step-index';
 	import { uploadImage } from '$lib/upload';
-	import { primaryBuildImageUrl } from '$lib/build';
+	import { primaryImageUrl, viewableImages } from '$lib/image-moderation';
 	import { getUserContext } from '$lib/user-context';
 	import Modal from '$lib/components/Modal.svelte';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -59,7 +60,7 @@
 				builds: updateWhere(
 					view.builds,
 					(build) => build.id === buildId,
-					(build) => withFreshImageUrls(build, fresh)
+					(build) => withFreshImages(build, fresh)
 				)
 			};
 		}
@@ -104,12 +105,14 @@
 
 	let galleryViewerOpen = $state(false);
 	let galleryIndex = $state(0);
+	const buildGalleryImages = $derived(viewableImages(selectedBuild?.images));
 
 	let keyboardDetail = $state<Keyboard | null>(null);
 	let keyboardDetailError = $state<string | null>(null);
 	let keyboardDetailLoading = $state(false);
 	let keyboardGalleryViewerOpen = $state(false);
 	let keyboardGalleryIndex = $state(0);
+	const keyboardGalleryImages = $derived(viewableImages(keyboardDetail?.images));
 
 	let switchDetail = $state<SwitchModel | null>(null);
 	let switchDetailError = $state<string | null>(null);
@@ -118,7 +121,7 @@
 
 	let kitDetail = $state<{
 		name: string;
-		imageUrl: string | undefined;
+		image: KeycapKitImage | undefined;
 		purchase: PurchaseLike | undefined;
 	} | null>(null);
 	let kitDetailError = $state<string | null>(null);
@@ -293,7 +296,7 @@
 			if (!kit) {
 				kitDetailError = 'This kit no longer exists.';
 			} else {
-				kitDetail = { name: kit.name, imageUrl: kit.image?.url, purchase: kit.purchase };
+				kitDetail = { name: kit.name, image: kit.image, purchase: kit.purchase };
 			}
 		} catch {
 			kitDetailError = 'Could not load this kit.';
@@ -342,10 +345,11 @@
 	<p class="p-16 text-center text-lg" role="alert" style="color: var(--danger)">{view.message}</p>
 {:else}
 	{@const { keyboard, builds } = view}
+	{@const headerImageUrl = primaryImageUrl(keyboard?.images)}
 	<div class="flex items-center gap-3 px-4">
-		{#if keyboard?.images?.[0]?.url}
+		{#if keyboard && headerImageUrl}
 			<img
-				src={keyboard.images[0].url}
+				src={headerImageUrl}
 				alt={keyboard.name}
 				class="kc-thumb h-16 w-16 shrink-0 object-contain"
 				decoding="async"
@@ -364,7 +368,7 @@
 	{:else}
 		<ol class="kc-build-timeline mt-8 px-4">
 			{#each builds as build, index (build.id)}
-				{@const imageUrl = primaryBuildImageUrl(build)}
+				{@const imageUrl = primaryImageUrl(build.images)}
 				<li class="kc-build-timeline-item">
 					<button
 						type="button"
@@ -501,17 +505,18 @@
 	{/if}
 </Modal>
 
-{#if selectedBuild?.images && selectedBuild.images.length > 0}
+{#if buildGalleryImages.length > 0}
+	{@const images = buildGalleryImages}
 	<ImageViewer
 		open={galleryViewerOpen}
-		src={selectedBuild.images[Math.min(galleryIndex, selectedBuild.images.length - 1)].url}
+		src={images[Math.min(galleryIndex, images.length - 1)].url}
 		alt="Build"
 		onClose={() => (galleryViewerOpen = false)}
-		onPrev={selectedBuild.images.length > 1
-			? () => (galleryIndex = stepIndex(galleryIndex, -1, selectedBuild!.images!.length))
+		onPrev={images.length > 1
+			? () => (galleryIndex = stepIndex(galleryIndex, -1, images.length))
 			: undefined}
-		onNext={selectedBuild.images.length > 1
-			? () => (galleryIndex = stepIndex(galleryIndex, 1, selectedBuild!.images!.length))
+		onNext={images.length > 1
+			? () => (galleryIndex = stepIndex(galleryIndex, 1, images.length))
 			: undefined}
 	/>
 {/if}
@@ -540,28 +545,18 @@
 	{/if}
 </Modal>
 
-{#if keyboardDetail?.images && keyboardDetail.images.length > 0}
+{#if keyboardDetail && keyboardGalleryImages.length > 0}
+	{@const images = keyboardGalleryImages}
 	<ImageViewer
 		open={keyboardGalleryViewerOpen}
-		src={keyboardDetail.images[Math.min(keyboardGalleryIndex, keyboardDetail.images.length - 1)]
-			.url}
+		src={images[Math.min(keyboardGalleryIndex, images.length - 1)].url}
 		alt={keyboardDetail.name}
 		onClose={() => (keyboardGalleryViewerOpen = false)}
-		onPrev={keyboardDetail.images.length > 1
-			? () =>
-					(keyboardGalleryIndex = stepIndex(
-						keyboardGalleryIndex,
-						-1,
-						keyboardDetail!.images!.length
-					))
+		onPrev={images.length > 1
+			? () => (keyboardGalleryIndex = stepIndex(keyboardGalleryIndex, -1, images.length))
 			: undefined}
-		onNext={keyboardDetail.images.length > 1
-			? () =>
-					(keyboardGalleryIndex = stepIndex(
-						keyboardGalleryIndex,
-						1,
-						keyboardDetail!.images!.length
-					))
+		onNext={images.length > 1
+			? () => (keyboardGalleryIndex = stepIndex(keyboardGalleryIndex, 1, images.length))
 			: undefined}
 	/>
 {/if}
@@ -608,7 +603,7 @@
 		{@const kit = kitDetail}
 		<KeycapKitDetails
 			name={kit.name}
-			imageUrl={kit.imageUrl}
+			image={kit.image}
 			imageFailed={false}
 			onImageError={() => {}}
 			onImageClick={() => (kitViewerOpen = true)}
@@ -618,10 +613,10 @@
 	{/if}
 </Modal>
 
-{#if kitDetail?.imageUrl}
+{#if kitDetail?.image?.url}
 	<ImageViewer
 		open={kitViewerOpen}
-		src={kitDetail.imageUrl}
+		src={kitDetail.image.url}
 		alt={kitDetail.name}
 		onClose={() => (kitViewerOpen = false)}
 	/>

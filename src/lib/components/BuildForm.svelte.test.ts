@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
 import { keyboardsApi } from '$lib/api/client';
 import { kitKey, type StaleBuildRefs } from '$lib/build-refs';
 import { MAX_IMAGES } from '$lib/image-limit';
@@ -289,6 +289,36 @@ describe('BuildForm.svelte photo limit', () => {
 			}
 		});
 	}
+
+	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+		renderWith({
+			initial: withImages(1),
+			onImageUpload: vi
+				.fn()
+				.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+		});
+
+		await userEvent.upload(fileInput(), [jpg('a.jpg')]);
+
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' }))
+			.toBeInTheDocument();
+	});
+
+	it('shows pending and rejected photos, and counts the rejected one toward the limit', async () => {
+		const initial = withImages(MAX_IMAGES - 2);
+		initial.images!.push(
+			{ imageId: 'pending', url: 'https://img.example/p.png', status: ImageStatus.Pending },
+			{ imageId: 'rejected', status: ImageStatus.Rejected, rejectionReason: 'unprocessable' }
+		);
+		renderWith({ initial });
+
+		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+		await expect
+			.element(page.getByRole('img', { name: "Photo couldn't be processed" }))
+			.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: '+ Add photo' })).toBeDisabled();
+	});
 
 	it(`disables adding photos once there are ${MAX_IMAGES}`, async () => {
 		renderWith({ initial: withImages(MAX_IMAGES) });
