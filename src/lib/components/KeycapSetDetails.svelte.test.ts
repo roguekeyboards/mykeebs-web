@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { KeycapSet } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, type KeycapSet } from '@rogueserenity/kbdb-api-client';
 import KeycapSetDetails from './KeycapSetDetails.svelte';
 
 const BROKEN = 'data:image/png;base64,bm90IGFuIGltYWdl';
@@ -74,5 +74,28 @@ describe('KeycapSetDetails.svelte', () => {
 		expect(tile.element().querySelector('img')?.getAttribute('alt')).toBe('');
 		expect(tile.element().textContent?.match(/Base/g)).toHaveLength(1);
 		await expect.element(page.getByRole('img', { name: 'Base' })).not.toBeInTheDocument();
+	});
+});
+
+describe('KeycapSetDetails.svelte image moderation', () => {
+	it('shows a rejected kit image by its reason and marks a pending one', async () => {
+		render(
+			KeycapSetDetails,
+			props({
+				kits: [
+					{
+						kitId: 'base',
+						name: 'Base',
+						image: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' }
+					},
+					{ kitId: 'nov', name: 'Novelties', image: { url: PIXEL, status: ImageStatus.Pending } }
+				]
+			})
+		);
+
+		await expect
+			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+			.toBeInTheDocument();
+		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
 	});
 });

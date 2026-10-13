@@ -4,10 +4,11 @@
 	import type { Build, BuildInput } from '@rogueserenity/kbdb-api-client';
 	import { resolve } from '$app/paths';
 	import { buildsApi } from '$lib/api/client';
-	import { uploadImage } from '$lib/upload';
+	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
+	import PageNotice from '$lib/components/PageNotice.svelte';
 	import { groupByKeyboard, type KeyboardBuildGroup } from '$lib/build-groups';
 	import { primaryBuildImageUrl } from '$lib/build';
-	import { perItemImageRefetcher, withFreshImageUrls } from '$lib/stale-images';
+	import { perItemImageRefetcher, withFreshImages } from '$lib/stale-images';
 	import {
 		STALE_REFS_MESSAGE,
 		staleBuildRefsFromError,
@@ -49,7 +50,7 @@
 		(fresh, buildId) =>
 			grid?.updateItem(fresh.keyboard.id, (group) =>
 				group.current.id === buildId
-					? { ...group, current: withFreshImageUrls(group.current, fresh) }
+					? { ...group, current: withFreshImages(group.current, fresh) }
 					: group
 			)
 	);
@@ -57,6 +58,7 @@
 	let grid = $state<ReturnType<typeof CollectionGrid<KeyboardBuildGroup>> | null>(null);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let notice = $state<{ message: string; keyboardId: string } | null>(null);
 	let staleRefs = $state<StaleBuildRefs | null>(null);
 	let form = $state<{ isDirty(): boolean } | null>(null);
 
@@ -67,6 +69,7 @@
 	}
 
 	function openCreate() {
+		notice = null;
 		saveError = null;
 		staleRefs = null;
 		formMode = { mode: 'create' };
@@ -80,15 +83,13 @@
 		saveError = null;
 		try {
 			const build = await buildsApi.createBuild({ userId, buildInput: input });
-			if (stagedImages && stagedImages.length > 0) {
-				// The build already exists, so an upload failure isn't a failed
-				// create and saveError no longer applies to it.
-				for (const file of stagedImages) {
-					await uploadBuildImage(build.id, file).catch(() => {});
-				}
-			}
-			await grid?.refresh();
+			const photoFailure = await uploadStaged(stagedImages ?? [], (file) =>
+				uploadBuildImage(build.id, file)
+			);
+			await grid?.refresh().catch(() => {});
 			closeModal();
+			const { message } = stagedUploadOutcome('build', photoFailure, false);
+			if (message) notice = { message, keyboardId: build.keyboard.id };
 		} catch (err) {
 			staleRefs = await staleBuildRefsFromError(err, input);
 			saveError = staleRefs ? STALE_REFS_MESSAGE : 'Could not create this build.';
@@ -108,6 +109,19 @@
 </script>
 
 <svelte:head><title>{pageTitle('Builds', `@${userContext.username}`)}</title></svelte:head>
+
+{#if notice}
+	<PageNotice onDismiss={() => (notice = null)}>
+		{notice.message}
+		<a
+			class="underline"
+			href={resolve('/u/[username]/builds/[keyboardId]', {
+				username: userContext.username,
+				keyboardId: notice.keyboardId
+			})}>See this keyboard's builds</a
+		>
+	</PageNotice>
+{/if}
 
 <CollectionGrid
 	bind:this={grid}

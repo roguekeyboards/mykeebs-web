@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { Switch } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, type Switch } from '@rogueserenity/kbdb-api-client';
 import SwitchDetails from './SwitchDetails.svelte';
 
 const BROKEN = 'data:image/png;base64,bm90IGFuIGltYWdl';
@@ -35,5 +35,35 @@ describe('SwitchDetails.svelte', () => {
 
 		await expect.element(page.getByRole('img', { name: 'Aperol' })).toBeInTheDocument();
 		expect(onImageError).toHaveBeenCalledOnce();
+	});
+});
+
+describe('SwitchDetails.svelte image moderation', () => {
+	it('marks an image that is pending review', async () => {
+		render(SwitchDetails, {
+			sw: { ...sw(FRESH), image: { url: FRESH, status: ImageStatus.Pending } },
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+	});
+
+	it('shows a rejected image by its reason', async () => {
+		render(SwitchDetails, {
+			sw: {
+				...sw(FRESH),
+				image: { status: ImageStatus.Rejected, rejectionReason: 'unprocessable' }
+			},
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect
+			.element(page.getByRole('img', { name: "Photo couldn't be processed" }))
+			.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('button', { name: 'View full size image' }))
+			.not.toBeInTheDocument();
 	});
 });

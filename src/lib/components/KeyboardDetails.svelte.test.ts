@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { Keyboard } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, type Keyboard } from '@rogueserenity/kbdb-api-client';
 import KeyboardDetails from './KeyboardDetails.svelte';
 
 const BROKEN = 'data:image/png;base64,bm90IGFuIGltYWdl';
@@ -40,6 +40,41 @@ describe('KeyboardDetails.svelte', () => {
 
 		await expect.element(page.getByRole('img', { name: 'Agar' })).toBeInTheDocument();
 		expect(onImageError).toHaveBeenCalledOnce();
+	});
+
+	describe('image moderation', () => {
+		const moderated: Keyboard = {
+			id: 'k',
+			brand: 'KBDFans',
+			name: 'Agar',
+			images: [
+				{ imageId: 'rejected', status: ImageStatus.Rejected, rejectionReason: 'Explicit' },
+				{ imageId: 'pending', url: FRESH, status: ImageStatus.Pending },
+				{ imageId: 'approved', url: FRESH, status: ImageStatus.Approved }
+			]
+		};
+
+		it('shows a rejected image by its reason and marks a pending one', async () => {
+			render(KeyboardDetails, { keyboard: moderated, onImageClick: vi.fn(), showPrice: true });
+
+			await expect
+				.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+			await expect
+				.element(page.getByRole('button', { name: 'View full size image, pending review' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByRole('img', { name: 'Agar' }).nth(1)).toBeInTheDocument();
+		});
+
+		it('opens the gallery at the position among the images that can be viewed', async () => {
+			const onImageClick = vi.fn();
+			render(KeyboardDetails, { keyboard: moderated, onImageClick, showPrice: true });
+
+			await page.getByRole('button', { name: 'View full size image' }).nth(1).click();
+
+			expect(onImageClick).toHaveBeenCalledWith(1);
+		});
 	});
 
 	describe('plates, PCBs and prices', () => {

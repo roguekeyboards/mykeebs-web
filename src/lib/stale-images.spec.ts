@@ -1,16 +1,38 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Build, Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	type Build,
+	type Keyboard,
+	type KeycapSet,
+	type Switch
+} from '@rogueserenity/kbdb-api-client';
 import {
 	anyImageFailed,
 	perItemImageRefetcher,
 	staleImageRefetcher,
 	updateWhere,
-	withFreshImageUrls,
-	withFreshKitImageUrls,
-	withFreshSwitchImageUrl
+	withFreshImage,
+	withFreshImages,
+	withFreshKitImages
 } from './stale-images';
 
 describe('staleImageRefetcher', () => {
+	it('drops a refetch still in flight when reset', async () => {
+		let resolve: (item: { id: string }) => void = () => {};
+		const onFresh = vi.fn();
+		const refetcher = staleImageRefetcher(
+			() => new Promise<{ id: string }>((r) => (resolve = r)),
+			onFresh
+		);
+
+		const pending = refetcher.refetch('k1');
+		refetcher.reset();
+		resolve({ id: 'k1' });
+		await pending;
+
+		expect(onFresh).not.toHaveBeenCalled();
+	});
+
 	it('hands the freshly fetched item to onFresh', async () => {
 		const onFresh = vi.fn();
 		const refetcher = staleImageRefetcher(async (id) => ({ id, url: 'fresh' }), onFresh);
@@ -63,105 +85,6 @@ describe('staleImageRefetcher', () => {
 
 		expect(onFresh).not.toHaveBeenCalled();
 		expect(fetchItem).toHaveBeenCalledTimes(1);
-	});
-});
-
-describe('withFreshImageUrls', () => {
-	const keyboard = (name: string, images: [string, string][]): Keyboard => ({
-		id: 'k',
-		brand: 'KBDFans',
-		name,
-		images: images.map(([imageId, url]) => ({ imageId, url }))
-	});
-
-	it('takes fresh URLs by image id and keeps everything else as shown', () => {
-		const shown = keyboard('Agar (edited)', [
-			['a', 'a-old'],
-			['b', 'b-old']
-		]);
-		const fresh = keyboard('Agar', [
-			['b', 'b-new'],
-			['a', 'a-new']
-		]);
-
-		expect(withFreshImageUrls(shown, fresh)).toEqual(
-			keyboard('Agar (edited)', [
-				['a', 'a-new'],
-				['b', 'b-new']
-			])
-		);
-	});
-
-	it('keeps an image the refetch no longer has, and ignores one it newly has', () => {
-		const shown = keyboard('Agar', [['a', 'a-old']]);
-		const fresh = keyboard('Agar', [['c', 'c-new']]);
-
-		expect(withFreshImageUrls(shown, fresh).images).toEqual([{ imageId: 'a', url: 'a-old' }]);
-	});
-});
-
-describe('withFreshSwitchImageUrl', () => {
-	const sw = (name: string, url?: string): Switch => ({
-		id: 'sw',
-		brand: 'HMX',
-		name,
-		type: 'Linear',
-		image: url ? { url } : undefined
-	});
-
-	it('takes the fresh URL and keeps everything else as shown', () => {
-		expect(withFreshSwitchImageUrl(sw('Aperol (edited)', 'old'), sw('Aperol', 'new'))).toEqual(
-			sw('Aperol (edited)', 'new')
-		);
-	});
-
-	it('leaves the switch alone when either side has no image', () => {
-		const noImage = sw('Aperol');
-		expect(withFreshSwitchImageUrl(noImage, sw('Aperol', 'new'))).toBe(noImage);
-
-		const shown = sw('Aperol', 'old');
-		expect(withFreshSwitchImageUrl(shown, sw('Aperol'))).toBe(shown);
-	});
-});
-
-describe('withFreshKitImageUrls', () => {
-	const set = (name: string, kits: [string, string?][]): KeycapSet => ({
-		id: 's',
-		brand: 'GMK',
-		name,
-		kits: kits.map(([kitId, url]) => ({ kitId, name: kitId, image: url ? { url } : undefined }))
-	});
-
-	it('takes fresh URLs by kit id and keeps everything else as shown', () => {
-		const shown = set('Olivia (edited)', [
-			['base', 'base-old'],
-			['novelties', 'nov-old']
-		]);
-		const fresh = set('Olivia', [
-			['novelties', 'nov-new'],
-			['base', 'base-new']
-		]);
-
-		expect(withFreshKitImageUrls(shown, fresh)).toEqual(
-			set('Olivia (edited)', [
-				['base', 'base-new'],
-				['novelties', 'nov-new']
-			])
-		);
-	});
-
-	it('keeps a kit the refetch no longer has, and ignores one it newly has', () => {
-		const shown = set('Olivia', [['base', 'base-old']]);
-		const fresh = set('Olivia', [['extras', 'extras-new']]);
-
-		expect(withFreshKitImageUrls(shown, fresh).kits).toEqual(shown.kits);
-	});
-
-	it("doesn't give a kit an image it doesn't show, or drop one it does", () => {
-		const shown = set('Olivia', [['base'], ['novelties', 'nov-old']]);
-		const fresh = set('Olivia', [['base', 'base-new'], ['novelties']]);
-
-		expect(withFreshKitImageUrls(shown, fresh).kits).toEqual(shown.kits);
 	});
 });
 
@@ -276,7 +199,150 @@ describe('perItemImageRefetcher', () => {
 	});
 });
 
-describe('withFreshImageUrls on a build', () => {
+describe('withFreshImages', () => {
+	const keyboard = (name: string, images: [string, string][]): Keyboard => ({
+		id: 'k',
+		brand: 'KBDFans',
+		name,
+		images: images.map(([imageId, url]) => ({ imageId, url }))
+	});
+
+	it('takes fresh URLs by image id and keeps everything else as shown', () => {
+		const shown = keyboard('Agar (edited)', [
+			['a', 'a-old'],
+			['b', 'b-old']
+		]);
+		const fresh = keyboard('Agar', [
+			['b', 'b-new'],
+			['a', 'a-new']
+		]);
+
+		expect(withFreshImages(shown, fresh)).toEqual(
+			keyboard('Agar (edited)', [
+				['a', 'a-new'],
+				['b', 'b-new']
+			])
+		);
+	});
+
+	it('keeps an image the refetch no longer has, and ignores one it newly has', () => {
+		const shown = keyboard('Agar', [['a', 'a-old']]);
+		const fresh = keyboard('Agar', [['c', 'c-new']]);
+
+		expect(withFreshImages(shown, fresh).images).toEqual([{ imageId: 'a', url: 'a-old' }]);
+	});
+});
+
+describe('stale-url refresh with moderation state', () => {
+	const pending = { imageId: 'i1', url: 'old', status: ImageStatus.Pending };
+	const rejected = { imageId: 'i1', status: ImageStatus.Rejected, rejectionReason: 'Explicit' };
+
+	it('takes a rejection, dropping the url the image no longer has', () => {
+		const shown: Keyboard = { id: 'k', brand: 'KBDFans', name: 'Agar', images: [pending] };
+		const fresh: Keyboard = { ...shown, images: [rejected] };
+
+		expect(withFreshImages(shown, fresh).images).toEqual([rejected]);
+	});
+
+	it('takes an approval along with the new url', () => {
+		const shown: Keyboard = { id: 'k', brand: 'KBDFans', name: 'Agar', images: [pending] };
+		const approved = { imageId: 'i1', url: 'new', status: ImageStatus.Approved };
+
+		expect(withFreshImages(shown, { ...shown, images: [approved] }).images).toEqual([approved]);
+	});
+
+	it('takes a rejection for a switch image', () => {
+		const shown: Switch = {
+			id: 'sw',
+			brand: 'HMX',
+			name: 'Aperol',
+			type: 'Linear',
+			image: pending
+		};
+		const fresh: Switch = { ...shown, image: rejected };
+
+		expect(withFreshImage(shown, fresh).image).toEqual(rejected);
+	});
+
+	it('takes a rejection for a kit image', () => {
+		const shown: KeycapSet = {
+			id: 's',
+			brand: 'GMK',
+			name: 'Olivia',
+			kits: [{ kitId: 'base', name: 'Base', image: pending }]
+		};
+		const fresh: KeycapSet = { ...shown, kits: [{ kitId: 'base', name: 'Base', image: rejected }] };
+
+		expect(withFreshKitImages(shown, fresh).kits?.[0].image).toEqual(rejected);
+	});
+});
+
+describe('withFreshImage', () => {
+	const sw = (name: string, url?: string): Switch => ({
+		id: 'sw',
+		brand: 'HMX',
+		name,
+		type: 'Linear',
+		image: url ? { url } : undefined
+	});
+
+	it('takes the fresh URL and keeps everything else as shown', () => {
+		expect(withFreshImage(sw('Aperol (edited)', 'old'), sw('Aperol', 'new'))).toEqual(
+			sw('Aperol (edited)', 'new')
+		);
+	});
+
+	it('leaves the switch alone when either side has no image', () => {
+		const noImage = sw('Aperol');
+		expect(withFreshImage(noImage, sw('Aperol', 'new'))).toBe(noImage);
+
+		const shown = sw('Aperol', 'old');
+		expect(withFreshImage(shown, sw('Aperol'))).toBe(shown);
+	});
+});
+
+describe('withFreshKitImages', () => {
+	const set = (name: string, kits: [string, string?][]): KeycapSet => ({
+		id: 's',
+		brand: 'GMK',
+		name,
+		kits: kits.map(([kitId, url]) => ({ kitId, name: kitId, image: url ? { url } : undefined }))
+	});
+
+	it('takes fresh URLs by kit id and keeps everything else as shown', () => {
+		const shown = set('Olivia (edited)', [
+			['base', 'base-old'],
+			['novelties', 'nov-old']
+		]);
+		const fresh = set('Olivia', [
+			['novelties', 'nov-new'],
+			['base', 'base-new']
+		]);
+
+		expect(withFreshKitImages(shown, fresh)).toEqual(
+			set('Olivia (edited)', [
+				['base', 'base-new'],
+				['novelties', 'nov-new']
+			])
+		);
+	});
+
+	it('keeps a kit the refetch no longer has, and ignores one it newly has', () => {
+		const shown = set('Olivia', [['base', 'base-old']]);
+		const fresh = set('Olivia', [['extras', 'extras-new']]);
+
+		expect(withFreshKitImages(shown, fresh).kits).toEqual(shown.kits);
+	});
+
+	it("doesn't give a kit an image it doesn't show, or drop one it does", () => {
+		const shown = set('Olivia', [['base'], ['novelties', 'nov-old']]);
+		const fresh = set('Olivia', [['base', 'base-new'], ['novelties']]);
+
+		expect(withFreshKitImages(shown, fresh).kits).toEqual(shown.kits);
+	});
+});
+
+describe('withFreshImages on a build', () => {
 	it('takes fresh URLs by image id and leaves everything else as shown', () => {
 		const shown: Build = {
 			id: 'b',
@@ -291,7 +357,7 @@ describe('withFreshImageUrls on a build', () => {
 			images: [{ imageId: 'i1', url: 'new' }]
 		};
 
-		expect(withFreshImageUrls(shown, fresh)).toEqual({
+		expect(withFreshImages(shown, fresh)).toEqual({
 			...shown,
 			images: [{ imageId: 'i1', url: 'new' }]
 		});

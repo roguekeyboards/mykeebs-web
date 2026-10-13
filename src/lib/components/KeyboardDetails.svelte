@@ -4,6 +4,9 @@
 	import PurchaseDetails from '$lib/components/PurchaseDetails.svelte';
 	import { formatPrice } from '$lib/format';
 	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
+	import { isPending, viewableImages } from '$lib/image-moderation';
+	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '$lib/components/RejectedImage.svelte';
 
 	let {
 		keyboard,
@@ -18,6 +21,7 @@
 	} = $props();
 
 	const failedUrls = new SvelteSet<string>();
+	const viewable = $derived(viewableImages(keyboard.images));
 	const totalCost = $derived(
 		showPrice ? formatPrice(keyboard.totalCost, keyboard.currency) : undefined
 	);
@@ -53,25 +57,33 @@
 	<div class="mt-6">
 		<h3 class="section-label">Images</h3>
 		<div class="flex flex-wrap gap-3">
-			{#each keyboard.images as image, index (image.imageId)}
-				{#if !failedUrls.has(image.url)}
+			{#each keyboard.images as image (image.imageId)}
+				{@const url = image.url}
+				{#if url === undefined}
+					<RejectedImage reason={image.rejectionReason} class="h-20 w-20 shrink-0" />
+				{:else if !failedUrls.has(url)}
 					<button
 						type="button"
-						class="kc-thumb h-20 w-20 shrink-0 overflow-hidden"
-						aria-label="View full size image"
-						onclick={() => onImageClick(index)}
+						class="kc-thumb relative h-20 w-20 shrink-0 overflow-hidden"
+						aria-label={isPending(image)
+							? 'View full size image, pending review'
+							: 'View full size image'}
+						onclick={() => onImageClick(viewable.findIndex((v) => v.imageId === image.imageId))}
 					>
 						<img
-							src={image.url}
+							src={url}
 							alt={keyboard.name}
 							class="h-full w-full object-contain"
 							loading="lazy"
 							decoding="async"
 							onerror={() => {
-								failedUrls.add(image.url);
+								failedUrls.add(url);
 								onImageError?.();
 							}}
 						/>
+						{#if isPending(image)}
+							<PendingReviewBadge />
+						{/if}
 					</button>
 				{/if}
 			{/each}

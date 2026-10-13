@@ -11,6 +11,7 @@
 	import { X } from '@lucide/svelte';
 	import { cleanLinks, USERNAME_RULES, usernameLooksValid } from '$lib/profile/profile-input';
 	import { uploadImage } from '$lib/upload';
+	import { isPending, rejectionText, uploadErrorMessage } from '$lib/image-moderation';
 
 	const MAX_LINKS = 5;
 
@@ -140,8 +141,8 @@
 				profilesApi.setProfileImage({ identifier, imageUploadRequest })
 			);
 			await refreshProfile();
-		} catch {
-			avatarError = 'Could not upload that image.';
+		} catch (err) {
+			avatarError = uploadErrorMessage(err);
 		} finally {
 			avatarBusy = false;
 			if (fileInput) fileInput.value = '';
@@ -201,7 +202,7 @@
 					>
 						{avatarBusy ? 'Working…' : 'Change photo'}
 					</button>
-					{#if profile.data?.avatar?.url}
+					{#if profile.data?.avatar}
 						<button type="button" class="btn" disabled={avatarBusy} onclick={removeAvatar}>
 							Remove
 						</button>
@@ -209,6 +210,15 @@
 				</div>
 				{#if isNew}
 					<span class="text-faint text-xs">Save your profile first, then add a photo.</span>
+				{/if}
+				{#if profile.data?.avatar && !profile.data.avatar.url}
+					<span class="text-xs" style="color: var(--danger)">
+						{rejectionText(profile.data.avatar.rejectionReason)}. Remove it or choose another photo.
+					</span>
+				{:else if isPending(profile.data?.avatar)}
+					<span class="text-faint text-xs"
+						>Pending review. Only you can see it until it's approved.</span
+					>
 				{/if}
 				{#if avatarError}
 					<span class="text-xs" role="alert" style="color: var(--danger)">{avatarError}</span>

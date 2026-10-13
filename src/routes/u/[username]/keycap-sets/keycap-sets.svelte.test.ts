@@ -1,12 +1,13 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, type KeycapSet } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError, type KeycapSet } from '@rogueserenity/kbdb-api-client';
 import { buildsApi, keycapSetsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('$lib/image-resize', async (importOriginal) => ({
+	...(await importOriginal<typeof import('$lib/image-resize')>()),
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));
@@ -332,6 +333,98 @@ describe('keycap sets page', () => {
 				.not.toBeInTheDocument();
 		});
 
+		async function addKitWithPhoto() {
+			api.createKeycapKit.mockResolvedValue({ kitId: 'spacebars', name: 'Spacebars' });
+			renderPage();
+			await openOlivia();
+			await page.getByRole('button', { name: '+ Add kit' }).click();
+			await dialog().getByLabelText('Name').fill('Spacebars');
+			await userEvent.upload(
+				page.elementLocator(
+					document.querySelector('[role="dialog"]:last-of-type input[type="file"]')!
+				),
+				new File(['png'], 'kit.png', { type: 'image/png' })
+			);
+			await dialog().getByRole('button', { name: 'Add kit' }).click();
+		}
+
+		it('opens the new kit for editing when its photo upload fails', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 403 }))
+			);
+			api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+			api.getKeycapSet.mockResolvedValue({
+				...olivia,
+				kits: [...olivia.kits!, { kitId: 'spacebars', name: 'Spacebars' }]
+			});
+
+			await addKitWithPhoto();
+
+			await expect.element(dialog().getByRole('heading', { name: 'Edit kit' })).toBeInTheDocument();
+			await expect
+				.element(
+					dialog()
+						.getByRole('alert')
+						.filter({ hasText: "The kit was added, but its photo wasn't. Add it again." })
+				)
+				.toBeInTheDocument();
+			vi.unstubAllGlobals();
+		});
+
+		it("closes the kit with a notice when its photo fails and the set can't be reloaded", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 403 }))
+			);
+			api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+			api.getKeycapSet.mockRejectedValue(new Error('network'));
+
+			await addKitWithPhoto();
+
+			await expect.element(page.getByRole('heading', { name: 'Edit kit' })).not.toBeInTheDocument();
+			await expect
+				.element(
+					dialog()
+						.getByRole('alert')
+						.filter({ hasText: "The kit was added, but its photo wasn't. Add it again." })
+				)
+				.toBeInTheDocument();
+			vi.unstubAllGlobals();
+		});
+
+		it('closes the kit and says so in the set when uploads are unavailable', async () => {
+			api.setKeycapKitImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+
+			await addKitWithPhoto();
+
+			await expect.element(page.getByRole('heading', { name: 'Edit kit' })).not.toBeInTheDocument();
+			await expect
+				.element(
+					dialog().getByRole('alert').filter({
+						hasText:
+							"The kit was added, but its photo wasn't. Uploads unavailable, try again later."
+					})
+				)
+				.toBeInTheDocument();
+		});
+
+		it('clears the kit notice once another kit is opened', async () => {
+			api.setKeycapKitImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+			await addKitWithPhoto();
+			const notice = dialog().getByRole('alert').filter({ hasText: 'Uploads unavailable' });
+			await expect.element(notice).toBeInTheDocument();
+
+			await openKit('Novelties');
+			await page.getByRole('button', { name: 'Close' }).last().click();
+
+			await expect.element(notice).not.toBeInTheDocument();
+		});
+
 		it('adds a kit with a staged photo and uploads it', async () => {
 			const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
 			vi.stubGlobal('fetch', fetchMock);
@@ -419,5 +512,32 @@ describe('keycap sets page', () => {
 		renderPage();
 
 		await vi.waitFor(() => expect(document.title).toBe('Keycap sets · @rogue.serenity · mykeebs'));
+	});
+});
+
+describe('keycap sets page image moderation', () => {
+	it('re-fetches a set with a pending kit photo when it is opened', async () => {
+		const withKitImage = (image: NonNullable<KeycapSet['kits']>[number]['image']) => ({
+			...olivia,
+			kits: [{ ...olivia.kits![0], image }, ...olivia.kits!.slice(1)]
+		});
+		api.listKeycapSets.mockResolvedValue({
+			items: [
+				withKitImage({
+					url: 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
+					status: ImageStatus.Pending
+				})
+			]
+		});
+		api.getKeycapSet.mockResolvedValue(
+			withKitImage({ status: ImageStatus.Rejected, rejectionReason: 'Explicit' })
+		);
+		renderPage();
+		await openOlivia();
+
+		await expect
+			.element(dialog().getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+			.toBeInTheDocument();
+		expect(api.getKeycapSet).toHaveBeenCalledTimes(1);
 	});
 });

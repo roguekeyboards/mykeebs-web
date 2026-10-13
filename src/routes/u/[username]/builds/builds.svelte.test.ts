@@ -1,12 +1,13 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import { ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
 import { buildsApi, keyboardsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import BuildsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('$lib/image-resize', async (importOriginal) => ({
+	...(await importOriginal<typeof import('$lib/image-resize')>()),
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.
 		if (file.name === 'a.jpg') await new Promise((resolve) => setTimeout(resolve, 50));
@@ -98,17 +99,61 @@ describe('builds page', () => {
 		]);
 	});
 
-	it('still closes when a photo upload fails, since the build exists', async () => {
+	it('closes and says which photos failed, linking to the build', async () => {
 		vi.stubGlobal(
 			'fetch',
-			vi.fn(async () => new Response(null, { status: 403 }))
+			vi.fn(async (url: string) => new Response(null, { status: url.endsWith('/b') ? 403 : 200 }))
 		);
-		builds.createBuildImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/a' } as never);
+		builds.createBuildImage
+			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/a' } as never)
+			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/b' } as never);
 		renderPage();
+
+		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
+
+		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+		const notice = page
+			.getByRole('alert')
+			.filter({ hasText: "The build was added, but 1 of its 2 photos wasn't. Add it again." });
+		await expect.element(notice).toBeInTheDocument();
+		await expect
+			.element(notice.getByRole('link', { name: "See this keyboard's builds" }))
+			.toHaveAttribute('href', expect.stringMatching(/\/builds\/kb-1$/));
+	});
+
+	it("doesn't call a created build a failed create when reloading the list fails", async () => {
+		builds.createBuildImage.mockRejectedValue(
+			new ResponseError(new Response(null, { status: 429 }))
+		);
+		renderPage();
+		await expect.element(page.getByRole('button', { name: 'Add build' })).toBeInTheDocument();
+		builds.listBuilds.mockRejectedValue(new Error('network'));
 
 		await startBuildWithPhotos(jpg('a.jpg'));
 
 		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable' }))
+			.toBeInTheDocument();
+	});
+
+	it('stops uploading and says so when uploads are unavailable', async () => {
+		builds.createBuildImage.mockRejectedValue(
+			new ResponseError(new Response(null, { status: 429 }))
+		);
+		renderPage();
+
+		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
+
+		await expect
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"The build was added, but its photos weren't. Uploads unavailable, try again later."
+				})
+			)
+			.toBeInTheDocument();
+		expect(builds.createBuildImage).toHaveBeenCalledTimes(1);
 	});
 
 	it('asks before closing a new build with unsaved edits', async () => {

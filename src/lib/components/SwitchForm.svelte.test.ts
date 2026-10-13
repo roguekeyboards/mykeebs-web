@@ -2,6 +2,8 @@ import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import {
+	ImageStatus,
+	ResponseError,
 	Visibility,
 	type Switch as SwitchModel,
 	type SwitchInput
@@ -390,6 +392,46 @@ describe('SwitchForm.svelte', () => {
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
 				.toBeInTheDocument();
+		});
+
+		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+			renderForm({
+				initial: sw,
+				onImageUpload: vi
+					.fn()
+					.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+			});
+
+			await userEvent.upload(fileInput(), png('a.png'));
+
+			await expect
+				.element(
+					page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' })
+				)
+				.toBeInTheDocument();
+		});
+
+		it('marks a photo that is pending review', async () => {
+			renderForm({
+				initial: { ...sw, image: { url: 'https://img.example/s.png', status: ImageStatus.Pending } }
+			});
+
+			await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+		});
+
+		it('shows a rejected photo by its reason, and offers to remove or replace it', async () => {
+			const onImageRemove = vi.fn(async () => {});
+			renderForm({
+				initial: { ...sw, image: { status: ImageStatus.Rejected, rejectionReason: 'Violence' } },
+				onImageRemove
+			});
+
+			await expect
+				.element(page.getByRole('img', { name: 'Photo removed by moderation: Violence' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByRole('button', { name: 'Change photo' })).toBeInTheDocument();
+			await page.getByRole('button', { name: 'Remove' }).click();
+			expect(onImageRemove).toHaveBeenCalled();
 		});
 
 		it('removes the photo', async () => {

@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { Build } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, type Build } from '@rogueserenity/kbdb-api-client';
 import BuildDetails from './BuildDetails.svelte';
 
 const build: Build = {
@@ -84,5 +84,32 @@ describe('BuildDetails.svelte', () => {
 
 		await expect.element(page.getByText('POM · Black · 1.5mm')).toBeInTheDocument();
 		await expect.element(page.getByText('Hotswap · VIA · Wired')).toBeInTheDocument();
+	});
+});
+
+describe('BuildDetails.svelte image moderation', () => {
+	it('shows a rejected image by its reason and opens the gallery among the viewable ones', async () => {
+		const onImageClick = vi.fn();
+		render(BuildDetails, {
+			build: {
+				...build,
+				images: [
+					{ imageId: 'rejected', status: ImageStatus.Rejected, rejectionReason: 'Explicit' },
+					{ imageId: 'pending', url: 'https://img.example/p.png', status: ImageStatus.Pending }
+				]
+			},
+			onKeyboardClick: vi.fn(),
+			onSwitchClick: vi.fn(),
+			onKeycapKitClick: vi.fn(),
+			onImageClick,
+			showPrice: true
+		});
+
+		await expect
+			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
+			.toBeInTheDocument();
+		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
+		await page.getByRole('button', { name: 'View full size image' }).click();
+		expect(onImageClick).toHaveBeenCalledWith(0);
 	});
 });

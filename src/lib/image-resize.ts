@@ -1,10 +1,18 @@
 export const MAX_EDGE = 2560;
 export const WEBP_QUALITY = 82;
+export const MIN_EDGE = 80;
 
 export class UnsupportedImageError extends Error {
 	constructor() {
 		super('This image format is not supported.');
 		this.name = 'UnsupportedImageError';
+	}
+}
+
+export class ImageTooSmallError extends Error {
+	constructor() {
+		super(`Images must be at least ${MIN_EDGE} pixels on each side.`);
+		this.name = 'ImageTooSmallError';
 	}
 }
 
@@ -34,6 +42,10 @@ export async function prepareImage(file: File): Promise<File> {
 	}
 
 	const { width, height } = fitWithin(bitmap.width, bitmap.height);
+	if (Math.min(width, height) < MIN_EDGE) {
+		bitmap.close();
+		throw new ImageTooSmallError();
+	}
 	const canvas = new OffscreenCanvas(width, height);
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error('2d canvas unavailable');

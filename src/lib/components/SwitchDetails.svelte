@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { Switch as SwitchModel } from '@rogueserenity/kbdb-api-client';
 	import PurchaseDetails from '$lib/components/PurchaseDetails.svelte';
+	import { isPending } from '$lib/image-moderation';
+	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '$lib/components/RejectedImage.svelte';
 
 	let {
 		sw,
@@ -21,8 +24,10 @@
 	{#if sw.image?.url && sw.image.url !== failedUrl}
 		<button
 			type="button"
-			class="shrink-0 cursor-zoom-in"
-			aria-label="View full size image"
+			class="relative shrink-0 cursor-zoom-in"
+			aria-label={isPending(sw.image)
+				? 'View full size image, pending review'
+				: 'View full size image'}
 			onclick={onImageClick}
 		>
 			<img
@@ -35,7 +40,12 @@
 					onImageError?.();
 				}}
 			/>
+			{#if isPending(sw.image)}
+				<PendingReviewBadge />
+			{/if}
 		</button>
+	{:else if sw.image && !sw.image.url}
+		<RejectedImage reason={sw.image.rejectionReason} class="h-24 w-24 shrink-0" />
 	{/if}
 	<div>
 		<h2 class="heading-lg text-2xl">{sw.name}</h2>
