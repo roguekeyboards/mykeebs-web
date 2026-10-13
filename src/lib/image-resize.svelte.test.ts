@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	ImageTooSmallError,
-	MAX_EDGE,
-	MIN_EDGE,
-	prepareImage,
-	UnsupportedImageError
-} from './image-resize';
+import { MAX_EDGE, prepareImage, UnsupportedImageError } from './image-resize';
 
 async function canvasFile(
 	width: number,
@@ -54,12 +48,12 @@ async function pixels(file: File) {
 
 describe('prepareImage', () => {
 	it('re-encodes as WebP with a .webp name', async () => {
-		const prepared = await prepareImage(await canvasFile(160, 120, 'image/png', fill('#c33')));
+		const prepared = await prepareImage(await canvasFile(40, 30, 'image/png', fill('#c33')));
 
 		expect(prepared.type).toBe('image/webp');
 		expect(prepared.name).toBe('pic.webp');
 		const { width, height } = await pixels(prepared);
-		expect([width, height]).toEqual([160, 120]);
+		expect([width, height]).toEqual([40, 30]);
 	});
 
 	it('shrinks a large image so its long edge is the max edge, keeping the aspect ratio', async () => {
@@ -71,49 +65,29 @@ describe('prepareImage', () => {
 	});
 
 	it('applies the EXIF rotation so phone photos stay upright', async () => {
-		const sideways = await withExifRotation(await canvasFile(160, 80, 'image/jpeg', fill('#3a3')));
+		const sideways = await withExifRotation(await canvasFile(40, 20, 'image/jpeg', fill('#3a3')));
 
 		const { width, height } = await pixels(await prepareImage(sideways));
 
-		expect([width, height]).toEqual([80, 160]);
+		expect([width, height]).toEqual([20, 40]);
 	});
 
 	it('keeps transparent areas transparent', async () => {
-		const halfClear = await canvasFile(200, 100, 'image/png', (ctx) => {
+		const halfClear = await canvasFile(20, 10, 'image/png', (ctx) => {
 			ctx.fillStyle = '#000';
-			ctx.fillRect(0, 0, 100, 100);
+			ctx.fillRect(0, 0, 10, 10);
 		});
 
 		const { width, data } = await pixels(await prepareImage(halfClear));
 		const alphaAt = (x: number, y: number) => data[(y * width + x) * 4 + 3];
 
-		expect(alphaAt(20, 50)).toBe(255);
-		expect(alphaAt(170, 50)).toBe(0);
+		expect(alphaAt(2, 5)).toBe(255);
+		expect(alphaAt(17, 5)).toBe(0);
 	});
 
 	it('rejects a file the browser cannot decode', async () => {
 		const heic = new File(['not really an image'], 'IMG_0001.HEIC', { type: 'image/heic' });
 
 		await expect(prepareImage(heic)).rejects.toBeInstanceOf(UnsupportedImageError);
-	});
-
-	it(`refuses an image under ${MIN_EDGE} pixels on a side, which moderation can't process`, async () => {
-		await expect(
-			prepareImage(await canvasFile(MIN_EDGE - 1, 200, 'image/png', fill('#c33')))
-		).rejects.toBeInstanceOf(ImageTooSmallError);
-	});
-
-	it('refuses an image whose short side shrinks below the minimum when resized', async () => {
-		await expect(
-			prepareImage(await canvasFile(6000, 150, 'image/png', fill('#c33')))
-		).rejects.toBeInstanceOf(ImageTooSmallError);
-	});
-
-	it(`accepts an image exactly ${MIN_EDGE} pixels on its short side`, async () => {
-		const { width, height } = await pixels(
-			await prepareImage(await canvasFile(MIN_EDGE, 200, 'image/png', fill('#c33')))
-		);
-
-		expect([width, height]).toEqual([MIN_EDGE, 200]);
 	});
 });

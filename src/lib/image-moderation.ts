@@ -1,5 +1,4 @@
 import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
-import { ImageTooSmallError } from './image-resize';
 
 export type ModeratedImage = { url?: string; status?: ImageStatus; rejectionReason?: string };
 
@@ -29,7 +28,5 @@ export function isUploadsUnavailable(err: unknown): boolean {
 }
 
 export function uploadErrorMessage(err: unknown): string {
-	if (isUploadsUnavailable(err)) return UPLOADS_UNAVAILABLE;
-	if (err instanceof ImageTooSmallError) return err.message;
-	return 'Could not upload that image.';
+	return isUploadsUnavailable(err) ? UPLOADS_UNAVAILABLE : 'Could not upload that image.';
 }

@@ -6,8 +6,7 @@ import { buildsApi, keycapSetsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/image-resize')>()),
+vi.mock('$lib/image-resize', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));

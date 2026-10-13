@@ -6,7 +6,7 @@ import { goto } from '$app/navigation';
 import { profilesApi } from '$lib/api/client';
 import { refreshProfile, saveProfile } from '$lib/profile/profile.svelte';
 import ProfileEditPage from './+page.svelte';
-import { ImageTooSmallError, prepareImage, UnsupportedImageError } from '$lib/image-resize';
+import { prepareImage, UnsupportedImageError } from '$lib/image-resize';
 
 vi.mock('$lib/image-resize', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/image-resize')>()),
@@ -325,22 +325,6 @@ describe('Profile edit page photo', () => {
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
-			.toBeInTheDocument();
-		expect(api.setProfileImage).not.toHaveBeenCalled();
-	});
-
-	it('says so, without asking for an upload URL, when the image is too small', async () => {
-		vi.mocked(prepareImage).mockRejectedValueOnce(new ImageTooSmallError());
-		render(ProfileEditPage);
-
-		await userEvent.upload(fileInput(), png);
-
-		await expect
-			.element(
-				page
-					.getByRole('alert')
-					.filter({ hasText: 'Images must be at least 80 pixels on each side.' })
-			)
 			.toBeInTheDocument();
 		expect(api.setProfileImage).not.toHaveBeenCalled();
 	});

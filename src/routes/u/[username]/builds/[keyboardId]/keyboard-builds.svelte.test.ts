@@ -7,8 +7,7 @@ import { STALE_REFS_MESSAGE } from '$lib/build-refs';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeyboardBuildsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/image-resize')>()),
+vi.mock('$lib/image-resize', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));

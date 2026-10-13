@@ -8,7 +8,6 @@ import {
 	uploadErrorMessage,
 	viewableImages
 } from './image-moderation';
-import { ImageTooSmallError } from './image-resize';
 
 describe('viewableImages', () => {
 	it('drops rejected images, which have no url, and keeps order', () => {
@@ -66,12 +65,6 @@ describe('uploadErrorMessage', () => {
 
 	it('says uploads are unavailable on a 429', () => {
 		expect(uploadErrorMessage(responseError(429))).toBe(UPLOADS_UNAVAILABLE);
-	});
-
-	it('explains an image too small to be checked', () => {
-		expect(uploadErrorMessage(new ImageTooSmallError())).toBe(
-			'Images must be at least 80 pixels on each side.'
-		);
 	});
 
 	it('is generic for anything else', () => {

@@ -11,8 +11,7 @@ import { buildsApi, keyboardsApi, lookupsApi } from '$lib/api/client';
 import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/image-resize')>()),
+vi.mock('$lib/image-resize', () => ({
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.
 		if (file.name === 'a.png') await new Promise((resolve) => setTimeout(resolve, 50));
