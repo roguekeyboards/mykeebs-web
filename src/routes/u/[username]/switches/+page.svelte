@@ -148,7 +148,7 @@
 	}
 
 	async function handleImageUpload(switchId: string, file: File) {
-		staleImages.reset();
+		staleImages.cancel();
 		await uploadSwitchImage(switchId, file);
 		await refreshEditingSwitch(switchId);
 	}

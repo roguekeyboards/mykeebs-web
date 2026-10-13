@@ -14,7 +14,12 @@
 	import type { KeyboardParts } from '$lib/keyboard-parts';
 	import { blockedRemovalMessage, removeParts, saveParts } from '$lib/keyboard-parts-save';
 	import { stepIndex } from '$lib/step-index';
-	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
+	import {
+		stagedUploadFollowUp,
+		stagedUploadOutcome,
+		uploadImage,
+		uploadStaged
+	} from '$lib/upload';
 	import PageNotice from '$lib/components/PageNotice.svelte';
 	import { anyPending, viewableImages } from '$lib/image-moderation';
 	import ImageViewer from '$lib/components/ImageViewer.svelte';
@@ -130,14 +135,14 @@
 					.getKeyboard({ userId, keyboardId: keyboard.id })
 					.catch(() => keyboard);
 				modal = { mode: 'edit', keyboard: fresh };
-				saveError = [
-					partsSaved
-						? null
-						: "The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.",
-					photos.message
-				]
-					.filter(Boolean)
-					.join(' ');
+				saveError = partsSaved
+					? photos.message
+					: [
+							"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.",
+							photoFailure && stagedUploadFollowUp('keyboard', photoFailure)
+						]
+							.filter(Boolean)
+							.join(' ');
 			}
 		} finally {
 			saving = false;

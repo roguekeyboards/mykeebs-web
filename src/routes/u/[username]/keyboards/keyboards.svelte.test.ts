@@ -381,6 +381,35 @@ describe('keyboards page', () => {
 			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Deacon TKL');
 		});
 
+		it('says once that the keyboard was added when both a part and a photo fail', async () => {
+			plateMaterials(['POM']);
+			const created = { id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' };
+			api.createKeyboard.mockResolvedValue(created);
+			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
+			api.createKeyboardImage.mockRejectedValue(
+				new ResponseError(new Response(null, { status: 429 }))
+			);
+			api.getKeyboard.mockResolvedValue(created);
+			renderPage();
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['a'], 'a.png', { type: 'image/png' })
+			);
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await expect
+				.element(
+					dialog().getByRole('alert').filter({
+						hasText:
+							"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save. Its photo wasn't added either. Uploads unavailable, try again later."
+					})
+				)
+				.toBeInTheDocument();
+		});
+
 		it("doesn't call a created keyboard a failed create when reloading it fails", async () => {
 			plateMaterials(['POM']);
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });

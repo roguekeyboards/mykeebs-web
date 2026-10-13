@@ -384,9 +384,9 @@ describe('keycap sets page', () => {
 			await expect.element(page.getByRole('heading', { name: 'Edit kit' })).not.toBeInTheDocument();
 			await expect
 				.element(
-					dialog()
-						.getByRole('alert')
-						.filter({ hasText: "The kit was added, but its photo wasn't. Add it again." })
+					dialog().getByRole('alert').filter({
+						hasText: "The kit was added, but its photo wasn't. Add it again by editing the kit."
+					})
 				)
 				.toBeInTheDocument();
 			vi.unstubAllGlobals();

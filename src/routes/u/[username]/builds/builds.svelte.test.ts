@@ -111,9 +111,10 @@ describe('builds page', () => {
 		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
 
 		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
-		const notice = page
-			.getByRole('alert')
-			.filter({ hasText: "The build was added, but 1 of its 2 photos wasn't. Add it again." });
+		const notice = page.getByRole('alert').filter({
+			hasText:
+				"The build was added, but 1 of its 2 photos wasn't. Add it again by editing the build."
+		});
 		await expect.element(notice).toBeInTheDocument();
 		await expect
 			.element(notice.getByRole('link', { name: "See this keyboard's builds" }))

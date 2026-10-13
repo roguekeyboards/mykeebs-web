@@ -17,20 +17,36 @@ import {
 } from './stale-images';
 
 describe('staleImageRefetcher', () => {
-	it('drops a refetch still in flight when reset', async () => {
+	function deferredRefetcher() {
 		let resolve: (item: { id: string }) => void = () => {};
 		const onFresh = vi.fn();
 		const refetcher = staleImageRefetcher(
 			() => new Promise<{ id: string }>((r) => (resolve = r)),
 			onFresh
 		);
+		return { refetcher, onFresh, resolve: (item: { id: string }) => resolve(item) };
+	}
+
+	it('drops a refetch still in flight when cancelled', async () => {
+		const { refetcher, onFresh, resolve } = deferredRefetcher();
+
+		const pending = refetcher.refetch('k1');
+		refetcher.cancel();
+		resolve({ id: 'k1' });
+		await pending;
+
+		expect(onFresh).not.toHaveBeenCalled();
+	});
+
+	it('still delivers a refetch in flight when reset for another item', async () => {
+		const { refetcher, onFresh, resolve } = deferredRefetcher();
 
 		const pending = refetcher.refetch('k1');
 		refetcher.reset();
 		resolve({ id: 'k1' });
 		await pending;
 
-		expect(onFresh).not.toHaveBeenCalled();
+		expect(onFresh).toHaveBeenCalledWith({ id: 'k1' }, 'k1');
 	});
 
 	it('hands the freshly fetched item to onFresh', async () => {

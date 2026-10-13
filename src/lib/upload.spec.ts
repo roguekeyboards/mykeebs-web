@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ResponseError } from '@rogueserenity/kbdb-api-client';
 import {
+	stagedUploadFollowUp,
 	stagedUploadMessage,
 	stagedUploadOutcome,
 	uploadImage,
@@ -148,7 +149,10 @@ describe('stagedUploadOutcome', () => {
 			reopen: true,
 			message: "The switch was added, but its photo wasn't. Add it again."
 		});
-		expect(stagedUploadOutcome('build', failure, false).reopen).toBe(false);
+		expect(stagedUploadOutcome('build', failure, false)).toEqual({
+			reopen: false,
+			message: "The build was added, but its photo wasn't. Add it again by editing the build."
+		});
 	});
 
 	it("doesn't reopen after a 429, since retrying won't help", () => {
@@ -157,6 +161,17 @@ describe('stagedUploadOutcome', () => {
 				reopen: false,
 				message: "The switch was added, but its photo wasn't. Uploads unavailable, try again later."
 			}
+		);
+	});
+});
+
+describe('stagedUploadFollowUp', () => {
+	it('follows on from another failure in the same create', () => {
+		expect(stagedUploadFollowUp('keyboard', { failed: 1, total: 1, unavailable: false })).toBe(
+			"Its photo wasn't added either. Add it again."
+		);
+		expect(stagedUploadFollowUp('keyboard', { failed: 2, total: 3, unavailable: true })).toBe(
+			"2 of its 3 photos weren't added either. Uploads unavailable, try again later."
 		);
 	});
 });

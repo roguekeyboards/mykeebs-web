@@ -2,8 +2,8 @@ import type { KeycapSet } from '@rogueserenity/kbdb-api-client';
 import type { ModeratedImage } from './image-moderation';
 
 // Callers copy only image state from the refetch (withFreshImages and friends), so a
-// late response can't undo an edit. reset() also drops a refetch still in flight,
-// so it can't land on a photo uploaded since.
+// late response can't undo an edit. cancel() drops a refetch still in flight, so it
+// can't land on a photo uploaded since.
 export function staleImageRefetcher<T>(
 	fetchItem: (id: string) => Promise<T>,
 	onFresh: (item: T, id: string) => void
@@ -13,6 +13,9 @@ export function staleImageRefetcher<T>(
 
 	return {
 		reset() {
+			refetchedId = null;
+		},
+		cancel() {
 			refetchedId = null;
 			generation++;
 		},

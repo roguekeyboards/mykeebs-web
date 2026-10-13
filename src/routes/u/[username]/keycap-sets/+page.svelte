@@ -317,7 +317,7 @@
 	async function handleKitImageUpload(kitId: string, file: File) {
 		if (modal.mode !== 'view') return;
 		const keycapSetId = modal.set.id;
-		staleImages.reset();
+		staleImages.cancel();
 		await uploadKitImage(keycapSetId, kitId, file);
 		await refreshViewedSet(keycapSetId);
 	}

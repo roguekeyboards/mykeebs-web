@@ -44,16 +44,30 @@ export async function uploadStaged(
 	return failed > 0 ? { failed, total: files.length, unavailable: false } : null;
 }
 
-export function stagedUploadMessage(noun: string, failure: StagedUploadFailure): string {
-	const { failed, total, unavailable } = failure;
-	const what =
-		failed < total
-			? `${failed} of its ${total} photos ${failed === 1 ? "wasn't" : "weren't"}`
-			: total === 1
-				? "its photo wasn't"
-				: "its photos weren't";
-	const next = unavailable ? UPLOADS_UNAVAILABLE : `Add ${failed === 1 ? 'it' : 'them'} again.`;
-	return `The ${noun} was added, but ${what}. ${next}`;
+function missingPhotos({ failed, total }: StagedUploadFailure): string {
+	if (failed < total)
+		return `${failed} of its ${total} photos ${failed === 1 ? "wasn't" : "weren't"}`;
+	return total === 1 ? "its photo wasn't" : "its photos weren't";
+}
+
+function nextStep(noun: string, { failed, unavailable }: StagedUploadFailure, canReopen: boolean) {
+	if (unavailable) return UPLOADS_UNAVAILABLE;
+	const them = failed === 1 ? 'it' : 'them';
+	return canReopen ? `Add ${them} again.` : `Add ${them} again by editing the ${noun}.`;
+}
+
+export function stagedUploadMessage(
+	noun: string,
+	failure: StagedUploadFailure,
+	canReopen = true
+): string {
+	return `The ${noun} was added, but ${missingPhotos(failure)}. ${nextStep(noun, failure, canReopen)}`;
+}
+
+// For a create that already reports another failure, so the photos follow on from it.
+export function stagedUploadFollowUp(noun: string, failure: StagedUploadFailure): string {
+	const missing = missingPhotos(failure);
+	return `${missing.charAt(0).toUpperCase()}${missing.slice(1)} added either. ${nextStep(noun, failure, true)}`;
 }
 
 // After an ordinary failure the new item reopens for editing so the photos can
@@ -66,6 +80,6 @@ export function stagedUploadOutcome(
 	if (!failure) return { reopen: false, message: null };
 	return {
 		reopen: canReopen && !failure.unavailable,
-		message: stagedUploadMessage(noun, failure)
+		message: stagedUploadMessage(noun, failure, canReopen)
 	};
 }
