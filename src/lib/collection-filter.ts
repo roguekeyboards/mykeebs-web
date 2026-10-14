@@ -46,7 +46,10 @@ export function sortItems<T>(
 	descending: boolean
 ): T[] {
 	return [...items].sort((a, b) => {
-		const primary = compareValues(getValue(a), getValue(b));
+		const valueA = getValue(a);
+		const valueB = getValue(b);
+		if ((valueA == null) !== (valueB == null)) return valueA == null ? 1 : -1;
+		const primary = compareValues(valueA, valueB);
 		if (primary !== 0) return descending ? -primary : primary;
 		return compareValues(getName(a), getName(b));
 	});

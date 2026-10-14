@@ -113,6 +113,37 @@ describe('keycap sets page', () => {
 		});
 	});
 
+	it("lets visitors sort by each set's earliest kit order and delivery dates", async () => {
+		const kit = (kitId: string, orderDate: string, deliveryDate?: string) => ({
+			kitId,
+			name: kitId,
+			purchase: {
+				orderDate: new Date(orderDate),
+				deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined
+			}
+		});
+		api.listKeycapSets.mockResolvedValue({
+			items: [
+				{ ...olivia, kits: [kit('base', '2024-03-01', '2025-01-01'), kit('novs', '2024-01-01')] },
+				{
+					id: 'set-2',
+					brand: 'GMK',
+					name: 'Botanical',
+					kits: [kit('base', '2024-02-01', '2024-12-01'), kit('novs', '2024-02-15', '2025-03-01')]
+				}
+			]
+		});
+		renderPage(false);
+		const cards = () => page.getByRole('button', { name: /Olivia|Botanical/ });
+		await expect.element(cards().first()).toHaveTextContent('Botanical');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await expect.element(cards().first()).toHaveTextContent('Olivia');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await expect.element(cards().first()).toHaveTextContent('Botanical');
+	});
+
 	describe('creating a set', () => {
 		it('creates the set and opens it so kits can be added next', async () => {
 			const created: KeycapSet = { id: 'set-2', brand: 'GMK', name: 'Botanical', kits: [] };
