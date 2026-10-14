@@ -262,13 +262,23 @@
 				{ label: 'Name', getValue: (keyboard) => keyboard.name },
 				{ label: 'Brand', getValue: (keyboard) => keyboard.brand },
 				{ label: 'Order status', getValue: (keyboard) => keyboard.purchase?.orderStatus },
+				{ label: 'Order date', getValue: (keyboard) => keyboard.purchase?.orderDate?.getTime() },
+				{
+					label: 'Delivery date',
+					getValue: (keyboard) => keyboard.purchase?.deliveryDate?.getTime()
+				},
 				{ label: 'Total cost', getValue: (keyboard) => keyboard.totalCost ?? undefined },
 				{ label: 'Visibility', getValue: (keyboard) => keyboard.visibility }
 			]
 		: [
 				{ label: 'Name', getValue: (keyboard) => keyboard.name },
 				{ label: 'Brand', getValue: (keyboard) => keyboard.brand },
-				{ label: 'Order status', getValue: (keyboard) => keyboard.purchase?.orderStatus }
+				{ label: 'Order status', getValue: (keyboard) => keyboard.purchase?.orderStatus },
+				{ label: 'Order date', getValue: (keyboard) => keyboard.purchase?.orderDate?.getTime() },
+				{
+					label: 'Delivery date',
+					getValue: (keyboard) => keyboard.purchase?.deliveryDate?.getTime()
+				}
 			]}
 >
 	{#snippet card(keyboard)}

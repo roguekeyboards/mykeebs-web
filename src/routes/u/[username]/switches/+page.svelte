@@ -209,13 +209,17 @@
 				{ label: 'Name', getValue: (sw) => sw.name },
 				{ label: 'Brand', getValue: (sw) => sw.brand },
 				{ label: 'Order status', getValue: (sw) => sw.purchase?.orderStatus },
+				{ label: 'Order date', getValue: (sw) => sw.purchase?.orderDate?.getTime() },
+				{ label: 'Delivery date', getValue: (sw) => sw.purchase?.deliveryDate?.getTime() },
 				{ label: 'Price', getValue: (sw) => sw.purchase?.price },
 				{ label: 'Visibility', getValue: (sw) => sw.visibility }
 			]
 		: [
 				{ label: 'Name', getValue: (sw) => sw.name },
 				{ label: 'Brand', getValue: (sw) => sw.brand },
-				{ label: 'Order status', getValue: (sw) => sw.purchase?.orderStatus }
+				{ label: 'Order status', getValue: (sw) => sw.purchase?.orderStatus },
+				{ label: 'Order date', getValue: (sw) => sw.purchase?.orderDate?.getTime() },
+				{ label: 'Delivery date', getValue: (sw) => sw.purchase?.deliveryDate?.getTime() }
 			]}
 >
 	{#snippet card(sw)}

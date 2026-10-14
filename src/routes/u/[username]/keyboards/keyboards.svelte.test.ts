@@ -157,6 +157,32 @@ describe('keyboards page', () => {
 			.not.toBeInTheDocument();
 	});
 
+	it('lets visitors sort by order and delivery dates', async () => {
+		api.listKeyboards.mockResolvedValue({
+			items: [
+				{
+					...manta,
+					purchase: { orderDate: new Date('2024-05-01'), deliveryDate: new Date('2024-06-01') }
+				},
+				{
+					...manta,
+					id: 'kb-2',
+					name: 'Zoom65',
+					purchase: { orderDate: new Date('2024-02-01'), deliveryDate: new Date('2024-09-01') }
+				}
+			]
+		});
+		renderPage(false);
+		const cards = () => page.getByRole('button', { name: /Manta|Zoom65/ });
+		await expect.element(cards().first()).toHaveTextContent('Manta');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await expect.element(cards().first()).toHaveTextContent('Zoom65');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await expect.element(cards().first()).toHaveTextContent('Manta');
+	});
+
 	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {
 		renderPage();
 		await openManta();

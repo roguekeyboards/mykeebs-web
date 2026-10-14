@@ -100,6 +100,21 @@ describe('sortItems', () => {
 		]);
 	});
 
+	it('keeps items without a value last in either direction', () => {
+		const byPrice = (item: Item) => item.price;
+
+		expect(names(sortItems([kafka, manta, agar], byPrice, byName, false))).toEqual([
+			'Agar',
+			'Manta',
+			'Kafka'
+		]);
+		expect(names(sortItems([kafka, agar, manta], byPrice, byName, true))).toEqual([
+			'Manta',
+			'Agar',
+			'Kafka'
+		]);
+	});
+
 	it('breaks ties by name, A to Z even when descending', () => {
 		const twin = { ...agar, id: 'twin', name: 'Aardvark' };
 

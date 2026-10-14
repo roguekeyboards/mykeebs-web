@@ -108,6 +108,32 @@ describe('switches page', () => {
 		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).not.toBeInTheDocument();
 	});
 
+	it('lets visitors sort by order and delivery dates', async () => {
+		api.listSwitches.mockResolvedValue({
+			items: [
+				{
+					...aperol,
+					purchase: { orderDate: new Date('2024-05-01'), deliveryDate: new Date('2024-06-01') }
+				},
+				{
+					...aperol,
+					id: 'sw-2',
+					name: 'Banana',
+					purchase: { orderDate: new Date('2024-02-01'), deliveryDate: new Date('2024-09-01') }
+				}
+			]
+		});
+		renderPage(false);
+		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
+		await expect.element(cards().first()).toHaveTextContent('Aperol');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await expect.element(cards().first()).toHaveTextContent('Banana');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await expect.element(cards().first()).toHaveTextContent('Aperol');
+	});
+
 	it('opens the photo full size', async () => {
 		renderPage();
 		await openAperol();

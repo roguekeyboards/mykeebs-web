@@ -10,7 +10,7 @@
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
 	import { keycapSetsApi, buildsApi } from '$lib/api/client';
 	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '$lib/stale-images';
-	import { adjacentKitId, primaryKitImageUrl } from '$lib/keycap-set';
+	import { adjacentKitId, earliestKitDate, primaryKitImageUrl } from '$lib/keycap-set';
 	import { getUserContext } from '$lib/user-context';
 	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -377,13 +377,17 @@
 				{ label: 'Name', getValue: (set) => set.name },
 				{ label: 'Brand', getValue: (set) => set.brand },
 				{ label: 'Order status', getValue: (set) => set.orderStatus ?? undefined },
+				{ label: 'Order date', getValue: (set) => earliestKitDate(set, 'orderDate') },
+				{ label: 'Delivery date', getValue: (set) => earliestKitDate(set, 'deliveryDate') },
 				{ label: 'Total cost', getValue: (set) => set.totalCost ?? undefined },
 				{ label: 'Visibility', getValue: (set) => set.visibility }
 			]
 		: [
 				{ label: 'Name', getValue: (set) => set.name },
 				{ label: 'Brand', getValue: (set) => set.brand },
-				{ label: 'Order status', getValue: (set) => set.orderStatus ?? undefined }
+				{ label: 'Order status', getValue: (set) => set.orderStatus ?? undefined },
+				{ label: 'Order date', getValue: (set) => earliestKitDate(set, 'orderDate') },
+				{ label: 'Delivery date', getValue: (set) => earliestKitDate(set, 'deliveryDate') }
 			]}
 >
 	{#snippet card(set)}
