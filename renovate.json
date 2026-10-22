@@ -16,6 +16,11 @@
 			"groupName": "node",
 			"matchManagers": ["mise", "nodenv", "npm"],
 			"matchPackageNames": ["node", "@types/node"]
+		},
+		{
+			"description": "adapter-static's majors require the matching SvelteKit major, so they arrive in one PR",
+			"groupName": "sveltekit",
+			"matchPackageNames": ["@sveltejs/kit", "@sveltejs/adapter-static"]
 		}
 	],
 	"hostRules": [
