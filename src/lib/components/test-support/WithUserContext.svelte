@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
-	import { setUserContext } from '$lib/user-context';
+	import { setUserContext } from '#lib/user-context.js';
 
 	let {
 		component: Inner,

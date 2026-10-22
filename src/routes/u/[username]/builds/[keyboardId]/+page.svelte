@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
@@ -11,28 +11,28 @@
 		Switch as SwitchModel
 	} from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
-	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '$lib/api/client';
+	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
 	import {
 		STALE_REFS_MESSAGE,
 		staleBuildRefsFromError,
 		type StaleBuildRefs
-	} from '$lib/build-refs';
-	import { formatDate, formatPrice, type PurchaseLike } from '$lib/format';
-	import { perItemImageRefetcher, updateWhere, withFreshImages } from '$lib/stale-images';
-	import { newestFirst } from '$lib/build-groups';
-	import { fetchAllPages } from '$lib/pagination';
-	import { stepIndex } from '$lib/step-index';
-	import { uploadImage } from '$lib/upload';
-	import { primaryImageUrl, viewableImages } from '$lib/image-moderation';
-	import { getUserContext } from '$lib/user-context';
-	import Modal from '$lib/components/Modal.svelte';
-	import ImageViewer from '$lib/components/ImageViewer.svelte';
-	import BuildDetails from '$lib/components/BuildDetails.svelte';
-	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
-	import BuildForm from '$lib/components/BuildForm.svelte';
-	import KeyboardDetails from '$lib/components/KeyboardDetails.svelte';
-	import SwitchDetails from '$lib/components/SwitchDetails.svelte';
-	import KeycapKitDetails from '$lib/components/KeycapKitDetails.svelte';
+	} from '#lib/build-refs.js';
+	import { formatDate, formatPrice, type PurchaseLike } from '#lib/format.js';
+	import { perItemImageRefetcher, updateWhere, withFreshImages } from '#lib/stale-images.js';
+	import { newestFirst } from '#lib/build-groups.js';
+	import { fetchAllPages } from '#lib/pagination.js';
+	import { stepIndex } from '#lib/step-index.js';
+	import { uploadImage } from '#lib/upload.js';
+	import { primaryImageUrl, viewableImages } from '#lib/image-moderation.js';
+	import { getUserContext } from '#lib/user-context.js';
+	import Modal from '#lib/components/Modal.svelte';
+	import ImageViewer from '#lib/components/ImageViewer.svelte';
+	import BuildDetails from '#lib/components/BuildDetails.svelte';
+	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
+	import BuildForm from '#lib/components/BuildForm.svelte';
+	import KeyboardDetails from '#lib/components/KeyboardDetails.svelte';
+	import SwitchDetails from '#lib/components/SwitchDetails.svelte';
+	import KeycapKitDetails from '#lib/components/KeycapKitDetails.svelte';
 
 	const userContext = getUserContext();
 	const showPrice = $derived(userContext.showPrice);

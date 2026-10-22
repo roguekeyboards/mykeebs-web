@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { Profile, ProfileListPage } from '@rogueserenity/kbdb-api-client';
 import { goto } from '$app/navigation';
-import { profilesApi } from '$lib/api/client';
+import { profilesApi } from '#lib/api/client.js';
 import BuilderSearch from './BuilderSearch.svelte';
 
-vi.mock('$lib/api/client', () => ({ profilesApi: { listProfiles: vi.fn() } }));
+vi.mock('#lib/api/client.js', () => ({ profilesApi: { listProfiles: vi.fn() } }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 const listProfiles = vi.mocked(profilesApi.listProfiles);

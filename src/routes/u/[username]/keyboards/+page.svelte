@@ -1,32 +1,32 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
-	import { keyboardsApi, buildsApi } from '$lib/api/client';
-	import { anyImageFailed, staleImageRefetcher, withFreshImages } from '$lib/stale-images';
-	import { formatPrice } from '$lib/format';
-	import { getUserContext } from '$lib/user-context';
-	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
-	import Modal from '$lib/components/Modal.svelte';
-	import DeleteBlocked from '$lib/components/DeleteBlocked.svelte';
-	import { deleteFailure } from '$lib/delete-blocked';
-	import type { KeyboardParts } from '$lib/keyboard-parts';
-	import { blockedRemovalMessage, removeParts, saveParts } from '$lib/keyboard-parts-save';
-	import { stepIndex } from '$lib/step-index';
+	import { keyboardsApi, buildsApi } from '#lib/api/client.js';
+	import { anyImageFailed, staleImageRefetcher, withFreshImages } from '#lib/stale-images.js';
+	import { formatPrice } from '#lib/format.js';
+	import { getUserContext } from '#lib/user-context.js';
+	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import Modal from '#lib/components/Modal.svelte';
+	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
+	import { deleteFailure } from '#lib/delete-blocked.js';
+	import type { KeyboardParts } from '#lib/keyboard-parts.js';
+	import { blockedRemovalMessage, removeParts, saveParts } from '#lib/keyboard-parts-save.js';
+	import { stepIndex } from '#lib/step-index.js';
 	import {
 		stagedUploadFollowUp,
 		stagedUploadOutcome,
 		uploadImage,
 		uploadStaged
-	} from '$lib/upload';
-	import PageNotice from '$lib/components/PageNotice.svelte';
-	import { anyPending, primaryImageUrl, viewableImages } from '$lib/image-moderation';
-	import ImageViewer from '$lib/components/ImageViewer.svelte';
-	import KeyboardDetails from '$lib/components/KeyboardDetails.svelte';
-	import KeyboardForm from '$lib/components/KeyboardForm.svelte';
-	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
-	import OrderStatusBadge from '$lib/components/OrderStatusBadge.svelte';
+	} from '#lib/upload.js';
+	import PageNotice from '#lib/components/PageNotice.svelte';
+	import { anyPending, primaryImageUrl, viewableImages } from '#lib/image-moderation.js';
+	import ImageViewer from '#lib/components/ImageViewer.svelte';
+	import KeyboardDetails from '#lib/components/KeyboardDetails.svelte';
+	import KeyboardForm from '#lib/components/KeyboardForm.svelte';
+	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
+	import OrderStatusBadge from '#lib/components/OrderStatusBadge.svelte';
 
 	const userContext = getUserContext();
 	const showPrice = $derived(userContext.showPrice);

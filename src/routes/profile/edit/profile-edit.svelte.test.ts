@@ -3,13 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
 import { goto } from '$app/navigation';
-import { profilesApi } from '$lib/api/client';
-import { refreshProfile, saveProfile } from '$lib/profile/profile.svelte';
+import { profilesApi } from '#lib/api/client.js';
+import { refreshProfile, saveProfile } from '#lib/profile/profile.svelte.js';
 import ProfileEditPage from './+page.svelte';
-import { prepareImage, UnsupportedImageError } from '$lib/image-resize';
+import { prepareImage, UnsupportedImageError } from '#lib/image-resize.js';
 
-vi.mock('$lib/image-resize', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/image-resize')>()),
+vi.mock('#lib/image-resize.js', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/image-resize.js')>()),
 	prepareImage: vi.fn(
 		async (file: File) =>
 			new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
@@ -35,15 +35,15 @@ const authState = vi.hoisted(() => ({
 	user: { id: 'user-1', email: null } as { id: string; email: null } | null
 }));
 
-vi.mock('$lib/auth/auth.svelte', () => ({ auth: authState }));
+vi.mock('#lib/auth/auth.svelte.js', () => ({ auth: authState }));
 const profileState = vi.hoisted(() => ({ status: 'ready', data: undefined as unknown }));
 
-vi.mock('$lib/profile/profile.svelte', () => ({
+vi.mock('#lib/profile/profile.svelte.js', () => ({
 	profile: profileState,
 	saveProfile: vi.fn(),
 	refreshProfile: vi.fn()
 }));
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	profilesApi: { setProfileImage: vi.fn(), deleteProfileImage: vi.fn() }
 }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));

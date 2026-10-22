@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
-	import { setUserContext } from '$lib/user-context';
+	import { setUserContext } from '#lib/user-context.js';
 	import BuildForm from '../BuildForm.svelte';
 
 	let { formProps }: { formProps: ComponentProps<typeof BuildForm> } = $props();

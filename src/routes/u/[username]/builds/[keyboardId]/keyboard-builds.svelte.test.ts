@@ -2,12 +2,12 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '$lib/api/client';
-import { STALE_REFS_MESSAGE } from '$lib/build-refs';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
+import { STALE_REFS_MESSAGE } from '#lib/build-refs.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardBuildsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));
@@ -15,7 +15,7 @@ vi.mock('$lib/image-resize', () => ({
 vi.mock('$app/state', () => ({
 	page: { params: { username: 'rogue.serenity', keyboardId: 'kb-1' } }
 }));
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	buildsApi: {
 		listBuilds: vi.fn(),
 		getBuild: vi.fn(),

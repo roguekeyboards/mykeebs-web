@@ -2,13 +2,13 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
-import { keyboardsApi } from '$lib/api/client';
-import { kitKey, type StaleBuildRefs } from '$lib/build-refs';
-import { MAX_IMAGES } from '$lib/image-limit';
+import { keyboardsApi } from '#lib/api/client.js';
+import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
+import { MAX_IMAGES } from '#lib/image-limit.js';
 import BuildFormWithUser from './test-support/BuildFormWithUser.svelte';
 import '../../routes/layout.css';
 
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) },
 	keyboardsApi: { getKeyboard: vi.fn(async () => ({ id: 'kb', brand: '', name: '' })) },
 	switchesApi: {},

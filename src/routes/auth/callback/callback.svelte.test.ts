@@ -2,14 +2,14 @@ import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { goto } from '$app/navigation';
-import { consumeStateMatches, exchangeCodeForToken } from '$lib/auth/auth.svelte';
+import { consumeStateMatches, exchangeCodeForToken } from '#lib/auth/auth.svelte.js';
 import CallbackPage from './+page.svelte';
 
 const pageState = vi.hoisted(() => ({ url: new URL('http://localhost/auth/callback') }));
 
 vi.mock('$app/state', () => ({ page: pageState }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
-vi.mock('$lib/auth/auth.svelte', () => ({
+vi.mock('#lib/auth/auth.svelte.js', () => ({
 	consumeStateMatches: vi.fn(),
 	exchangeCodeForToken: vi.fn()
 }));

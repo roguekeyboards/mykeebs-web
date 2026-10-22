@@ -7,16 +7,16 @@ import {
 	Visibility,
 	type Switch
 } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, switchesApi } from '$lib/api/client';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { buildsApi, switchesApi } from '#lib/api/client.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import SwitchesPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));
 
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	switchesApi: {
 		listSwitches: vi.fn(),
 		getSwitch: vi.fn(),

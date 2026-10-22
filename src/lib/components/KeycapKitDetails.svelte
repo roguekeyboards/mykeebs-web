@@ -1,9 +1,9 @@
 <script lang="ts">
-	import PurchaseDetails from '$lib/components/PurchaseDetails.svelte';
-	import type { PurchaseLike } from '$lib/format';
-	import { isPending, type ModeratedImage } from '$lib/image-moderation';
-	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
-	import RejectedImage from '$lib/components/RejectedImage.svelte';
+	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
+	import type { PurchaseLike } from '#lib/format.js';
+	import { isPending, type ModeratedImage } from '#lib/image-moderation.js';
+	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '#lib/components/RejectedImage.svelte';
 
 	let {
 		name,

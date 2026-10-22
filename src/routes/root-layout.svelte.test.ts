@@ -7,17 +7,17 @@ import Layout from './+layout.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/discover') } }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
-vi.mock('$lib/auth/auth.svelte', () => ({
+vi.mock('#lib/auth/auth.svelte.js', () => ({
 	initAuth: vi.fn(async () => {}),
 	signIn: vi.fn(),
 	signOut: vi.fn(),
 	auth: { status: 'signed-out', user: null }
 }));
-vi.mock('$lib/profile/profile.svelte', () => ({
+vi.mock('#lib/profile/profile.svelte.js', () => ({
 	initProfile: vi.fn(),
 	profile: { status: 'idle', data: null }
 }));
-vi.mock('$lib/api/client', () => ({ profilesApi: { listProfiles: vi.fn() } }));
+vi.mock('#lib/api/client.js', () => ({ profilesApi: { listProfiles: vi.fn() } }));
 
 const content = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
 

@@ -2,18 +2,18 @@ import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, keyboardsApi } from '$lib/api/client';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { buildsApi, keyboardsApi } from '#lib/api/client.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import BuildsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.
 		if (file.name === 'a.jpg') await new Promise((resolve) => setTimeout(resolve, 50));
 		return new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' });
 	}
 }));
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	buildsApi: {
 		listBuilds: vi.fn(),
 		getBuild: vi.fn(),

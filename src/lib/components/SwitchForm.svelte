@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { isPending, uploadErrorMessage } from '$lib/image-moderation';
-	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
-	import RejectedImage from '$lib/components/RejectedImage.svelte';
+	import { isPending, uploadErrorMessage } from '#lib/image-moderation.js';
+	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
 	import type { Switch as SwitchModel, SwitchInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
-	import { lookupsApi } from '$lib/api/client';
-	import { toDateInput, todayDateInput } from '$lib/format';
+	import { lookupsApi } from '#lib/api/client.js';
+	import { toDateInput, todayDateInput } from '#lib/format.js';
 
 	let {
 		initial,

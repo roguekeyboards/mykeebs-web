@@ -8,12 +8,12 @@ import {
 	type Switch as SwitchModel,
 	type SwitchInput
 } from '@rogueserenity/kbdb-api-client';
-import { lookupsApi } from '$lib/api/client';
-import { todayDateInput } from '$lib/format';
+import { lookupsApi } from '#lib/api/client.js';
+import { todayDateInput } from '#lib/format.js';
 import SwitchForm from './SwitchForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';
 
-vi.mock('$lib/api/client', () => ({ lookupsApi: { getLookup: vi.fn() } }));
+vi.mock('#lib/api/client.js', () => ({ lookupsApi: { getLookup: vi.fn() } }));
 
 const lookups: Record<string, string[]> = {
 	switch_type: ['Linear', 'Tactile', 'Clicky'],

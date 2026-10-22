@@ -2,16 +2,16 @@ import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, type KeycapSet } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, keycapSetsApi } from '$lib/api/client';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { buildsApi, keycapSetsApi } from '#lib/api/client.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
 }));
 
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	keycapSetsApi: {
 		listKeycapSets: vi.fn(),
 		getKeycapSet: vi.fn(),

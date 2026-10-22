@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
-	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '$lib/api/client';
-	import { formatPrice } from '$lib/format';
-	import { getUserContext } from '$lib/user-context';
+	import { pageTitle } from '#lib/page-title.js';
+	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
+	import { formatPrice } from '#lib/format.js';
+	import { getUserContext } from '#lib/user-context.js';
 	import { resolve } from '$app/paths';
 	import {
 		STATUS_FILTERS,
 		statusFilterIcon,
 		statusFilterLabel,
 		type StatusFilter
-	} from '$lib/order-status';
+	} from '#lib/order-status.js';
 	import {
 		collectionStats,
 		countsFor,
 		totalsFor,
 		type CollectionStats,
 		type Tally
-	} from '$lib/collection-stats';
+	} from '#lib/collection-stats.js';
 
 	const userContext = getUserContext();
 	const showPrices = $derived(userContext.showPrice);

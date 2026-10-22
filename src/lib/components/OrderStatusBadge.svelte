@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { orderStatusClass } from '$lib/format';
-	import { orderStatusIcon } from '$lib/order-status';
+	import { orderStatusClass } from '#lib/format.js';
+	import { orderStatusIcon } from '#lib/order-status.js';
 
 	let { status, showLabel = false }: { status: string; showLabel?: boolean } = $props();
 

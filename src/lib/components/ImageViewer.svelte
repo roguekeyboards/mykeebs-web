@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight, X } from '@lucide/svelte';
-	import { clampOffset } from '$lib/pan';
+	import { clampOffset } from '#lib/pan.js';
 	let {
 		open,
 		src,

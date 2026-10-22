@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
 
-vi.mock('$lib/auth/auth.svelte', async () => {
-	const { authState } = await import('$lib/test-support/auth-state.svelte');
+vi.mock('#lib/auth/auth.svelte.js', async () => {
+	const { authState } = await import('#lib/test-support/auth-state.svelte.js');
 	return { auth: authState };
 });
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	profilesApi: { getProfile: vi.fn(), createProfile: vi.fn(), updateProfile: vi.fn() }
 }));
 
@@ -30,9 +30,9 @@ function signIn(id = 'user-1') {
 
 beforeEach(async () => {
 	vi.resetModules();
-	({ authState } = await import('$lib/test-support/auth-state.svelte'));
+	({ authState } = await import('#lib/test-support/auth-state.svelte.js'));
 	authState.user = null;
-	api = (await import('$lib/api/client')).profilesApi as never;
+	api = (await import('#lib/api/client.js')).profilesApi as never;
 	api.getProfile.mockReset().mockResolvedValue(rogue);
 	api.createProfile.mockReset();
 	api.updateProfile.mockReset();

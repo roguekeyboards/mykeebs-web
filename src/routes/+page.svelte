@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { auth, signIn } from '$lib/auth/auth.svelte';
-	import { profile } from '$lib/profile/profile.svelte';
+	import { auth, signIn } from '#lib/auth/auth.svelte.js';
+	import { profile } from '#lib/profile/profile.svelte.js';
 
 	$effect(() => {
 		if (auth.status !== 'signed-in') return;

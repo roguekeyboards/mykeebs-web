@@ -1,4 +1,4 @@
-import type { StatusFilter } from '$lib/order-status';
+import type { StatusFilter } from '#lib/order-status.js';
 
 export type SortValue = string | number | undefined;
 

@@ -3,7 +3,7 @@
 	import type { KeycapSet, KeycapSetInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
-	import { lookupsApi } from '$lib/api/client';
+	import { lookupsApi } from '#lib/api/client.js';
 
 	let {
 		initial,

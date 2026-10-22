@@ -7,11 +7,11 @@ import {
 	Visibility,
 	type Keyboard
 } from '@rogueserenity/kbdb-api-client';
-import { buildsApi, keyboardsApi, lookupsApi } from '$lib/api/client';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { buildsApi, keyboardsApi, lookupsApi } from '#lib/api/client.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
 
-vi.mock('$lib/image-resize', () => ({
+vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.
 		if (file.name === 'a.png') await new Promise((resolve) => setTimeout(resolve, 50));
@@ -19,7 +19,7 @@ vi.mock('$lib/image-resize', () => ({
 	}
 }));
 
-vi.mock('$lib/api/client', () => ({
+vi.mock('#lib/api/client.js', () => ({
 	keyboardsApi: {
 		listKeyboards: vi.fn(),
 		getKeyboard: vi.fn(),

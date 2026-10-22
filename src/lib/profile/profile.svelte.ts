@@ -1,7 +1,7 @@
 import type { Profile, ProfileInput } from '@rogueserenity/kbdb-api-client';
 import { ResponseError } from '@rogueserenity/kbdb-api-client';
-import { auth } from '$lib/auth/auth.svelte';
-import { profilesApi } from '$lib/api/client';
+import { auth } from '#lib/auth/auth.svelte.js';
+import { profilesApi } from '#lib/api/client.js';
 
 type ProfileState =
 	| { status: 'idle' }

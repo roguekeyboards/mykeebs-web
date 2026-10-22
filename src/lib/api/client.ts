@@ -8,7 +8,7 @@ import {
 	SwitchesApi
 } from '@rogueserenity/kbdb-api-client';
 import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
-import { getAccessToken } from '$lib/auth/auth.svelte';
+import { getAccessToken } from '#lib/auth/auth.svelte.js';
 
 const configuration = new Configuration({
 	basePath: PUBLIC_KBDB_API_BASE_PATH,

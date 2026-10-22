@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDate, formatPrice, type PurchaseLike } from '$lib/format';
+	import { formatDate, formatPrice, type PurchaseLike } from '#lib/format.js';
 	import OrderStatusBadge from './OrderStatusBadge.svelte';
 
 	let {
