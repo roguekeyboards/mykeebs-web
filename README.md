@@ -21,7 +21,7 @@ identity kbdb's REST API already trusts, and styled with Skeleton UI.
 ## Setup
 
 ```sh
-cp .env.example .env   # fill in PUBLIC_STYTCH_CLIENT_ID / PUBLIC_KBDB_API_BASE_PATH
+cp .env.example .env   # fill in PUBLIC_STYTCH_CLIENT_ID / PUBLIC_KBDB_API_BASE_PATH / PUBLIC_OIDC_ISSUER
 mise install
 eval "$(mise env)"
 npm install
