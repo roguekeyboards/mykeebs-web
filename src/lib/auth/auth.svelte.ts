@@ -1,5 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-import { PUBLIC_STYTCH_CLIENT_ID } from '$env/static/public';
+import { PUBLIC_STYTCH_CLIENT_ID } from '$app/env/public';
 import { oidcEndpoints } from './oidc';
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce';
 

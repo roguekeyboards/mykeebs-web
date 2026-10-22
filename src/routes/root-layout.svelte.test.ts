@@ -2,7 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
-import { PUBLIC_KBDB_API_BASE_PATH } from '$env/static/public';
+import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 import Layout from './+layout.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/discover') } }));

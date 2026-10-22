@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
-	import { PUBLIC_KBDB_API_BASE_PATH } from '$env/static/public';
+	import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { initAuth } from '$lib/auth/auth.svelte';
