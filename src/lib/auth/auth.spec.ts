@@ -3,12 +3,18 @@ import { PUBLIC_STYTCH_CLIENT_ID } from '$env/static/public';
 import { generateCodeChallenge } from './pkce';
 
 const ORIGIN = 'http://localhost:5173';
-const TOKEN_ENDPOINT = 'https://auth.jay.mykeebs.dev/v1/oauth2/token';
+const AUTHORIZE_ENDPOINT = 'https://idp.test/authorize';
+const TOKEN_ENDPOINT = 'https://issuer.test/token';
+const END_SESSION_ENDPOINT = 'https://idp.test/end-session';
+
+const oidcEndpoints = vi.hoisted(() => vi.fn());
+vi.mock('./oidc', () => ({ oidcEndpoints }));
 
 const VERIFIER_KEY = 'stytch_pkce_code_verifier';
 const STATE_KEY = 'stytch_oauth_state';
 const ACCESS_KEY = 'stytch_access_token';
 const REFRESH_KEY = 'stytch_refresh_token';
+const ID_TOKEN_KEY = 'stytch_id_token';
 
 type AuthModule = typeof import('./auth.svelte');
 let authModule: AuthModule;
@@ -44,6 +50,11 @@ beforeEach(async () => {
 	vi.stubGlobal('window', { location: { origin: ORIGIN, assign } });
 	fetchMock = vi.fn();
 	vi.stubGlobal('fetch', fetchMock);
+	oidcEndpoints.mockReset().mockResolvedValue({
+		authorization: AUTHORIZE_ENDPOINT,
+		token: TOKEN_ENDPOINT,
+		endSession: END_SESSION_ENDPOINT
+	});
 
 	vi.resetModules();
 	authModule = await import('./auth.svelte');
@@ -93,7 +104,7 @@ describe('signIn', () => {
 		expect(storedState).toBeTruthy();
 
 		const url = new URL(assign.mock.calls[0][0]);
-		expect(url.origin + url.pathname).toBe('https://api.jay.mykeebs.dev/authorize');
+		expect(url.origin + url.pathname).toBe(AUTHORIZE_ENDPOINT);
 		expect(Object.fromEntries(url.searchParams)).toEqual({
 			client_id: PUBLIC_STYTCH_CLIENT_ID,
 			redirect_uri: `${ORIGIN}/auth/callback`,
@@ -114,6 +125,16 @@ describe('signIn', () => {
 		expect(second[0]).not.toBe(first[0]);
 		expect(second[1]).not.toBe(first[1]);
 	});
+
+	it('goes nowhere and stores nothing when discovery fails', async () => {
+		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+
+		await expect(authModule.signIn()).rejects.toThrow(/discovery/);
+
+		expect(assign).not.toHaveBeenCalled();
+		expect(localStorage.getItem(VERIFIER_KEY)).toBeNull();
+		expect(localStorage.getItem(STATE_KEY)).toBeNull();
+	});
 });
 
 describe('exchangeCodeForToken', () => {
@@ -125,7 +146,9 @@ describe('exchangeCodeForToken', () => {
 	it('trades the code and verifier for tokens and signs the user in', async () => {
 		localStorage.setItem(VERIFIER_KEY, 'verifier-1');
 		const access = tokenExpiringIn(3600, 'user-9', 'jay@example.com');
-		fetchMock.mockResolvedValue(tokenResponse({ access_token: access, refresh_token: 'r-1' }));
+		fetchMock.mockResolvedValue(
+			tokenResponse({ access_token: access, refresh_token: 'r-1', id_token: 'id-1' })
+		);
 
 		await authModule.exchangeCodeForToken('code-1');
 
@@ -139,6 +162,7 @@ describe('exchangeCodeForToken', () => {
 		});
 		expect(localStorage.getItem(ACCESS_KEY)).toBe(access);
 		expect(localStorage.getItem(REFRESH_KEY)).toBe('r-1');
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBe('id-1');
 		expect(localStorage.getItem(VERIFIER_KEY)).toBeNull();
 		expect(authModule.auth.status).toBe('signed-in');
 		expect(authModule.auth.user).toEqual({ id: 'user-9', email: 'jay@example.com' });
@@ -152,6 +176,28 @@ describe('exchangeCodeForToken', () => {
 
 		expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
 		expect(authModule.auth.status).toBe('signed-in');
+	});
+
+	it("drops the previous session's refresh and ID tokens when the new response has none", async () => {
+		localStorage.setItem(REFRESH_KEY, 'old-r');
+		localStorage.setItem(ID_TOKEN_KEY, 'old-id');
+		localStorage.setItem(VERIFIER_KEY, 'verifier-1');
+		fetchMock.mockResolvedValue(tokenResponse({ access_token: tokenExpiringIn(3600) }));
+
+		await authModule.exchangeCodeForToken('code-1');
+
+		expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBeNull();
+	});
+
+	it('keeps the verifier for a retry when discovery fails', async () => {
+		localStorage.setItem(VERIFIER_KEY, 'verifier-1');
+		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+
+		await expect(authModule.exchangeCodeForToken('code-1')).rejects.toThrow(/discovery/);
+
+		expect(localStorage.getItem(VERIFIER_KEY)).toBe('verifier-1');
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	it('fails without storing anything, and the verifier stays spent', async () => {
@@ -169,6 +215,17 @@ describe('exchangeCodeForToken', () => {
 describe('initAuth', () => {
 	it('starts out loading', () => {
 		expect(authModule.auth.status).toBe('loading');
+	});
+
+	it('starts discovery early, so sign-in and sign-out rarely wait on it', async () => {
+		await authModule.initAuth();
+		expect(oidcEndpoints).toHaveBeenCalledOnce();
+	});
+
+	it('tolerates a failed early discovery', async () => {
+		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+		await authModule.initAuth();
+		expect(authModule.auth.status).toBe('signed-out');
 	});
 
 	it('signs in from a stored token', async () => {
@@ -233,19 +290,48 @@ describe('initAuth', () => {
 });
 
 describe('signOut', () => {
-	it('drops both tokens and hands off to the kbdb logout page', async () => {
+	it('drops every token and hands off to the end-session endpoint with the ID token as a hint', async () => {
 		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(3600));
 		localStorage.setItem(REFRESH_KEY, 'r-1');
+		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
 		await authModule.initAuth();
 
-		authModule.signOut();
+		await authModule.signOut();
 
 		expect(localStorage.getItem(ACCESS_KEY)).toBeNull();
 		expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBeNull();
 		expect(authModule.auth.status).toBe('signed-out');
 		const url = new URL(assign.mock.calls[0][0]);
-		expect(url.origin + url.pathname).toBe('https://api.jay.mykeebs.dev/logout');
-		expect(url.searchParams.get('return_to')).toBe(ORIGIN);
+		expect(url.origin + url.pathname).toBe(END_SESSION_ENDPOINT);
+		expect(Object.fromEntries(url.searchParams)).toEqual({
+			client_id: PUBLIC_STYTCH_CLIENT_ID,
+			post_logout_redirect_uri: `${ORIGIN}/`,
+			id_token_hint: 'id-1'
+		});
+	});
+
+	it('still hands off without a hint when no ID token was stored', async () => {
+		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(3600));
+
+		await authModule.signOut();
+
+		const url = new URL(assign.mock.calls[0][0]);
+		expect(url.searchParams.has('id_token_hint')).toBe(false);
+	});
+
+	it('signs out locally even when discovery fails', async () => {
+		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(3600));
+		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
+		await authModule.initAuth();
+		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+
+		await expect(authModule.signOut()).rejects.toThrow(/discovery/);
+
+		expect(localStorage.getItem(ACCESS_KEY)).toBeNull();
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBeNull();
+		expect(authModule.auth.status).toBe('signed-out');
+		expect(assign).not.toHaveBeenCalled();
 	});
 });
 
@@ -305,14 +391,42 @@ describe('getAccessToken', () => {
 		expect(authModule.auth.user).toEqual({ id: 'user-1', email: 'new@b.c' });
 	});
 
-	it('keeps the old refresh token when the response does not rotate it', async () => {
+	it('keeps the old refresh and ID tokens when the response does not rotate them', async () => {
 		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(30));
 		localStorage.setItem(REFRESH_KEY, 'r-1');
+		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
 		fetchMock.mockResolvedValue(tokenResponse({ access_token: tokenExpiringIn(3600) }));
 
 		await authModule.getAccessToken();
 
 		expect(localStorage.getItem(REFRESH_KEY)).toBe('r-1');
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBe('id-1');
+	});
+
+	it('replaces the ID token when a refresh returns a new one', async () => {
+		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(30));
+		localStorage.setItem(REFRESH_KEY, 'r-1');
+		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
+		fetchMock.mockResolvedValue(
+			tokenResponse({ access_token: tokenExpiringIn(3600), refresh_token: 'r-2', id_token: 'id-2' })
+		);
+
+		await authModule.getAccessToken();
+
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBe('id-2');
+	});
+
+	it('keeps the tokens when discovery fails, so a later refresh can retry', async () => {
+		const token = tokenExpiringIn(30);
+		localStorage.setItem(ACCESS_KEY, token);
+		localStorage.setItem(REFRESH_KEY, 'r-1');
+		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+
+		await expect(authModule.getAccessToken()).rejects.toThrow(/discovery/);
+
+		expect(localStorage.getItem(ACCESS_KEY)).toBe(token);
+		expect(localStorage.getItem(REFRESH_KEY)).toBe('r-1');
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	// Stytch rotates the refresh token per exchange, so a second concurrent
@@ -355,6 +469,7 @@ describe('getAccessToken', () => {
 	it('signs out and rejects every waiting caller when the refresh fails', async () => {
 		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(30));
 		localStorage.setItem(REFRESH_KEY, 'r-1');
+		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
 		await authModule.initAuth();
 		fetchMock.mockResolvedValue(new Response('invalid_grant', { status: 400 }));
 
@@ -367,6 +482,7 @@ describe('getAccessToken', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(localStorage.getItem(ACCESS_KEY)).toBeNull();
 		expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+		expect(localStorage.getItem(ID_TOKEN_KEY)).toBeNull();
 		expect(authModule.auth.status).toBe('signed-out');
 	});
 });

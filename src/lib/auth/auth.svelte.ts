@@ -1,17 +1,13 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
 import { PUBLIC_STYTCH_CLIENT_ID } from '$env/static/public';
+import { oidcEndpoints } from './oidc';
 import { generateCodeChallenge, generateCodeVerifier, generateState } from './pkce';
-
-// AUTHORIZE/LOGOUT are kbdb's own hosted consent pages, not paths under the
-// Stytch issuer: Connected Apps requires the app to host its own consent UI.
-const AUTHORIZE_ENDPOINT = 'https://api.jay.mykeebs.dev/authorize';
-const LOGOUT_ENDPOINT = 'https://api.jay.mykeebs.dev/logout';
-const TOKEN_ENDPOINT = 'https://auth.jay.mykeebs.dev/v1/oauth2/token';
 
 const CODE_VERIFIER_KEY = 'stytch_pkce_code_verifier';
 const STATE_KEY = 'stytch_oauth_state';
 const ACCESS_TOKEN_KEY = 'stytch_access_token';
 const REFRESH_TOKEN_KEY = 'stytch_refresh_token';
+const ID_TOKEN_KEY = 'stytch_id_token';
 
 const REFRESH_SKEW_SECONDS = 60;
 
@@ -39,6 +35,7 @@ function decodeAccessTokenPayload(token: string): AccessTokenPayload | null {
 function clearStoredTokens() {
 	localStorage.removeItem(ACCESS_TOKEN_KEY);
 	localStorage.removeItem(REFRESH_TOKEN_KEY);
+	localStorage.removeItem(ID_TOKEN_KEY);
 }
 
 function syncFromStoredToken() {
@@ -52,6 +49,7 @@ function syncFromStoredToken() {
 
 export function initAuth(): Promise<void> {
 	if (!initPromise) {
+		oidcEndpoints().catch(() => {});
 		initPromise = Promise.resolve().then(() => {
 			try {
 				syncFromStoredToken();
@@ -64,6 +62,7 @@ export function initAuth(): Promise<void> {
 }
 
 export async function signIn(): Promise<void> {
+	const { authorization } = await oidcEndpoints();
 	const verifier = generateCodeVerifier();
 	const challenge = await generateCodeChallenge(verifier);
 	localStorage.setItem(CODE_VERIFIER_KEY, verifier);
@@ -85,7 +84,7 @@ export async function signIn(): Promise<void> {
 		code_challenge_method: 'S256'
 	});
 
-	window.location.assign(`${AUTHORIZE_ENDPOINT}?${params.toString()}`);
+	window.location.assign(`${authorization}?${params.toString()}`);
 }
 
 // Consumes the stored `state` and reports whether the redirect's matches it.
@@ -102,10 +101,11 @@ export async function exchangeCodeForToken(code: string): Promise<void> {
 	if (!verifier) {
 		throw new Error('No PKCE code_verifier found - signIn() was not called in this browser');
 	}
-	localStorage.removeItem(CODE_VERIFIER_KEY);
 
+	const { token } = await oidcEndpoints();
+	localStorage.removeItem(CODE_VERIFIER_KEY);
 	const redirectUri = `${window.location.origin}/auth/callback`;
-	const response = await fetch(TOKEN_ENDPOINT, {
+	const response = await fetch(token, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new SvelteURLSearchParams({
@@ -121,15 +121,22 @@ export async function exchangeCodeForToken(code: string): Promise<void> {
 		throw new Error(`Token exchange failed: ${response.status} ${await response.text()}`);
 	}
 
-	const { access_token, refresh_token } = (await response.json()) as {
-		access_token: string;
-		refresh_token?: string;
-	};
+	clearStoredTokens();
+	storeTokens(await response.json());
+}
+
+type TokenResponse = { access_token: string; refresh_token?: string; id_token?: string };
+
+function storeTokens({ access_token, refresh_token, id_token }: TokenResponse): string {
 	localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
 	if (refresh_token) {
 		localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
 	}
+	if (id_token) {
+		localStorage.setItem(ID_TOKEN_KEY, id_token);
+	}
 	syncFromStoredToken();
+	return access_token;
 }
 
 // Public PKCE client: Stytch rotates the refresh token on every exchange, so
@@ -152,7 +159,8 @@ async function exchangeRefreshToken(): Promise<string> {
 		throw new Error('No refresh token available');
 	}
 
-	const response = await fetch(TOKEN_ENDPOINT, {
+	const { token } = await oidcEndpoints();
+	const response = await fetch(token, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new SvelteURLSearchParams({
@@ -168,16 +176,7 @@ async function exchangeRefreshToken(): Promise<string> {
 		throw new Error(`Token refresh failed: ${response.status} ${await response.text()}`);
 	}
 
-	const { access_token, refresh_token } = (await response.json()) as {
-		access_token: string;
-		refresh_token?: string;
-	};
-	localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
-	if (refresh_token) {
-		localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
-	}
-	syncFromStoredToken();
-	return access_token;
+	return storeTokens(await response.json());
 }
 
 export const auth = {
@@ -189,15 +188,20 @@ export const auth = {
 	}
 };
 
-// The Stytch session lives on kbdb's origin, so revoking it has to happen
-// there rather than via session.revoke() here.
-export function signOut(): void {
-	localStorage.removeItem(ACCESS_TOKEN_KEY);
-	localStorage.removeItem(REFRESH_TOKEN_KEY);
+export async function signOut(): Promise<void> {
+	const idToken = localStorage.getItem(ID_TOKEN_KEY);
+	clearStoredTokens();
 	syncFromStoredToken();
 
-	const params = new SvelteURLSearchParams({ return_to: window.location.origin });
-	window.location.assign(`${LOGOUT_ENDPOINT}?${params.toString()}`);
+	const { endSession } = await oidcEndpoints();
+	const params = new SvelteURLSearchParams({
+		client_id: PUBLIC_STYTCH_CLIENT_ID,
+		post_logout_redirect_uri: `${window.location.origin}/`
+	});
+	if (idToken) {
+		params.set('id_token_hint', idToken);
+	}
+	window.location.assign(`${endSession}?${params.toString()}`);
 }
 
 // Called per-request by the generated client. Returns '' when signed out
