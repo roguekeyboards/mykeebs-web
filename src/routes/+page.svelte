@@ -10,12 +10,12 @@
 		if (profile.status === 'loading' || profile.status === 'idle') return;
 		if (profile.status === 'ready') {
 			goto(resolve('/u/[username]/keyboards', { username: profile.data!.username }), {
-				replaceState: true
+				replace: true
 			});
 		} else if (profile.status === 'none') {
-			goto(resolve('profile/edit'), { replaceState: true });
+			goto(resolve('profile/edit'), { replace: true });
 		} else {
-			goto(resolve('discover'), { replaceState: true });
+			goto(resolve('discover'), { replace: true });
 		}
 	});
 </script>

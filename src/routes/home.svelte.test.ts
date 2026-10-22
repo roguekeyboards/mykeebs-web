@@ -66,7 +66,7 @@ describe('home page', () => {
 			render(HomePage);
 
 			await vi.waitFor(() =>
-				expect(goto).toHaveBeenCalledWith('/u/rogue.serenity/keyboards', { replaceState: true })
+				expect(goto).toHaveBeenCalledWith('/u/rogue.serenity/keyboards', { replace: true })
 			);
 		});
 
@@ -75,9 +75,7 @@ describe('home page', () => {
 
 			render(HomePage);
 
-			await vi.waitFor(() =>
-				expect(goto).toHaveBeenCalledWith('/profile/edit', { replaceState: true })
-			);
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/profile/edit', { replace: true }));
 		});
 
 		it('waits, showing nothing, while the profile loads', async () => {

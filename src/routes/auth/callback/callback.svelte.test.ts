@@ -36,7 +36,7 @@ describe('Auth callback page', () => {
 
 		render(CallbackPage);
 
-		await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/', { replaceState: true }));
+		await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/', { replace: true }));
 		expect(consume).toHaveBeenCalledWith('state-1');
 		expect(exchange).toHaveBeenCalledWith('code-1');
 	});

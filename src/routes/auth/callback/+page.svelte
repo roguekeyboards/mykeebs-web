@@ -23,9 +23,9 @@
 		}
 
 		exchangeCodeForToken(code)
-			// replaceState drops ?code= from history, keeping the single-use
+			// replace drops ?code= from history, keeping the single-use
 			// code out of back-navigation and the Referer of later requests.
-			.then(() => goto(resolve('/'), { replaceState: true }))
+			.then(() => goto(resolve('/'), { replace: true }))
 			.catch(() => {
 				error = 'Sign-in failed. Please try again.';
 			});
