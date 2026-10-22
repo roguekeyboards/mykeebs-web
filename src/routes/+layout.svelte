@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
+	import { PUBLIC_KBDB_API_BASE_PATH } from '$env/static/public';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { initAuth } from '$lib/auth/auth.svelte';
@@ -12,6 +13,9 @@
 	import { setProfileSubNavContext, type ProfileSubNavContext } from '$lib/profile-subnav-context';
 
 	let { children } = $props();
+
+	const privacyUrl = new URL('/privacy', PUBLIC_KBDB_API_BASE_PATH).href;
+	const termsUrl = new URL('/terms', PUBLIC_KBDB_API_BASE_PATH).href;
 
 	const profileSubNav: ProfileSubNavContext = $state({ items: [] });
 	setProfileSubNavContext(profileSubNav);
@@ -114,3 +118,8 @@
 <main id="main" tabindex="-1">
 	{@render children()}
 </main>
+<footer class="app-footer">
+	<a href={privacyUrl} rel="external">Privacy Policy</a>
+	<a href={termsUrl} rel="external">Terms of Service</a>
+	<a href="mailto:support@mykeebs.com">support@mykeebs.com</a>
+</footer>

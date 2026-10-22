@@ -2,6 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
+import { PUBLIC_KBDB_API_BASE_PATH } from '$env/static/public';
 import Layout from './+layout.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/discover') } }));
@@ -55,5 +56,21 @@ describe('root layout', () => {
 		} finally {
 			await page.viewport(414, 896);
 		}
+	});
+
+	it("links kbdb's privacy policy and terms, and the support address, from the footer", async () => {
+		renderLayout();
+		const footer = page.getByRole('contentinfo');
+
+		const kbdbOrigin = new URL(PUBLIC_KBDB_API_BASE_PATH).origin;
+		await expect
+			.element(footer.getByRole('link', { name: 'Privacy Policy' }))
+			.toHaveAttribute('href', `${kbdbOrigin}/privacy`);
+		await expect
+			.element(footer.getByRole('link', { name: 'Terms of Service' }))
+			.toHaveAttribute('href', `${kbdbOrigin}/terms`);
+		await expect
+			.element(footer.getByRole('link', { name: 'support@mykeebs.com' }))
+			.toHaveAttribute('href', 'mailto:support@mykeebs.com');
 	});
 });
