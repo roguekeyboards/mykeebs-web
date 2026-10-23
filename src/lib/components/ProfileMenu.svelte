@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { auth, signOut } from '#lib/auth/auth.svelte.js';
+	import { signOut } from '#lib/auth/auth.svelte.js';
 	import { profile } from '#lib/profile/profile.svelte.js';
 	import Avatar from '#lib/components/Avatar.svelte';
 
-	let displayName = $derived(profile.data?.username ?? auth.user?.email?.split('@')[0] ?? 'you');
+	let displayName = $derived(profile.data?.username ?? 'you');
 	let hasProfile = $derived(profile.status === 'ready');
 
 	let open = $state(false);

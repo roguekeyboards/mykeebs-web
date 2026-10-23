@@ -27,8 +27,8 @@ function jwt(payload: Record<string, unknown>): string {
 	return `${encode({ alg: 'none' })}.${encode(payload)}.sig`;
 }
 
-function tokenExpiringIn(seconds: number, sub = 'user-1', email = 'a@b.c'): string {
-	return jwt({ sub, email, exp: Math.floor(Date.now() / 1000) + seconds });
+function tokenExpiringIn(seconds: number, sub = 'user-1'): string {
+	return jwt({ sub, exp: Math.floor(Date.now() / 1000) + seconds });
 }
 
 function tokenResponse(body: Record<string, unknown>): Response {
@@ -145,7 +145,7 @@ describe('exchangeCodeForToken', () => {
 
 	it('trades the code and verifier for tokens and signs the user in', async () => {
 		localStorage.setItem(VERIFIER_KEY, 'verifier-1');
-		const access = tokenExpiringIn(3600, 'user-9', 'jay@example.com');
+		const access = tokenExpiringIn(3600, 'user-9');
 		fetchMock.mockResolvedValue(
 			tokenResponse({ access_token: access, refresh_token: 'r-1', id_token: 'id-1' })
 		);
@@ -165,7 +165,7 @@ describe('exchangeCodeForToken', () => {
 		expect(localStorage.getItem(ID_TOKEN_KEY)).toBe('id-1');
 		expect(localStorage.getItem(VERIFIER_KEY)).toBeNull();
 		expect(authModule.auth.status).toBe('signed-in');
-		expect(authModule.auth.user).toEqual({ id: 'user-9', email: 'jay@example.com' });
+		expect(authModule.auth.user).toEqual({ id: 'user-9' });
 	});
 
 	it('signs in without a refresh token when none is issued', async () => {
@@ -229,19 +229,22 @@ describe('initAuth', () => {
 	});
 
 	it('signs in from a stored token', async () => {
-		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(3600, 'user-1', 'a@b.c'));
+		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(3600, 'user-1'));
 
 		await authModule.initAuth();
 
-		expect(authModule.auth.user).toEqual({ id: 'user-1', email: 'a@b.c' });
+		expect(authModule.auth.user).toEqual({ id: 'user-1' });
 	});
 
-	it('reports a missing email as null', async () => {
-		localStorage.setItem(ACCESS_KEY, jwt({ sub: 'user-1', exp: 9999999999 }));
+	it('keeps only the user id, even when the token carries an email', async () => {
+		localStorage.setItem(
+			ACCESS_KEY,
+			jwt({ sub: 'user-1', email: 'jay@example.com', exp: 9999999999 })
+		);
 
 		await authModule.initAuth();
 
-		expect(authModule.auth.user).toEqual({ id: 'user-1', email: null });
+		expect(authModule.auth.user).toEqual({ id: 'user-1' });
 	});
 
 	it('is signed out with nothing stored', async () => {
@@ -375,7 +378,7 @@ describe('getAccessToken', () => {
 	])('refreshes a token %s and stores the rotated pair', async (_, expiresIn) => {
 		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(expiresIn));
 		localStorage.setItem(REFRESH_KEY, 'r-1');
-		const fresh = tokenExpiringIn(3600, 'user-1', 'new@b.c');
+		const fresh = tokenExpiringIn(3600, 'user-1');
 		fetchMock.mockResolvedValue(tokenResponse({ access_token: fresh, refresh_token: 'r-2' }));
 
 		expect(await authModule.getAccessToken()).toBe(fresh);
@@ -388,7 +391,7 @@ describe('getAccessToken', () => {
 		});
 		expect(localStorage.getItem(ACCESS_KEY)).toBe(fresh);
 		expect(localStorage.getItem(REFRESH_KEY)).toBe('r-2');
-		expect(authModule.auth.user).toEqual({ id: 'user-1', email: 'new@b.c' });
+		expect(authModule.auth.user).toEqual({ id: 'user-1' });
 	});
 
 	it('keeps the old refresh and ID tokens when the response does not rotate them', async () => {
