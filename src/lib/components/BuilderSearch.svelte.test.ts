@@ -35,7 +35,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('looks up the trimmed username, six at most, and lists the matches', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity', 'rogue#1')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 
 		await userEvent.fill(searchbox(), ' rog ');
 
@@ -46,7 +46,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it("goes to the picked builder's profile and clears the search", async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 
 		await userEvent.click(page.getByRole('button', { name: /@rogue\.serenity/ }));
@@ -58,7 +58,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('sends no further search when a result is picked while one is still queued', async () => {
 		listProfiles.mockResolvedValueOnce(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		const match = page.getByRole('button', { name: /@rogue\.serenity/ });
 		await expect.element(match).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('says so when no builders match', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 
 		await userEvent.fill(searchbox(), 'zzz');
 
@@ -84,7 +84,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('says the search failed rather than showing nothing or a false no-match', async () => {
 		listProfiles.mockRejectedValueOnce(new Error('network'));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 
 		await userEvent.fill(searchbox(), 'rog');
 
@@ -98,7 +98,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('clears the failure once a later search succeeds', async () => {
 		listProfiles.mockRejectedValueOnce(new Error('network'));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Search failed. Try again.' }))
@@ -114,7 +114,7 @@ describe('BuilderSearch.svelte', () => {
 	});
 
 	it("doesn't search for blank input", async () => {
-		render(BuilderSearch);
+		await render(BuilderSearch);
 
 		await userEvent.fill(searchbox(), '   ');
 		await new Promise((r) => setTimeout(r, 400));
@@ -125,7 +125,7 @@ describe('BuilderSearch.svelte', () => {
 	it('stays closed when the box is cleared before a search comes back', async () => {
 		const pending = deferred<ProfileListPage>();
 		listProfiles.mockReturnValueOnce(pending.promise);
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledOnce());
 
@@ -139,7 +139,7 @@ describe('BuilderSearch.svelte', () => {
 	it("doesn't let a slow earlier search overwrite a newer one", async () => {
 		const slow = deferred<ProfileListPage>();
 		listProfiles.mockReturnValueOnce(slow.promise);
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'ol');
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledOnce());
 
@@ -156,7 +156,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('closes the results when focus leaves, and reopens them on focus', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		await expect.element(page.getByText('@rogue.serenity')).toBeInTheDocument();
 
@@ -170,7 +170,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('stays open when Tab moves focus into the results, and Enter picks one', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		const match = page.getByRole('button', { name: /@rogue\.serenity/ });
 		await expect.element(match).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('closes when Tab moves focus past the results', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		await expect.element(page.getByText('@rogue.serenity')).toBeInTheDocument();
 
@@ -197,7 +197,7 @@ describe('BuilderSearch.svelte', () => {
 
 	it('keeps focus in the box while a result is pressed with the mouse', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
-		render(BuilderSearch);
+		await render(BuilderSearch);
 		await userEvent.fill(searchbox(), 'rog');
 		const match = page.getByRole('button', { name: /@rogue\.serenity/ });
 		await expect.element(match).toBeInTheDocument();

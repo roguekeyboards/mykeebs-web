@@ -6,7 +6,7 @@ import '../../routes/layout.css';
 
 async function openModal(props: Record<string, unknown> = {}) {
 	const onClose = vi.fn();
-	render(ModalHarness, { onClose, ...props });
+	await render(ModalHarness, { onClose, ...props });
 	await page.getByRole('button', { name: 'Open' }).click();
 	await expect.element(page.getByRole('dialog')).toBeInTheDocument();
 	return onClose;
@@ -113,7 +113,7 @@ describe('Modal.svelte', () => {
 
 		it('falls back to its label while it has no heading, and prefers the heading', async () => {
 			const onClose = vi.fn();
-			const { rerender } = render(ModalHarness, { onClose, label: 'Build' });
+			const { rerender } = await render(ModalHarness, { onClose, label: 'Build' });
 			await page.getByRole('button', { name: 'Open' }).click();
 			await expect.element(page.getByRole('dialog', { name: 'Build' })).toBeInTheDocument();
 
@@ -124,7 +124,7 @@ describe('Modal.svelte', () => {
 
 		it('picks up a heading that appears after it opens', async () => {
 			const onClose = vi.fn();
-			const { rerender } = render(ModalHarness, { onClose });
+			const { rerender } = await render(ModalHarness, { onClose });
 			await page.getByRole('button', { name: 'Open' }).click();
 			await expect.element(page.getByRole('dialog')).toBeInTheDocument();
 

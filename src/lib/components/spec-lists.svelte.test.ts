@@ -34,7 +34,7 @@ function invalidSpecRows(): string[] {
 
 describe('spec lists hold only dt and dd in each row', () => {
 	it('keyboard details', async () => {
-		render(KeyboardDetails, {
+		await render(KeyboardDetails, {
 			keyboard: {
 				id: 'k',
 				brand: 'KBDFans',
@@ -54,7 +54,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 	});
 
 	it('switch details', async () => {
-		render(SwitchDetails, {
+		await render(SwitchDetails, {
 			sw: {
 				id: 's',
 				brand: 'HMX',
@@ -71,7 +71,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 	});
 
 	it('keycap set details', async () => {
-		render(KeycapSetDetails, {
+		await render(KeycapSetDetails, {
 			set: {
 				id: 'set-1',
 				brand: 'GMK',
@@ -91,7 +91,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 	});
 
 	it('build details', async () => {
-		render(BuildDetails, {
+		await render(BuildDetails, {
 			build: {
 				id: 'b',
 				visibility: Visibility.Public,

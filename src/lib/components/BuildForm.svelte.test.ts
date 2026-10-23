@@ -36,8 +36,8 @@ const build: Build = {
 	]
 };
 
-function renderForm(staleRefs: StaleBuildRefs | null) {
-	render(BuildFormWithUser, {
+async function renderForm(staleRefs: StaleBuildRefs | null) {
+	await render(BuildFormWithUser, {
 		formProps: {
 			initial: build,
 			saving: false,
@@ -53,7 +53,7 @@ const NOTE = 'No longer in your collection';
 
 describe('BuildForm.svelte stale references', () => {
 	it('flags only the switches and kits kbdb rejected', async () => {
-		renderForm({
+		await renderForm({
 			keyboardId: null,
 			switchIds: new Set(['sw-b']),
 			kitKeys: new Set([kitKey('set-1', 'aesthetic')])
@@ -67,20 +67,20 @@ describe('BuildForm.svelte stale references', () => {
 	});
 
 	it('flags the keyboard when it is the one kbdb rejected', async () => {
-		renderForm({ keyboardId: 'kb', switchIds: new Set(), kitKeys: new Set() });
+		await renderForm({ keyboardId: 'kb', switchIds: new Set(), kitKeys: new Set() });
 
 		await expect.element(page.getByText(NOTE)).toBeInTheDocument();
 	});
 
 	it("doesn't flag a keyboard other than the rejected one", async () => {
-		renderForm({ keyboardId: 'replaced', switchIds: new Set(), kitKeys: new Set() });
+		await renderForm({ keyboardId: 'replaced', switchIds: new Set(), kitKeys: new Set() });
 
 		await expect.element(page.getByText('Manta')).toBeInTheDocument();
 		await expect.element(page.getByText(NOTE)).not.toBeInTheDocument();
 	});
 
 	it('flags nothing without a stale-reference error', async () => {
-		renderForm(null);
+		await renderForm(null);
 
 		await expect.element(page.getByText('Manta')).toBeInTheDocument();
 		await expect.element(page.getByText(NOTE)).not.toBeInTheDocument();
@@ -88,9 +88,9 @@ describe('BuildForm.svelte stale references', () => {
 });
 
 describe('BuildForm.svelte cleared stabilizer price', () => {
-	function renderWithStabs(stabs: Build['stabs']) {
+	async function renderWithStabs(stabs: Build['stabs']) {
 		const onSubmit = vi.fn();
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				initial: { ...build, stabs },
 				saving: false,
@@ -104,7 +104,7 @@ describe('BuildForm.svelte cleared stabilizer price', () => {
 	}
 
 	it('leaves the form clean once the price is typed into and cleared', async () => {
-		renderWithStabs({ name: 'Durock V2' });
+		await renderWithStabs({ name: 'Durock V2' });
 		const dirty = page.getByTestId('dirty');
 		const price = page.getByLabelText('Price');
 
@@ -116,7 +116,7 @@ describe('BuildForm.svelte cleared stabilizer price', () => {
 	});
 
 	it('drops a cleared price rather than keeping the old value', async () => {
-		const onSubmit = renderWithStabs({ name: 'Durock V2', price: 15 });
+		const onSubmit = await renderWithStabs({ name: 'Durock V2', price: 15 });
 
 		await page.getByLabelText('Price').fill('');
 		await page.getByRole('button', { name: 'Save changes' }).click();
@@ -127,9 +127,9 @@ describe('BuildForm.svelte cleared stabilizer price', () => {
 });
 
 describe('BuildForm.svelte switch counts', () => {
-	function renderBuild() {
+	async function renderBuild() {
 		const onSubmit = vi.fn();
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				initial: build,
 				saving: false,
@@ -145,7 +145,7 @@ describe('BuildForm.svelte switch counts', () => {
 	const countFor = (label: string) => page.getByRole('spinbutton', { name: `Count of ${label}` });
 
 	it('refuses to save a switch whose count was cleared', async () => {
-		const onSubmit = renderBuild();
+		const onSubmit = await renderBuild();
 
 		await countFor('Oil King (Gateron)').fill('');
 		await page.getByRole('button', { name: 'Save changes' }).click();
@@ -164,7 +164,7 @@ describe('BuildForm.svelte switch counts', () => {
 	});
 
 	it('saves once every switch has a count again', async () => {
-		const onSubmit = renderBuild();
+		const onSubmit = await renderBuild();
 
 		await countFor('Oil King (Gateron)').fill('');
 		await page.getByRole('button', { name: 'Save changes' }).click();
@@ -186,7 +186,7 @@ describe('BuildForm.svelte switch counts', () => {
 
 describe('BuildForm.svelte switch rows', () => {
 	it('names each count field after its switch and keeps the switch name visible', async () => {
-		renderForm(null);
+		await renderForm(null);
 
 		for (const label of ['Aperol (HMX)', 'Oil King (Gateron)']) {
 			await expect
@@ -199,7 +199,7 @@ describe('BuildForm.svelte switch rows', () => {
 
 describe('BuildForm.svelte remove buttons', () => {
 	it('names each remove button after its row and removes only that row', async () => {
-		renderForm(null);
+		await renderForm(null);
 
 		await page.getByRole('button', { name: 'Remove Oil King (Gateron)' }).click();
 		await page.getByRole('button', { name: 'Remove 8008 2 — Aesthetic' }).click();
@@ -214,7 +214,7 @@ describe('BuildForm.svelte remove buttons', () => {
 describe('BuildForm.svelte image remove buttons', () => {
 	it('numbers each image remove button and removes the right image', async () => {
 		const onImageRemove = vi.fn(async () => {});
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				initial: {
 					...build,
@@ -243,7 +243,7 @@ describe('BuildForm.svelte image remove buttons', () => {
 
 describe('BuildForm.svelte removing a photo', () => {
 	it('says so when the removal fails, and lets you try again', async () => {
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				initial: { ...build, images: [{ imageId: 'img-1', url: 'https://img.example/1.png' }] },
 				saving: false,
@@ -277,8 +277,8 @@ describe('BuildForm.svelte photo limit', () => {
 		}))
 	});
 
-	function renderWith(props: Partial<Parameters<typeof BuildFormWithUser>[1]['formProps']>) {
-		render(BuildFormWithUser, {
+	async function renderWith(props: Partial<Parameters<typeof BuildFormWithUser>[1]['formProps']>) {
+		await render(BuildFormWithUser, {
 			formProps: {
 				saving: false,
 				error: null,
@@ -291,7 +291,7 @@ describe('BuildForm.svelte photo limit', () => {
 	}
 
 	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
-		renderWith({
+		await renderWith({
 			initial: withImages(1),
 			onImageUpload: vi
 				.fn()
@@ -311,7 +311,7 @@ describe('BuildForm.svelte photo limit', () => {
 			{ imageId: 'pending', url: 'https://img.example/p.png', status: ImageStatus.Pending },
 			{ imageId: 'rejected', status: ImageStatus.Rejected, rejectionReason: 'unprocessable' }
 		);
-		renderWith({ initial });
+		await renderWith({ initial });
 
 		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
 		await expect
@@ -321,7 +321,7 @@ describe('BuildForm.svelte photo limit', () => {
 	});
 
 	it(`disables adding photos once there are ${MAX_IMAGES}`, async () => {
-		renderWith({ initial: withImages(MAX_IMAGES) });
+		await renderWith({ initial: withImages(MAX_IMAGES) });
 
 		await expect.element(page.getByRole('button', { name: '+ Add photo' })).toBeDisabled();
 		await expect
@@ -331,7 +331,7 @@ describe('BuildForm.svelte photo limit', () => {
 
 	it('uploads only the picked photos that fit, and says how many were left out', async () => {
 		const onImageUpload = vi.fn(async () => {});
-		renderWith({ initial: withImages(MAX_IMAGES - 1), onImageUpload });
+		await renderWith({ initial: withImages(MAX_IMAGES - 1), onImageUpload });
 		const [a, b] = [jpg('a.jpg'), jpg('b.jpg')];
 
 		await userEvent.upload(fileInput(), [a, b]);
@@ -347,7 +347,7 @@ describe('BuildForm.svelte photo limit', () => {
 	});
 
 	it(`stages at most ${MAX_IMAGES} photos on a new build`, async () => {
-		renderWith({});
+		await renderWith({});
 		const picked = Array.from({ length: MAX_IMAGES + 1 }, (_, i) => jpg(`${i}.jpg`));
 
 		await userEvent.upload(fileInput(), picked);
@@ -364,7 +364,7 @@ describe('BuildForm.svelte photo limit', () => {
 	});
 
 	it('moves focus to + Add photo after a photo is removed', async () => {
-		renderWith({ initial: withImages(2), onImageRemove: vi.fn(async () => {}) });
+		await renderWith({ initial: withImages(2), onImageRemove: vi.fn(async () => {}) });
 
 		await page.getByRole('button', { name: 'Remove image 2 of 2' }).click();
 
@@ -374,7 +374,7 @@ describe('BuildForm.svelte photo limit', () => {
 
 describe('BuildForm.svelte keyboard', () => {
 	it('points the keyboard button at the error when no keyboard was chosen', async () => {
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				saving: false,
 				error: null,
@@ -393,10 +393,10 @@ describe('BuildForm.svelte keyboard', () => {
 });
 
 describe('BuildForm.svelte plate and PCB', () => {
-	function renderParts(getKeyboard: () => Promise<unknown>) {
+	async function renderParts(getKeyboard: () => Promise<unknown>) {
 		vi.mocked(keyboardsApi.getKeyboard).mockImplementationOnce(getKeyboard as never);
 		const onSubmit = vi.fn();
-		render(BuildFormWithUser, {
+		await render(BuildFormWithUser, {
 			formProps: {
 				initial: {
 					...build,
@@ -416,7 +416,7 @@ describe('BuildForm.svelte plate and PCB', () => {
 	const pcb = () => page.getByLabelText('PCB');
 
 	it("offers the keyboard's parts by id, labelled to tell same-material plates apart", async () => {
-		const onSubmit = renderParts(async () => ({
+		const onSubmit = await renderParts(async () => ({
 			id: 'kb',
 			brand: 'Bowl',
 			name: 'Manta',
@@ -445,7 +445,7 @@ describe('BuildForm.svelte plate and PCB', () => {
 	});
 
 	it("keeps the build's own plate and PCB when the keyboard can't be loaded", async () => {
-		const onSubmit = renderParts(() => Promise.reject(new Error('network')));
+		const onSubmit = await renderParts(() => Promise.reject(new Error('network')));
 
 		await expect.element(plate()).toHaveValue('p2');
 		await expect.element(pcb()).toHaveValue('c1');

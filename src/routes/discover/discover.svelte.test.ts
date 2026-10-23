@@ -31,7 +31,7 @@ describe('Discover page', () => {
 	it('lists the whole directory on load, linking each builder to their profile', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity', 'rogue#1')]));
 
-		render(DiscoverPage);
+		await render(DiscoverPage);
 
 		const link = page.getByRole('link', { name: /@rogue\.serenity/ });
 		await expect.element(link).toHaveAttribute('href', '/u/rogue.serenity');
@@ -41,7 +41,7 @@ describe('Discover page', () => {
 
 	it('searches by the trimmed username as the user types', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledTimes(1));
 
 		listProfiles.mockResolvedValue(pageOf([profile('keebfan')]));
@@ -54,7 +54,7 @@ describe('Discover page', () => {
 	it('says so when no builders match', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
 
-		render(DiscoverPage);
+		await render(DiscoverPage);
 
 		await expect
 			.element(page.getByRole('status').filter({ hasText: 'No builders match that search.' }))
@@ -64,7 +64,7 @@ describe('Discover page', () => {
 	it('says so when the directory fails to load', async () => {
 		listProfiles.mockRejectedValue(new Error('network'));
 
-		render(DiscoverPage);
+		await render(DiscoverPage);
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not load the directory.' }))
@@ -73,7 +73,7 @@ describe('Discover page', () => {
 
 	it('appends the next page, keeping the search filter, until there are no more', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledTimes(1));
 
 		listProfiles.mockResolvedValueOnce(pageOf([profile('alpha')], 'cursor-2'));
@@ -91,7 +91,7 @@ describe('Discover page', () => {
 
 	it('loads more for the search on screen, even while a newer one is pending', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledTimes(1));
 
 		listProfiles.mockResolvedValueOnce(pageOf([profile('alpha')], 'cursor-2'));
@@ -107,7 +107,7 @@ describe('Discover page', () => {
 
 	it('re-enables Load more when a new search replaces one that was still loading more', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledTimes(1));
 
 		listProfiles.mockResolvedValueOnce(pageOf([profile('alpha')], 'cursor-2'));
@@ -131,7 +131,7 @@ describe('Discover page', () => {
 
 	it('keeps the loaded results when loading more fails, and lets the user retry', async () => {
 		listProfiles.mockResolvedValueOnce(pageOf([profile('alpha')], 'cursor-2'));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await expect.element(page.getByText('@alpha')).toBeInTheDocument();
 
 		listProfiles.mockRejectedValueOnce(new Error('network'));
@@ -155,7 +155,7 @@ describe('Discover page', () => {
 
 	it("doesn't let a slow earlier search overwrite a newer one", async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
-		render(DiscoverPage);
+		await render(DiscoverPage);
 		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledTimes(1));
 
 		const slow = deferred<ProfileListPage>();
@@ -179,7 +179,7 @@ describe('Discover page title', () => {
 	it('titles the tab', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
 
-		render(DiscoverPage);
+		await render(DiscoverPage);
 
 		await vi.waitFor(() => expect(document.title).toBe('Discover · mykeebs'));
 	});

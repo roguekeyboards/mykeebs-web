@@ -47,13 +47,13 @@ describe('user page titles', () => {
 		['keycap sets', KeycapSetsPage, 'Keycap sets · @rogue.serenity · mykeebs'],
 		['builds', BuildsPage, 'Builds · @rogue.serenity · mykeebs']
 	])('titles %s', async (_, component, expected) => {
-		render(WithUserContext, { component });
+		await render(WithUserContext, { component });
 
 		await title(expected);
 	});
 
 	it("titles a keyboard's builds with the keyboard's name", async () => {
-		render(WithUserContext, { component: KeyboardBuildsPage });
+		await render(WithUserContext, { component: KeyboardBuildsPage });
 
 		await title('Neo65 Cu builds · @rogue.serenity · mykeebs');
 	});
@@ -65,7 +65,7 @@ describe('user layout titles', () => {
 	it('titles the tab with the username while the profile loads', async () => {
 		vi.mocked(profilesApi.getProfile).mockReturnValue(new Promise(() => {}));
 
-		render(UserLayout, { children });
+		await render(UserLayout, { children });
 
 		await title('@rogue.serenity · mykeebs');
 	});
@@ -75,7 +75,7 @@ describe('user layout titles', () => {
 			new ResponseError(new Response(null, { status: 404 }))
 		);
 
-		render(UserLayout, { children });
+		await render(UserLayout, { children });
 
 		await title('Not found · mykeebs');
 		await expect
@@ -94,7 +94,7 @@ describe('user layout tabs', () => {
 			discoverable: true
 		} as never);
 
-		render(UserLayout, { children });
+		await render(UserLayout, { children });
 
 		const tabs = page.getByRole('navigation', { name: 'Profile' });
 		await expect

@@ -27,7 +27,7 @@ const build: Build = {
 	]
 };
 
-function renderDetails() {
+async function renderDetails() {
 	const props = {
 		build,
 		onKeyboardClick: vi.fn(),
@@ -36,13 +36,13 @@ function renderDetails() {
 		onImageClick: vi.fn(),
 		showPrice: true
 	};
-	render(BuildDetails, props);
+	await render(BuildDetails, props);
 	return props;
 }
 
 describe('BuildDetails.svelte', () => {
 	it("lists each set's kits, with sets in name order", async () => {
-		renderDetails();
+		await renderDetails();
 
 		const kits = page.getByRole('listitem').filter({ hasText: '—' });
 		await expect.element(kits.nth(0)).toHaveTextContent('Olivia — Base');
@@ -51,7 +51,7 @@ describe('BuildDetails.svelte', () => {
 	});
 
 	it('opens a kit by its set and kit id', async () => {
-		const { onKeycapKitClick } = renderDetails();
+		const { onKeycapKitClick } = await renderDetails();
 
 		await page.getByRole('button', { name: 'Olivia — Novelties' }).click();
 
@@ -59,7 +59,7 @@ describe('BuildDetails.svelte', () => {
 	});
 
 	it('opens the keyboard and switches by id', async () => {
-		const { onKeyboardClick, onSwitchClick } = renderDetails();
+		const { onKeyboardClick, onSwitchClick } = await renderDetails();
 
 		await page.getByRole('button', { name: 'Manta' }).click();
 		await page.getByRole('button', { name: '70x Aperol (HMX)' }).click();
@@ -69,7 +69,7 @@ describe('BuildDetails.svelte', () => {
 	});
 
 	it('describes the plate and PCB the build uses', async () => {
-		render(BuildDetails, {
+		await render(BuildDetails, {
 			build: {
 				...build,
 				plate: { id: 'p', material: 'POM', color: 'Black', thickness: 1.5 },
@@ -90,7 +90,7 @@ describe('BuildDetails.svelte', () => {
 describe('BuildDetails.svelte image moderation', () => {
 	it('shows a rejected image by its reason and opens the gallery among the viewable ones', async () => {
 		const onImageClick = vi.fn();
-		render(BuildDetails, {
+		await render(BuildDetails, {
 			build: {
 				...build,
 				images: [

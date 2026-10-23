@@ -17,7 +17,7 @@ function fetchPage() {
 
 describe('ItemPicker.svelte', () => {
 	it('names the search box and list from the placeholder, and keeps options out of the Tab order', async () => {
-		render(ItemPicker, {
+		await render(ItemPicker, {
 			userId: 'u1',
 			fetchPage,
 			itemKey: (item: unknown) => (item as Item).id,
@@ -39,7 +39,7 @@ describe('ItemPicker.svelte', () => {
 
 	it('navigates and picks with the keyboard', async () => {
 		const onPick = vi.fn();
-		render(ItemPicker, {
+		await render(ItemPicker, {
 			userId: 'u1',
 			fetchPage,
 			itemKey: (item: unknown) => (item as Item).id,
@@ -59,7 +59,7 @@ describe('ItemPicker.svelte', () => {
 	it('Escape clears filter text first, then calls onCancel', async () => {
 		const onPick = vi.fn();
 		const onCancel = vi.fn();
-		render(ItemPicker, {
+		await render(ItemPicker, {
 			userId: 'u1',
 			fetchPage,
 			itemKey: (item: unknown) => (item as Item).id,
@@ -85,7 +85,7 @@ describe('ItemPicker.svelte', () => {
 		const fetchSpy = vi.fn(fetchPage);
 		const cache: ItemPickerCache<Item> = { items: null };
 
-		const first = render(ItemPicker, {
+		const first = await render(ItemPicker, {
 			userId: 'u1',
 			fetchPage: fetchSpy,
 			itemKey: (item: unknown) => (item as Item).id,
@@ -97,9 +97,9 @@ describe('ItemPicker.svelte', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		expect(cache.items).toEqual(items);
 
-		first.unmount();
+		await first.unmount();
 
-		render(ItemPicker, {
+		await render(ItemPicker, {
 			userId: 'u1',
 			fetchPage: fetchSpy,
 			itemKey: (item: unknown) => (item as Item).id,

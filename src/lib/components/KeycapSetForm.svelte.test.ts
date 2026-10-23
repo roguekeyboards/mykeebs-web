@@ -6,7 +6,7 @@ import KeycapSetForm from './KeycapSetForm.svelte';
 describe('KeycapSetForm.svelte', () => {
 	it('does not submit the form when Enter is pressed in a text field', async () => {
 		const onSubmit = vi.fn();
-		render(KeycapSetForm, { saving: false, error: null, onSubmit, onCancel: () => {} });
+		await render(KeycapSetForm, { saving: false, error: null, onSubmit, onCancel: () => {} });
 
 		const brand = page.getByLabelText('Brand');
 		await brand.fill('Drop');
@@ -17,7 +17,12 @@ describe('KeycapSetForm.svelte', () => {
 	});
 
 	it('marks brand and name required, and flags the empty ones after a failed save', async () => {
-		render(KeycapSetForm, { saving: false, error: null, onSubmit: vi.fn(), onCancel: () => {} });
+		await render(KeycapSetForm, {
+			saving: false,
+			error: null,
+			onSubmit: vi.fn(),
+			onCancel: () => {}
+		});
 		const brand = page.getByLabelText('Brand');
 		const name = page.getByLabelText('Name');
 		await expect.element(brand).toBeRequired();

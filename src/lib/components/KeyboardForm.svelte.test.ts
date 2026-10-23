@@ -74,9 +74,9 @@ function withImages(count: number): Keyboard {
 	};
 }
 
-function renderForm(props: Partial<Parameters<typeof KeyboardForm>[1]> = {}) {
+async function renderForm(props: Partial<Parameters<typeof KeyboardForm>[1]> = {}) {
 	const mocks = { onSubmit: vi.fn(), onCancel: vi.fn() };
-	render(FormWithDirty, {
+	await render(FormWithDirty, {
 		form: KeyboardForm,
 		formProps: { saving: false, error: null, ...mocks, ...props }
 	});
@@ -140,7 +140,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('requires a brand and name', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await page.getByLabelText('Brand').fill('   ');
 		await submit();
@@ -152,7 +152,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('marks brand and name required, and flags only the empty ones after a failed save', async () => {
-		renderForm();
+		await renderForm();
 		const brand = page.getByLabelText('Brand');
 		const name = page.getByLabelText('Name');
 		await expect.element(brand).toBeRequired();
@@ -168,7 +168,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('submits a minimal keyboard trimmed, private, and without empty sections', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await page.getByLabelText('Brand').fill('  Bowl ');
 		await page.getByLabelText('Name').fill(' Manta  ');
@@ -192,7 +192,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('nests every section that has a value into the submitted keyboard', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await page.getByLabelText('Brand').fill('Bowl');
 		await page.getByLabelText('Name').fill('Manta');
@@ -250,7 +250,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('round-trips an existing keyboard untouched, including values the lookups no longer offer', async () => {
-		const { onSubmit } = renderForm({ initial: keyboard });
+		const { onSubmit } = await renderForm({ initial: keyboard });
 
 		await expect.element(page.getByRole('heading', { name: 'Edit keyboard' })).toBeInTheDocument();
 		await expect
@@ -290,7 +290,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('summarizes each section and opens the ones an existing keyboard fills', async () => {
-		renderForm({ initial: keyboard });
+		await renderForm({ initial: keyboard });
 
 		await expect.element(page.getByText('— top case · bottom case · weight')).toBeVisible();
 		await expect.element(page.getByText('— POM · Carbon fiber')).toBeVisible();
@@ -300,7 +300,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('starts with every section collapsed and unset for a new keyboard', async () => {
-		renderForm();
+		await renderForm();
 
 		await expect.element(page.getByText('— Not set').nth(1)).toBeInTheDocument();
 		await expect.element(page.getByText('— None').nth(1)).toBeInTheDocument();
@@ -308,7 +308,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it("labels the keyboard's own price as the base price", async () => {
-		renderForm({ initial: keyboard });
+		await renderForm({ initial: keyboard });
 
 		await expect
 			.element(page.getByLabelText('Base price'))
@@ -317,7 +317,7 @@ describe('KeyboardForm.svelte', () => {
 
 	describe('plates and PCBs', () => {
 		it("keeps each part's id, and leaves out a removed one", async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: 'Remove plate 1' }).click();
 			await part('PCB 1').getByLabelText('Firmware').selectOptions('VIA');
@@ -333,7 +333,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('adds a new part without an id next to the existing ones', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: '+ Add plate' }).click();
 			await part('Plate 3').getByLabelText('Material').selectOptions('Aluminum');
@@ -345,7 +345,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('requires a material on every plate', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: '+ Add plate' }).click();
 			await submit('Save changes');
@@ -359,7 +359,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('requires an assembly and connectivity on every PCB', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: '+ Add PCB' }).click();
 			await part('PCB 2').getByLabelText('Assembly').selectOptions('Hotswap');
@@ -386,7 +386,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('gives a part bought separately its own purchase', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await expect.element(part('PCB 1').getByText('— Came with the keyboard')).toBeVisible();
 			await part('PCB 1')
@@ -421,7 +421,7 @@ describe('KeyboardForm.svelte', () => {
 					}
 				]
 			};
-			const first = renderForm({ initial: withPurchase });
+			const first = await renderForm({ initial: withPurchase });
 			await expect.element(part('Plate 1').getByLabelText('Vendor')).toBeVisible();
 			await expect.element(part('Plate 1').getByText('— CannonKeys · Planned')).toBeVisible();
 			await submit('Save changes');
@@ -443,7 +443,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('offers only the layouts that fit the chosen size', async () => {
-		renderForm();
+		await renderForm();
 
 		await page.getByLabelText('Size').selectOptions('60%');
 
@@ -453,7 +453,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('clears the layout when the size changes to one it does not fit', async () => {
-		renderForm();
+		await renderForm();
 
 		await page.getByLabelText('Size').selectOptions('65%');
 		await page.getByLabelText('Layout').selectOptions('Alice');
@@ -463,7 +463,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('keeps the layout when the size changes to one it still fits', async () => {
-		renderForm();
+		await renderForm();
 
 		await page.getByLabelText('Size').selectOptions('65%');
 		await page.getByLabelText('Layout').selectOptions('ANSI');
@@ -474,7 +474,7 @@ describe('KeyboardForm.svelte', () => {
 
 	describe('order dates', () => {
 		it('asks for an order date, defaulting to today, once ordered', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
@@ -490,7 +490,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('asks for a delivery date, defaulting to today, once delivered', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await keyboardPurchase().getByLabelText('Order status').selectOptions('Delivered');
@@ -504,7 +504,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('keeps a date the user already picked when the status moves on', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await keyboardPurchase().getByLabelText('Order status').selectOptions('Ordered');
@@ -517,7 +517,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('drops dates the new status would not have', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
 			await submit('Save changes');
@@ -528,7 +528,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('leaves existing dates alone on open, even if the status would not set them', async () => {
-			const { onSubmit } = renderForm({
+			const { onSubmit } = await renderForm({
 				initial: { ...keyboard, purchase: { ...keyboard.purchase, orderStatus: 'Planned' } }
 			});
 
@@ -542,13 +542,13 @@ describe('KeyboardForm.svelte', () => {
 
 	describe('dirty', () => {
 		it('starts clean for an existing keyboard', async () => {
-			renderForm({ initial: keyboard });
+			await renderForm({ initial: keyboard });
 
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
 
 		it('turns dirty on an edit and clean again when it is undone', async () => {
-			renderForm({ initial: keyboard });
+			await renderForm({ initial: keyboard });
 
 			await page.getByLabelText('Name').fill('Manta 2');
 			await expect.element(dirty()).toHaveTextContent('true');
@@ -558,7 +558,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it("tracks edits to a part's fields", async () => {
-			renderForm({ initial: keyboard });
+			await renderForm({ initial: keyboard });
 
 			await part('Plate 2').getByLabelText('Color').fill('White');
 			await expect.element(dirty()).toHaveTextContent('true');
@@ -568,7 +568,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('stays dirty when a removed part is replaced by an identical new one', async () => {
-			renderForm({ initial: { ...keyboard, plates: [{ id: 'plate-1', material: 'POM' }] } });
+			await renderForm({ initial: { ...keyboard, plates: [{ id: 'plate-1', material: 'POM' }] } });
 
 			await page.getByRole('button', { name: 'Remove plate 1' }).click();
 			await page.getByRole('button', { name: '+ Add plate' }).click();
@@ -578,14 +578,14 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('turns dirty when a part is added or removed', async () => {
-			renderForm({ initial: keyboard });
+			await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: 'Remove PCB 1' }).click();
 			await expect.element(dirty()).toHaveTextContent('true');
 		});
 
 		it('turns dirty when a photo is staged', async () => {
-			renderForm();
+			await renderForm();
 
 			await userEvent.upload(fileInput(), [png('a.png')]);
 
@@ -595,7 +595,7 @@ describe('KeyboardForm.svelte', () => {
 
 	describe('images on a new keyboard', () => {
 		it('stages picked photos and submits them with the keyboard', async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 			const a = png('a.png');
 			const b = png('b.png');
 
@@ -610,7 +610,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it(`stages at most ${MAX_IMAGES} photos and says how many were left out`, async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 			const picked = Array.from({ length: MAX_IMAGES + 2 }, (_, i) => png(`${i}.png`));
 
 			await userEvent.upload(fileInput(), picked);
@@ -633,7 +633,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('drops a staged photo when it is removed', async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 			const a = png('a.png');
 			const b = png('b.png');
 
@@ -651,7 +651,7 @@ describe('KeyboardForm.svelte', () => {
 		it('keeps unsaved edits when the keyboard refreshes, while showing its new photos', async () => {
 			const mocks = { onSubmit: vi.fn(), onCancel: vi.fn() };
 			const formProps = { saving: false, error: null, ...mocks, initial: keyboard };
-			const { rerender } = render(FormWithDirty, { form: KeyboardForm, formProps });
+			const { rerender } = await render(FormWithDirty, { form: KeyboardForm, formProps });
 			await page.getByLabelText('Name').fill('Manta R2');
 
 			await rerender({
@@ -674,7 +674,7 @@ describe('KeyboardForm.svelte', () => {
 
 		it('uploads a picked photo straight away', async () => {
 			const onImageUpload = vi.fn(async () => {});
-			renderForm({ initial: keyboard, onImageUpload });
+			await renderForm({ initial: keyboard, onImageUpload });
 			const a = png('a.png');
 
 			await userEvent.upload(fileInput(), [a]);
@@ -683,7 +683,10 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('says so when an upload fails', async () => {
-			renderForm({ initial: keyboard, onImageUpload: vi.fn().mockRejectedValue(new Error('x')) });
+			await renderForm({
+				initial: keyboard,
+				onImageUpload: vi.fn().mockRejectedValue(new Error('x'))
+			});
 
 			await userEvent.upload(fileInput(), [png('a.png')]);
 
@@ -693,7 +696,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
-			renderForm({
+			await renderForm({
 				initial: keyboard,
 				onImageUpload: vi
 					.fn()
@@ -710,7 +713,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('marks a photo that is pending review', async () => {
-			renderForm({
+			await renderForm({
 				initial: {
 					...keyboard,
 					images: [
@@ -730,7 +733,7 @@ describe('KeyboardForm.svelte', () => {
 				status: ImageStatus.Rejected,
 				rejectionReason: 'Explicit'
 			});
-			renderForm({ initial, onImageRemove });
+			await renderForm({ initial, onImageRemove });
 
 			await expect
 				.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
@@ -743,7 +746,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it(`disables adding photos once there are ${MAX_IMAGES}`, async () => {
-			renderForm({ initial: withImages(MAX_IMAGES) });
+			await renderForm({ initial: withImages(MAX_IMAGES) });
 
 			await expect.element(page.getByRole('button', { name: '+ Add photo' })).toBeDisabled();
 			await expect
@@ -753,7 +756,7 @@ describe('KeyboardForm.svelte', () => {
 
 		it('uploads only the picked photos that fit, and says how many were left out', async () => {
 			const onImageUpload = vi.fn(async () => {});
-			renderForm({ initial: withImages(MAX_IMAGES - 2), onImageUpload });
+			await renderForm({ initial: withImages(MAX_IMAGES - 2), onImageUpload });
 			const [a, b, c] = [png('a.png'), png('b.png'), png('c.png')];
 
 			await userEvent.upload(fileInput(), [a, b, c]);
@@ -770,7 +773,7 @@ describe('KeyboardForm.svelte', () => {
 
 		it('removes a photo by its id', async () => {
 			const onImageRemove = vi.fn(async () => {});
-			renderForm({ initial: keyboard, onImageRemove });
+			await renderForm({ initial: keyboard, onImageRemove });
 
 			await page.getByRole('button', { name: 'Remove image 1 of 1' }).click();
 
@@ -779,7 +782,7 @@ describe('KeyboardForm.svelte', () => {
 
 		it('says so when removing a photo fails, and lets you try again', async () => {
 			const onImageRemove = vi.fn().mockRejectedValue(new Error('network'));
-			renderForm({ initial: keyboard, onImageRemove });
+			await renderForm({ initial: keyboard, onImageRemove });
 
 			await page.getByRole('button', { name: 'Remove image 1 of 1' }).click();
 
@@ -794,7 +797,7 @@ describe('KeyboardForm.svelte', () => {
 
 	describe('cleared number fields', () => {
 		it('base price leaves the form clean once typed into and cleared', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await page.getByLabelText('Base price').fill('5');
@@ -805,7 +808,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('plate thickness leaves the form clean once typed into and cleared', async () => {
-			renderForm({ initial: keyboard });
+			await renderForm({ initial: keyboard });
 			const thickness = part('Plate 1').getByLabelText('Thickness (mm)');
 
 			await thickness.fill('5');
@@ -816,7 +819,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('drops a cleared price rather than keeping the old value', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByLabelText('Base price').fill('');
 			await submit('Save changes');
@@ -825,7 +828,7 @@ describe('KeyboardForm.svelte', () => {
 		});
 
 		it('drops a cleared thickness rather than keeping the old value', async () => {
-			const { onSubmit } = renderForm({ initial: keyboard });
+			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await part('PCB 1').getByLabelText('Thickness (mm)').fill('');
 			await submit('Save changes');
@@ -835,7 +838,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it("doesn't submit on Enter in a text field", async () => {
-		const { onSubmit } = renderForm({ initial: keyboard });
+		const { onSubmit } = await renderForm({ initial: keyboard });
 
 		await page.getByLabelText('Name').click();
 		await userEvent.keyboard('{Enter}');
@@ -844,7 +847,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('locks the buttons while saving and shows a save error', async () => {
-		renderForm({ initial: keyboard, saving: true, error: 'kbdb said no' });
+		await renderForm({ initial: keyboard, saving: true, error: 'kbdb said no' });
 
 		await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 		await expect.element(page.getByRole('button', { name: 'Cancel' })).toBeDisabled();
@@ -852,7 +855,7 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('cancels', async () => {
-		const { onCancel } = renderForm();
+		const { onCancel } = await renderForm();
 
 		await page.getByRole('button', { name: 'Cancel' }).click();
 

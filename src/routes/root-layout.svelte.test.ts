@@ -21,19 +21,19 @@ vi.mock('#lib/api/client.js', () => ({ profilesApi: { listProfiles: vi.fn() } })
 
 const content = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }));
 
-function renderLayout() {
-	render(Layout, { children: content });
+async function renderLayout() {
+	await render(Layout, { children: content });
 }
 
 describe('root layout', () => {
 	it('puts the page content inside the main landmark', async () => {
-		renderLayout();
+		await renderLayout();
 
 		await expect.element(page.getByRole('main')).toHaveTextContent('Page content');
 	});
 
 	it('offers a skip link as the first stop, and it moves focus to the content', async () => {
-		renderLayout();
+		await renderLayout();
 		const skip = page.getByRole('link', { name: 'Skip to content' });
 
 		await userEvent.keyboard('{Tab}');
@@ -46,7 +46,7 @@ describe('root layout', () => {
 	it('names the site navigation and marks the current page', async () => {
 		await page.viewport(1024, 768);
 		try {
-			renderLayout();
+			await renderLayout();
 
 			await expect
 				.element(
@@ -59,7 +59,7 @@ describe('root layout', () => {
 	});
 
 	it("links kbdb's privacy policy and terms, and the support address, from the footer", async () => {
-		renderLayout();
+		await renderLayout();
 		const footer = page.getByRole('contentinfo');
 
 		const kbdbOrigin = new URL(PUBLIC_KBDB_API_BASE_PATH).origin;

@@ -51,8 +51,8 @@ function conflict(blockingBuildIds?: string[]): ResponseError {
 	);
 }
 
-function renderPage(isOwnProfile = true) {
-	render(WithUserContext, { component: KeycapSetsPage, isOwnProfile });
+async function renderPage(isOwnProfile = true) {
+	await render(WithUserContext, { component: KeycapSetsPage, isOwnProfile });
 }
 
 const dialog = () => page.getByRole('dialog').last();
@@ -77,7 +77,7 @@ beforeEach(() => {
 
 describe('keycap sets page', () => {
 	it('lists the sets and lets the owner add one', async () => {
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('button', { name: /Olivia/ })).toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: 'Add keycap set' })).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('keycap sets page', () => {
 	});
 
 	it('offers the owner cost and visibility sorts that visitors do not get', async () => {
-		renderPage();
+		await renderPage();
 		await expect
 			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
 			.toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('keycap sets page', () => {
 
 	describe('as a visitor', () => {
 		it('hides adding, editing, deleting, and private sorts', async () => {
-			renderPage(false);
+			await renderPage(false);
 			await openOlivia();
 
 			await expect
@@ -133,7 +133,7 @@ describe('keycap sets page', () => {
 				}
 			]
 		});
-		renderPage(false);
+		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Olivia|Botanical/ });
 		await expect.element(cards().first()).toHaveTextContent('Botanical');
 
@@ -148,7 +148,7 @@ describe('keycap sets page', () => {
 		it('creates the set and opens it so kits can be added next', async () => {
 			const created: KeycapSet = { id: 'set-2', brand: 'GMK', name: 'Botanical', kits: [] };
 			api.createKeycapSet.mockResolvedValue(created);
-			renderPage();
+			await renderPage();
 
 			await page.getByRole('button', { name: 'Add keycap set' }).click();
 			await dialog().getByLabelText('Brand').fill('GMK');
@@ -167,7 +167,7 @@ describe('keycap sets page', () => {
 
 		it('says so when the create fails', async () => {
 			api.createKeycapSet.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 
 			await page.getByRole('button', { name: 'Add keycap set' }).click();
 			await dialog().getByLabelText('Brand').fill('GMK');
@@ -183,7 +183,7 @@ describe('keycap sets page', () => {
 	describe('editing a set', () => {
 		it('saves and returns to the updated set', async () => {
 			api.updateKeycapSet.mockResolvedValue({ ...olivia, name: 'Olivia++' });
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Edit set' }).click();
@@ -201,7 +201,7 @@ describe('keycap sets page', () => {
 
 		it('says so when the save fails', async () => {
 			api.updateKeycapSet.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Edit set' }).click();
@@ -214,7 +214,7 @@ describe('keycap sets page', () => {
 	});
 
 	it('asks before closing a set form with unsaved edits', async () => {
-		renderPage();
+		await renderPage();
 		await openOlivia();
 		await page.getByRole('button', { name: 'Edit set' }).click();
 		await dialog().getByLabelText('Name').fill('Olivia R2');
@@ -230,7 +230,7 @@ describe('keycap sets page', () => {
 	describe('deleting a set', () => {
 		it('asks first, then deletes and closes', async () => {
 			api.deleteKeycapSet.mockResolvedValue(undefined);
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Delete set' }).click();
@@ -247,7 +247,7 @@ describe('keycap sets page', () => {
 				id: 'b-1',
 				keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' }
 			} as never);
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Delete set' }).click();
@@ -264,7 +264,7 @@ describe('keycap sets page', () => {
 
 		it('says the set is still used when kbdb names no builds', async () => {
 			api.deleteKeycapSet.mockRejectedValue(conflict());
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Delete set' }).click();
@@ -281,7 +281,7 @@ describe('keycap sets page', () => {
 
 		it('reports any other failure', async () => {
 			api.deleteKeycapSet.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Delete set' }).click();
@@ -295,7 +295,7 @@ describe('keycap sets page', () => {
 
 	describe('kits', () => {
 		it('asks before closing a kit form with unsaved edits', async () => {
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Base');
 			await page.getByRole('button', { name: 'Edit kit' }).click();
@@ -310,7 +310,7 @@ describe('keycap sets page', () => {
 		});
 
 		it('steps through the kits with the arrows, wrapping at the ends', async () => {
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Base');
 
@@ -326,7 +326,7 @@ describe('keycap sets page', () => {
 		});
 
 		it('steps through the kits with the arrow keys', async () => {
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Base');
 
@@ -351,7 +351,7 @@ describe('keycap sets page', () => {
 				}))
 			};
 			api.listKeycapSets.mockResolvedValue({ items: [withPhotos] });
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Base');
 
@@ -365,7 +365,7 @@ describe('keycap sets page', () => {
 
 		async function addKitWithPhoto() {
 			api.createKeycapKit.mockResolvedValue({ kitId: 'spacebars', name: 'Spacebars' });
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await page.getByRole('button', { name: '+ Add kit' }).click();
 			await dialog().getByLabelText('Name').fill('Spacebars');
@@ -462,7 +462,7 @@ describe('keycap sets page', () => {
 			api.setKeycapKitImage.mockResolvedValue({
 				uploadUrl: 'https://bucket.example/signed'
 			} as never);
-			renderPage();
+			await renderPage();
 			await openOlivia();
 
 			await page.getByRole('button', { name: '+ Add kit' }).click();
@@ -497,7 +497,7 @@ describe('keycap sets page', () => {
 				id: 'b-1',
 				keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' }
 			} as never);
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Novelties');
 
@@ -524,7 +524,7 @@ describe('keycap sets page', () => {
 				...olivia,
 				kits: olivia.kits!.filter((kit) => kit.kitId !== 'novs')
 			});
-			renderPage();
+			await renderPage();
 			await openOlivia();
 			await openKit('Novelties');
 
@@ -539,7 +539,7 @@ describe('keycap sets page', () => {
 	});
 
 	it('titles the tab', async () => {
-		renderPage();
+		await renderPage();
 
 		await vi.waitFor(() => expect(document.title).toBe('Keycap sets · @rogue.serenity · mykeebs'));
 	});
@@ -562,7 +562,7 @@ describe('keycap sets page image moderation', () => {
 		api.getKeycapSet.mockResolvedValue(
 			withKitImage({ status: ImageStatus.Rejected, rejectionReason: 'Explicit' })
 		);
-		renderPage();
+		await renderPage();
 		await openOlivia();
 
 		await expect

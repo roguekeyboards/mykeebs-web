@@ -7,21 +7,21 @@ const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAA
 
 describe('Avatar.svelte', () => {
 	it('is decorative by default, since the name is shown beside it', async () => {
-		render(Avatar, { name: 'rogue.serenity', imageUrl: PIXEL });
+		await render(Avatar, { name: 'rogue.serenity', imageUrl: PIXEL });
 
 		expect(document.querySelector('img')?.getAttribute('alt')).toBe('');
 		await expect.element(page.getByRole('img')).not.toBeInTheDocument();
 	});
 
 	it('hides its initials from screen readers when there is no photo', async () => {
-		render(Avatar, { name: 'rogue.serenity' });
+		await render(Avatar, { name: 'rogue.serenity' });
 
 		await expect.element(page.getByText('RO')).toHaveAttribute('aria-hidden', 'true');
 		await expect.element(page.getByRole('img')).not.toBeInTheDocument();
 	});
 
 	it('is named by its label when it is the subject, with or without a photo', async () => {
-		const { rerender } = render(Avatar, {
+		const { rerender } = await render(Avatar, {
 			name: 'rogue.serenity',
 			imageUrl: PIXEL,
 			label: 'Your profile photo'

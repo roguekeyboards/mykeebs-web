@@ -34,7 +34,7 @@ describe('Auth callback page', () => {
 		consume.mockReturnValue(true);
 		exchange.mockResolvedValue();
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/', { replace: true }));
 		expect(consume).toHaveBeenCalledWith('state-1');
@@ -46,7 +46,7 @@ describe('Auth callback page', () => {
 		consume.mockReturnValue(true);
 		exchange.mockReturnValue(new Promise(() => {}));
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await expect.element(page.getByText('Signing you in…')).toBeInTheDocument();
 	});
@@ -55,7 +55,7 @@ describe('Auth callback page', () => {
 		arriveWith({ code: 'attacker-code', state: 'attacker-state' });
 		consume.mockReturnValue(false);
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await expect.element(page.getByText(/Sign-in could not be verified/)).toBeInTheDocument();
 		expect(consume).toHaveBeenCalledWith('attacker-state');
@@ -67,7 +67,7 @@ describe('Auth callback page', () => {
 		arriveWith({ code: 'code-1' });
 		consume.mockReturnValue(false);
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await expect.element(page.getByText(/Sign-in could not be verified/)).toBeInTheDocument();
 		expect(consume).toHaveBeenCalledWith(null);
@@ -79,7 +79,7 @@ describe('Auth callback page', () => {
 		arriveWith({ state: 'state-1' });
 		consume.mockReturnValue(true);
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await expect
 			.element(page.getByText('No authorization code in the redirect URL.'))
@@ -93,7 +93,7 @@ describe('Auth callback page', () => {
 		consume.mockReturnValue(true);
 		exchange.mockRejectedValue(new Error('Token exchange failed: 400'));
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await expect.element(page.getByText('Sign-in failed. Please try again.')).toBeInTheDocument();
 		expect(navigate).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('Auth callback page title', () => {
 		consume.mockReturnValue(true);
 		exchange.mockReturnValue(new Promise(() => {}));
 
-		render(CallbackPage);
+		await render(CallbackPage);
 
 		await vi.waitFor(() => expect(document.title).toBe('Signing in · mykeebs'));
 	});

@@ -32,39 +32,39 @@ function props(overrides: Partial<KeycapSet> = {}, showPrice = true) {
 
 describe('KeycapSetDetails.svelte', () => {
 	it("shows the set's total cost", async () => {
-		render(KeycapSetDetails, props());
+		await render(KeycapSetDetails, props());
 
 		await expect.element(page.getByText('Total cost')).toBeInTheDocument();
 		await expect.element(page.getByText('$51.00')).toBeInTheDocument();
 	});
 
 	it('labels the total with the currency kbdb returns', async () => {
-		render(KeycapSetDetails, props({ totalCost: 40, currency: 'EUR' }));
+		await render(KeycapSetDetails, props({ totalCost: 40, currency: 'EUR' }));
 
 		await expect.element(page.getByText('€40.00')).toBeInTheDocument();
 	});
 
 	it('hides the total when prices are hidden from this viewer', async () => {
-		render(KeycapSetDetails, props({}, false));
+		await render(KeycapSetDetails, props({}, false));
 
 		await expect.element(page.getByText('Total cost')).not.toBeInTheDocument();
 	});
 
 	it('hides the total when no kit has a price', async () => {
-		render(KeycapSetDetails, props({ totalCost: undefined, currency: undefined }));
+		await render(KeycapSetDetails, props({ totalCost: undefined, currency: undefined }));
 
 		await expect.element(page.getByText('Total cost')).not.toBeInTheDocument();
 	});
 
 	it("reports a kit image that fails to load with that image's URL", async () => {
 		const p = props({ kits: [{ kitId: 'base', name: 'Base', image: { url: BROKEN } }] });
-		render(KeycapSetDetails, p);
+		await render(KeycapSetDetails, p);
 
 		await vi.waitFor(() => expect(p.onImageError).toHaveBeenCalledWith(BROKEN));
 	});
 
 	it('names a kit tile once, treating its photo as decoration', async () => {
-		render(
+		await render(
 			KeycapSetDetails,
 			props({ kits: [{ kitId: 'base', name: 'Base', image: { url: PIXEL } }] })
 		);
@@ -79,7 +79,7 @@ describe('KeycapSetDetails.svelte', () => {
 
 describe('KeycapSetDetails.svelte image moderation', () => {
 	it('shows a rejected kit image by its reason and marks a pending one', async () => {
-		render(
+		await render(
 			KeycapSetDetails,
 			props({
 				kits: [

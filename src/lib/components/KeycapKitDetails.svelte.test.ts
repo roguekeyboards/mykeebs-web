@@ -7,8 +7,8 @@ import KeycapKitDetails from './KeycapKitDetails.svelte';
 
 const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 
-function renderKit(image: ModeratedImage | undefined) {
-	render(KeycapKitDetails, {
+async function renderKit(image: ModeratedImage | undefined) {
+	await render(KeycapKitDetails, {
 		name: 'Base',
 		image,
 		imageFailed: false,
@@ -21,7 +21,7 @@ function renderKit(image: ModeratedImage | undefined) {
 
 describe('KeycapKitDetails.svelte', () => {
 	it('marks a photo that is pending review', async () => {
-		renderKit({ url: PIXEL, status: ImageStatus.Pending });
+		await renderKit({ url: PIXEL, status: ImageStatus.Pending });
 
 		await expect
 			.element(page.getByRole('button', { name: 'View full size image, pending review' }))
@@ -30,7 +30,7 @@ describe('KeycapKitDetails.svelte', () => {
 	});
 
 	it('shows a removed photo by its reason, with nothing to open full size', async () => {
-		renderKit({ status: ImageStatus.Rejected, rejectionReason: 'Explicit' });
+		await renderKit({ status: ImageStatus.Rejected, rejectionReason: 'Explicit' });
 
 		await expect
 			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
@@ -42,7 +42,7 @@ describe('KeycapKitDetails.svelte', () => {
 	});
 
 	it('still says there is no image when the kit has none', async () => {
-		renderKit(undefined);
+		await renderKit(undefined);
 
 		await expect.element(page.getByText('No image')).toBeInTheDocument();
 	});
