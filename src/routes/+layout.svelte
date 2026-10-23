@@ -37,7 +37,7 @@
 	const navItems = $derived(
 		[
 			myCollectionHref ? { href: myCollectionHref, label: 'My Collection' } : null,
-			{ href: resolve('discover'), label: 'Discover' }
+			{ href: resolve('/discover'), label: 'Discover' }
 		].filter((item) => item !== null)
 	);
 

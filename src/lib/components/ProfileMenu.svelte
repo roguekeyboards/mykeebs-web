@@ -57,11 +57,9 @@
 				</div>
 			</div>
 			<div class="profile-menu-divider"></div>
-
-			<a href={resolve('profile/edit')} class="profile-menu-item" onclick={() => (open = false)}
-				>{hasProfile ? 'Edit profile' : 'Set up your profile'}</a
-			>
-
+			<a href={resolve('/profile/edit')} class="profile-menu-item" onclick={() => (open = false)}>
+				{hasProfile ? 'Edit profile' : 'Set up your profile'}
+			</a>
 			<div class="profile-menu-divider"></div>
 			<button
 				type="button"

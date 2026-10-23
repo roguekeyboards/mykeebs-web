@@ -13,9 +13,9 @@
 				replace: true
 			});
 		} else if (profile.status === 'none') {
-			goto(resolve('profile/edit'), { replace: true });
+			goto(resolve('/profile/edit'), { replace: true });
 		} else {
-			goto(resolve('discover'), { replace: true });
+			goto(resolve('/discover'), { replace: true });
 		}
 	});
 </script>
@@ -29,13 +29,11 @@
 			Track your keyboards, switches, keycap sets and builds, from planned to delivered, and see
 			what other builders are working on.
 		</p>
-
-		<button type="button" class="btn btn-accent mt-8" onclick={signIn}
-			>Sign in or create an account</button
-		>
-
-		<a href={resolve('discover')} class="text-muted mt-6 text-sm hover:underline"
-			>Discover builders →</a
-		>
+		<button type="button" class="btn btn-accent mt-8" onclick={signIn}>
+			Sign in or create an account
+		</button>
+		<a href={resolve('/discover')} class="text-muted mt-6 text-sm hover:underline">
+			Discover builders &rarr;
+		</a>
 	</div>
 {/if}

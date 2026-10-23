@@ -1,5 +1,4 @@
 import tailwindcss from '@tailwindcss/vite';
-import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-static';
@@ -39,8 +38,9 @@ export default defineConfig({
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
 					exclude: ['src/lib/server/**'],
-					setupFiles: ['src/test-setup/public-env.ts'],
-					provide: { publicEnv: loadEnv('test', process.cwd(), 'PUBLIC_') }
+					// Browser mode has no dev-server page to define the globals
+					// `$app/env/public` reads; kit generates this module to do it.
+					setupFiles: ['.svelte-kit/generated/dev/env/service-worker.js']
 				}
 			},
 
