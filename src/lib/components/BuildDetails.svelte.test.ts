@@ -61,7 +61,7 @@ describe('BuildDetails.svelte', () => {
 	it('opens the keyboard and switches by id', async () => {
 		const { onKeyboardClick, onSwitchClick } = await renderDetails();
 
-		await page.getByRole('button', { name: 'Manta' }).click();
+		await page.getByRole('button', { name: 'Manta', exact: false }).click();
 		await page.getByRole('button', { name: '70x Aperol (HMX)' }).click();
 
 		expect(onKeyboardClick).toHaveBeenCalledWith('kb');
@@ -109,7 +109,7 @@ describe('BuildDetails.svelte image moderation', () => {
 			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
 			.toBeInTheDocument();
 		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
-		await page.getByRole('button', { name: 'View full size image' }).click();
+		await page.getByRole('button', { name: 'View full size image', exact: false }).click();
 		expect(onImageClick).toHaveBeenCalledWith(0);
 	});
 });

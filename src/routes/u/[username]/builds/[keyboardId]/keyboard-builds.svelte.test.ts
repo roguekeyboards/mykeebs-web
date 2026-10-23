@@ -95,8 +95,8 @@ describe('keyboard builds page', () => {
 			.toBeInTheDocument();
 		await expect.element(page.getByText('Qwertykeys')).toBeInTheDocument();
 		const items = page.getByRole('listitem');
-		await expect.element(items.nth(0)).toHaveTextContent(/Jun 30, 2026\s*Current/);
-		await expect.element(items.nth(0)).toHaveTextContent('$405.45');
+		await expect.element(items.nth(0)).toMatchTextContent(/Jun 30, 2026\s*Current/);
+		await expect.element(items.nth(0)).toMatchTextContent('$405.45');
 		await expect.element(items.nth(1)).toHaveTextContent('Nov 2, 2025');
 		await expect.element(items.nth(2)).toHaveTextContent('Undated');
 		expect(builds.listBuilds).toHaveBeenCalledWith({
@@ -202,7 +202,10 @@ describe('keyboard builds page', () => {
 			await renderPage();
 			await openCurrent();
 
-			await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
+			await dialog()
+				.getByRole('button', { name: 'View full size image', exact: false })
+				.nth(1)
+				.click();
 
 			await expect.element(page.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
 		});
@@ -288,7 +291,7 @@ describe('keyboard builds page', () => {
 				.toBeInTheDocument();
 			await expect
 				.element(page.getByRole('listitem').filter({ hasText: 'Ding Ding' }))
-				.toHaveTextContent('No longer in your collection');
+				.toMatchTextContent('No longer in your collection');
 		});
 
 		it('uploads a photo as WebP straight away and refreshes the build', async () => {
@@ -420,7 +423,10 @@ describe('keyboard builds page image moderation', () => {
 		await openCurrent();
 
 		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
-		await dialog().getByRole('button', { name: 'View full size image' }).first().click();
+		await dialog()
+			.getByRole('button', { name: 'View full size image', exact: false })
+			.first()
+			.click();
 		await vi.waitFor(() => expect(shown()).toBe('https://img.example/1.png'));
 	});
 });

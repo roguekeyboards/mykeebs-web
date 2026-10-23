@@ -68,7 +68,7 @@ describe('SwitchDetails.svelte image moderation', () => {
 			.element(page.getByRole('img', { name: "Photo couldn't be processed" }))
 			.toBeInTheDocument();
 		await expect
-			.element(page.getByRole('button', { name: 'View full size image' }))
+			.element(page.getByRole('button', { name: 'View full size image', exact: false }))
 			.not.toBeInTheDocument();
 	});
 });

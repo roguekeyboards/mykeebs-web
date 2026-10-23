@@ -89,15 +89,15 @@ async function addPlate(material: string) {
 		.click();
 	await dialog().getByRole('button', { name: '+ Add plate' }).click();
 	await dialog()
-		.getByRole('group', { name: 'Plate 1', exact: true })
-		.getByLabelText('Material')
+		.getByRole('group', { name: 'Plate 1' })
+		.getByLabelText('Material', { exact: false })
 		.selectOptions(material);
 }
 
 async function fillNewKeyboard() {
 	await page.getByRole('button', { name: 'Add keyboard' }).click();
-	await dialog().getByLabelText('Brand').fill('Bowl');
-	await dialog().getByLabelText('Name').fill('Deacon TKL');
+	await dialog().getByLabelText('Brand', { exact: false }).fill('Bowl');
+	await dialog().getByLabelText('Name', { exact: false }).fill('Deacon TKL');
 }
 
 beforeEach(() => {
@@ -114,7 +114,9 @@ describe('keyboards page', () => {
 	it('lists the keyboards and lets the owner add one', async () => {
 		await renderPage();
 
-		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('65% · WK');
+		await expect
+			.element(page.getByRole('button', { name: /Manta/ }))
+			.toMatchTextContent('65% · WK');
 		await expect.element(page.getByRole('button', { name: 'Add keyboard' })).toBeInTheDocument();
 		await expect
 			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
@@ -137,7 +139,7 @@ describe('keyboards page', () => {
 		});
 		await renderPage();
 
-		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('$420.00');
+		await expect.element(page.getByRole('button', { name: /Manta/ })).toMatchTextContent('$420.00');
 		await expect
 			.element(page.getByRole('button', { name: /Manta/ }))
 			.not.toHaveTextContent('$300.00');
@@ -174,13 +176,13 @@ describe('keyboards page', () => {
 		});
 		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Manta|Zoom65/ });
-		await expect.element(cards().first()).toHaveTextContent('Manta');
+		await expect.element(cards().first()).toMatchTextContent('Manta');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
-		await expect.element(cards().first()).toHaveTextContent('Zoom65');
+		await expect.element(cards().first()).toMatchTextContent('Zoom65');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
-		await expect.element(cards().first()).toHaveTextContent('Manta');
+		await expect.element(cards().first()).toMatchTextContent('Manta');
 	});
 
 	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {
@@ -189,7 +191,10 @@ describe('keyboards page', () => {
 
 		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
 
-		await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
+		await dialog()
+			.getByRole('button', { name: 'View full size image', exact: false })
+			.nth(1)
+			.click();
 		await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
@@ -217,7 +222,10 @@ describe('keyboards page', () => {
 				.element(dialog().getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
 				.toBeInTheDocument();
 
-			await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
+			await dialog()
+				.getByRole('button', { name: 'View full size image', exact: false })
+				.nth(1)
+				.click();
 			await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));
 			await page.getByRole('button', { name: 'Next photo' }).click();
 			await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#1`));
@@ -404,7 +412,9 @@ describe('keyboards page', () => {
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: "some of its plates or PCBs weren't" }))
 				.toBeInTheDocument();
-			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Deacon TKL');
+			await expect
+				.element(dialog().getByLabelText('Name', { exact: false }))
+				.toHaveValue('Deacon TKL');
 		});
 
 		it('says once that the keyboard was added when both a part and a photo fail', async () => {
@@ -477,7 +487,7 @@ describe('keyboards page', () => {
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog().getByLabelText('Name').fill('Manta R2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Manta R2');
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 
 			await expect.element(page.getByRole('dialog', { name: 'Manta R2' })).toBeInTheDocument();
@@ -505,10 +515,7 @@ describe('keyboards page', () => {
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog()
-				.getByRole('group', { name: 'Plate 2', exact: true })
-				.getByLabelText('Color')
-				.fill('Clear');
+			await dialog().getByRole('group', { name: 'Plate 2' }).getByLabelText('Color').fill('Clear');
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 
 			await expect
@@ -537,7 +544,7 @@ describe('keyboards page', () => {
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog().getByLabelText('Name').fill('Manta R2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Manta R2');
 			await dialog().getByRole('button', { name: 'Remove plate 1' }).click();
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 
@@ -552,7 +559,9 @@ describe('keyboards page', () => {
 			await vi.waitFor(() =>
 				expect(api.getKeyboard).toHaveBeenCalledWith({ userId: 'user-1', keyboardId: 'kb-1' })
 			);
-			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Manta R2');
+			await expect
+				.element(dialog().getByLabelText('Name', { exact: false }))
+				.toHaveValue('Manta R2');
 		});
 
 		it('picks up a removal that went through, so saving again does not repeat it', async () => {
@@ -662,7 +671,9 @@ describe('keyboards page', () => {
 
 			await page.getByRole('button', { name: 'Keep editing' }).click();
 			await expect.element(discardPrompt()).not.toBeInTheDocument();
-			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Deacon TKL');
+			await expect
+				.element(dialog().getByLabelText('Name', { exact: false }))
+				.toHaveValue('Deacon TKL');
 
 			await userEvent.keyboard('{Escape}');
 			await page.getByRole('button', { name: 'Discard' }).click();
@@ -672,7 +683,7 @@ describe('keyboards page', () => {
 		it('closes an untouched form straight away', async () => {
 			await renderPage();
 			await page.getByRole('button', { name: 'Add keyboard' }).click();
-			await expect.element(dialog().getByLabelText('Name')).toBeInTheDocument();
+			await expect.element(dialog().getByLabelText('Name', { exact: false })).toBeInTheDocument();
 
 			await userEvent.keyboard('{Escape}');
 
@@ -683,7 +694,7 @@ describe('keyboards page', () => {
 			await renderPage();
 			await openManta();
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog().getByLabelText('Name').fill('Manta R2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Manta R2');
 
 			await dialog().getByRole('button', { name: 'Cancel' }).click();
 			await expect.element(page.getByRole('dialog', { name: 'Manta' })).toBeInTheDocument();
@@ -699,7 +710,7 @@ describe('keyboards page', () => {
 			await renderPage();
 			await openManta();
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog().getByLabelText('Name').fill('Manta R2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Manta R2');
 
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 			await expect.element(page.getByRole('dialog', { name: 'Manta R2' })).toBeInTheDocument();

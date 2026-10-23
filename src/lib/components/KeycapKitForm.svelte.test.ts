@@ -95,7 +95,7 @@ describe('KeycapKitForm.svelte cleared price', () => {
 			onSubmit: vi.fn(),
 			onCancel: () => {}
 		});
-		const name = page.getByLabelText('Name');
+		const name = page.getByLabelText('Name', { exact: false });
 		await expect.element(name).toBeRequired();
 
 		await page.getByRole('button', { name: 'Add kit' }).click();
@@ -137,7 +137,7 @@ describe('KeycapKitForm.svelte image moderation', () => {
 		await expect
 			.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
 			.toBeInTheDocument();
-		await page.getByRole('button', { name: 'Remove', exact: true }).click();
+		await page.getByRole('button', { name: 'Remove' }).click();
 		expect(onImageRemove).toHaveBeenCalled();
 	});
 

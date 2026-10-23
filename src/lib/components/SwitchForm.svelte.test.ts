@@ -70,9 +70,9 @@ async function openSection(section: string) {
 }
 
 async function fillRequired() {
-	await page.getByLabelText('Brand').fill('HMX');
-	await page.getByLabelText('Name').fill('Aperol');
-	await page.getByLabelText('Type').selectOptions('Linear');
+	await page.getByLabelText('Brand', { exact: false }).fill('HMX');
+	await page.getByLabelText('Name', { exact: false }).fill('Aperol');
+	await page.getByLabelText('Type', { exact: false }).selectOptions('Linear');
 }
 
 const dirty = () => page.getByTestId('dirty');
@@ -88,8 +88,8 @@ describe('SwitchForm.svelte', () => {
 	it('requires a brand, name, and type', async () => {
 		const { onSubmit } = await renderForm();
 
-		await page.getByLabelText('Brand').fill('HMX');
-		await page.getByLabelText('Name').fill('Aperol');
+		await page.getByLabelText('Brand', { exact: false }).fill('HMX');
+		await page.getByLabelText('Name', { exact: false }).fill('Aperol');
 		await submit();
 
 		await expect
@@ -100,26 +100,26 @@ describe('SwitchForm.svelte', () => {
 
 	it('marks brand, name, and type required, and flags only the empty ones after a failed save', async () => {
 		await renderForm();
-		const type = page.getByLabelText('Type');
-		await expect.element(page.getByLabelText('Brand')).toBeRequired();
+		const type = page.getByLabelText('Type', { exact: false });
+		await expect.element(page.getByLabelText('Brand', { exact: false })).toBeRequired();
 		await expect.element(type).toBeRequired();
 
-		await page.getByLabelText('Brand').fill('HMX');
-		await page.getByLabelText('Name').fill('Aperol');
+		await page.getByLabelText('Brand', { exact: false }).fill('HMX');
+		await page.getByLabelText('Name', { exact: false }).fill('Aperol');
 		await submit();
 
 		await expect.element(type).toBeInvalid();
 		await expect.element(type).toHaveAccessibleDescription('Brand, name, and type are required.');
-		await expect.element(page.getByLabelText('Brand')).not.toBeInvalid();
-		await expect.element(page.getByLabelText('Name')).not.toBeInvalid();
+		await expect.element(page.getByLabelText('Brand', { exact: false })).not.toBeInvalid();
+		await expect.element(page.getByLabelText('Name', { exact: false })).not.toBeInvalid();
 	});
 
 	it('submits a minimal switch trimmed, private, and without empty sections', async () => {
 		const { onSubmit } = await renderForm();
 
-		await page.getByLabelText('Brand').fill(' HMX ');
-		await page.getByLabelText('Name').fill(' Aperol ');
-		await page.getByLabelText('Type').selectOptions('Linear');
+		await page.getByLabelText('Brand', { exact: false }).fill(' HMX ');
+		await page.getByLabelText('Name', { exact: false }).fill(' Aperol ');
+		await page.getByLabelText('Type', { exact: false }).selectOptions('Linear');
 		await submit();
 
 		expect(submitted(onSubmit)).toEqual([
@@ -151,7 +151,7 @@ describe('SwitchForm.svelte', () => {
 		await page.getByRole('radio', { name: 'Signed in' }).click();
 
 		await openSection('Construction');
-		await page.getByLabelText('Stem').selectOptions('POM');
+		await page.getByLabelText('Stem', { exact: false }).selectOptions('POM');
 
 		await openSection('Feel');
 		await page.getByLabelText('Actuation force (g)').fill('45');
@@ -191,7 +191,9 @@ describe('SwitchForm.svelte', () => {
 		const { onSubmit } = await renderForm({ initial: sw });
 
 		await expect.element(page.getByRole('heading', { name: 'Edit switch' })).toBeInTheDocument();
-		await expect.element(page.getByLabelText('Stem')).toHaveValue('Retired blend');
+		await expect
+			.element(page.getByLabelText('Stem', { exact: false }))
+			.toHaveValue('Retired blend');
 		await submit('Save changes');
 
 		const [input] = submitted(onSubmit);
@@ -261,7 +263,7 @@ describe('SwitchForm.svelte', () => {
 		await renderForm();
 
 		await expect.element(page.getByText('— Not set').nth(2)).toBeInTheDocument();
-		await expect.element(page.getByLabelText('Stem')).not.toBeVisible();
+		await expect.element(page.getByLabelText('Stem', { exact: false })).not.toBeVisible();
 	});
 
 	describe('order dates', () => {
@@ -269,7 +271,7 @@ describe('SwitchForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Order status').selectOptions('Ordered');
+			await page.getByLabelText('Order status', { exact: false }).selectOptions('Ordered');
 
 			await expect.element(page.getByLabelText('Order date')).toHaveValue(todayDateInput());
 			await expect.element(page.getByLabelText('Delivery date')).not.toBeInTheDocument();
@@ -279,7 +281,7 @@ describe('SwitchForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Order status').selectOptions('Delivered');
+			await page.getByLabelText('Order status', { exact: false }).selectOptions('Delivered');
 
 			await expect.element(page.getByLabelText('Delivery date')).toHaveValue(todayDateInput());
 		});
@@ -287,7 +289,7 @@ describe('SwitchForm.svelte', () => {
 		it('drops dates the new status would not have', async () => {
 			const { onSubmit } = await renderForm({ initial: sw });
 
-			await page.getByLabelText('Order status').selectOptions('Planned');
+			await page.getByLabelText('Order status', { exact: false }).selectOptions('Planned');
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
@@ -497,7 +499,7 @@ describe('SwitchForm.svelte', () => {
 	it("doesn't submit on Enter in a text field", async () => {
 		const { onSubmit } = await renderForm({ initial: sw });
 
-		await page.getByLabelText('Name').click();
+		await page.getByLabelText('Name', { exact: false }).click();
 		await userEvent.keyboard('{Enter}');
 
 		expect(onSubmit).not.toHaveBeenCalled();
