@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('../routes/layout.css', import.meta.url), 'utf8');
+const css = [
+	createRequire(import.meta.url).resolve('@rogueserenity/mykeebs-brand/tokens.css'),
+	new URL('../routes/layout.css', import.meta.url)
+]
+	.map((path) => readFileSync(path, 'utf8'))
+	.join('\n');
 
 const tokens = Object.fromEntries(
 	[...css.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6});/gi)].map(([, name, hex]) => [name, hex])

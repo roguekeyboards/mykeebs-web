@@ -73,4 +73,37 @@ describe('root layout', () => {
 			.element(footer.getByRole('link', { name: 'support@mykeebs.com' }))
 			.toHaveAttribute('href', 'mailto:support@mykeebs.com');
 	});
+
+	it('shows the square brand mark on small screens and the wide logo from sm up', async () => {
+		const brandShape = () => {
+			const box = page.getByRole('img', { name: 'mykeebs' }).element().getBoundingClientRect();
+			return box.width / box.height;
+		};
+		await page.viewport(390, 844);
+		try {
+			await renderLayout();
+			await vi.waitFor(() => expect(brandShape()).toBeCloseTo(1, 0));
+
+			await page.viewport(1024, 768);
+			await vi.waitFor(() => expect(brandShape()).toBeGreaterThan(3));
+		} finally {
+			await page.viewport(414, 896);
+		}
+	});
+
+	it("uses the brand's favicons and touch icon", async () => {
+		await renderLayout();
+
+		const href = (selector: string) =>
+			document.head.querySelector<HTMLLinkElement>(selector)?.getAttribute('href') ?? '';
+		await vi.waitFor(() => {
+			expect(href('link[rel="icon"][type="image/svg+xml"]')).toMatch(
+				/favicon\.svg|^data:image\/svg/
+			);
+			expect(href('link[rel="icon"][sizes="32x32"]')).toMatch(/favicon\.ico|^data:image/);
+			expect(href('link[rel="apple-touch-icon"]')).toMatch(
+				/apple-touch-icon\.png|^data:image\/png/
+			);
+		});
+	});
 });
