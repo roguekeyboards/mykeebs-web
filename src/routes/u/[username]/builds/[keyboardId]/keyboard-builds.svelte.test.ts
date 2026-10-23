@@ -64,8 +64,8 @@ const current = build('b-new', '2026-06-30', {
 const older = build('b-old', '2025-11-02');
 const undated = build('b-undated');
 
-function renderPage(isOwnProfile = true) {
-	render(WithUserContext, { component: KeyboardBuildsPage, isOwnProfile });
+async function renderPage(isOwnProfile = true) {
+	await render(WithUserContext, { component: KeyboardBuildsPage, isOwnProfile });
 }
 
 const dialog = () => page.getByRole('dialog').last();
@@ -88,7 +88,7 @@ afterEach(() => {
 
 describe('keyboard builds page', () => {
 	it('heads the page with the keyboard and lists its builds newest first', async () => {
-		renderPage();
+		await renderPage();
 
 		await expect
 			.element(page.getByRole('heading', { name: 'Neo65 Cu', level: 2 }))
@@ -110,7 +110,7 @@ describe('keyboard builds page', () => {
 		builds.listBuilds
 			.mockResolvedValueOnce({ items: [current], nextCursor: 'c-2' })
 			.mockResolvedValueOnce({ items: [older] });
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('listitem').nth(1)).toHaveTextContent('Nov 2, 2025');
 		expect(builds.listBuilds).toHaveBeenLastCalledWith({
@@ -122,7 +122,7 @@ describe('keyboard builds page', () => {
 
 	it('still lists the builds of a keyboard that was deleted', async () => {
 		vi.mocked(keyboardsApi.getKeyboard).mockRejectedValue(new Error('not found'));
-		renderPage();
+		await renderPage();
 
 		await expect
 			.element(page.getByRole('heading', { name: 'Deleted keyboard', level: 2 }))
@@ -132,14 +132,14 @@ describe('keyboard builds page', () => {
 
 	it('says so when the keyboard has no builds', async () => {
 		builds.listBuilds.mockResolvedValue({ items: [] });
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByText('No builds for this keyboard.')).toBeInTheDocument();
 	});
 
 	it('says so when the builds fail to load', async () => {
 		builds.listBuilds.mockRejectedValue(new Error('network'));
-		renderPage();
+		await renderPage();
 
 		await expect
 			.element(
@@ -149,7 +149,7 @@ describe('keyboard builds page', () => {
 	});
 
 	it("heads the keyboard section one level below the profile's h1", async () => {
-		renderPage();
+		await renderPage();
 
 		await expect
 			.element(page.getByRole('heading', { level: 2, name: 'Neo65 Cu' }))
@@ -158,7 +158,7 @@ describe('keyboard builds page', () => {
 	});
 
 	it('keeps the decorative timeline dots out of the Tab order', async () => {
-		renderPage();
+		await renderPage();
 		await expect.element(page.getByRole('button', { name: /Jun 30, 2026/ })).toBeInTheDocument();
 
 		const dots = [...document.querySelectorAll<HTMLElement>('.kc-build-timeline-dot')];
@@ -168,7 +168,7 @@ describe('keyboard builds page', () => {
 
 	describe('a build', () => {
 		it('opens with edit and delete for the owner', async () => {
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			expect(builds.getBuild).toHaveBeenCalledWith({ userId: 'user-1', buildId: 'b-new' });
@@ -177,7 +177,7 @@ describe('keyboard builds page', () => {
 		});
 
 		it('opens read-only for a visitor', async () => {
-			renderPage(false);
+			await renderPage(false);
 			await openCurrent();
 
 			await expect.element(dialog().getByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
@@ -188,7 +188,7 @@ describe('keyboard builds page', () => {
 
 		it('says so when the build fails to load', async () => {
 			builds.getBuild.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 
 			await page.getByRole('button', { name: /Jun 30, 2026/ }).click();
 
@@ -199,7 +199,7 @@ describe('keyboard builds page', () => {
 		});
 
 		it('opens a photo full size', async () => {
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
@@ -211,7 +211,7 @@ describe('keyboard builds page', () => {
 	describe('deleting a build', () => {
 		it('asks first, then deletes, reloads, and closes', async () => {
 			builds.deleteBuild.mockResolvedValue(undefined);
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Delete' }).click();
@@ -226,7 +226,7 @@ describe('keyboard builds page', () => {
 
 		it('says so when the delete fails', async () => {
 			builds.deleteBuild.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Delete' }).click();
@@ -241,7 +241,7 @@ describe('keyboard builds page', () => {
 	describe('editing a build', () => {
 		it('saves, reloads, and returns to the build', async () => {
 			builds.updateBuild.mockResolvedValue(current);
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -255,7 +255,7 @@ describe('keyboard builds page', () => {
 		});
 
 		it('asks before closing with unsaved edits', async () => {
-			renderPage();
+			await renderPage();
 			await openCurrent();
 			await dialog().getByRole('button', { name: 'Edit' }).click();
 			await dialog().getByLabelText('Notes').fill('Lubed the stabs');
@@ -277,7 +277,7 @@ describe('keyboard builds page', () => {
 					})
 				)
 			);
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -295,7 +295,7 @@ describe('keyboard builds page', () => {
 			const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 			vi.stubGlobal('fetch', fetchMock);
 			builds.createBuildImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/b' } as never);
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -322,7 +322,7 @@ describe('keyboard builds page', () => {
 
 		it('says so when the save fails for another reason', async () => {
 			builds.updateBuild.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -336,7 +336,7 @@ describe('keyboard builds page', () => {
 
 	describe('parts of a build', () => {
 		it('opens the keyboard', async () => {
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog()
@@ -359,7 +359,7 @@ describe('keyboard builds page', () => {
 				name: 'Ding Ding',
 				type: 'Linear'
 			} as never);
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog()
@@ -377,7 +377,7 @@ describe('keyboard builds page', () => {
 				name: 'Fremen',
 				kits: [{ kitId: 'base', name: 'Base' }]
 			});
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog()
@@ -394,7 +394,7 @@ describe('keyboard builds page', () => {
 				name: 'Fremen',
 				kits: []
 			});
-			renderPage();
+			await renderPage();
 			await openCurrent();
 
 			await dialog()
@@ -416,7 +416,7 @@ describe('keyboard builds page image moderation', () => {
 				...current.images!
 			]
 		});
-		renderPage();
+		await renderPage();
 		await openCurrent();
 
 		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');

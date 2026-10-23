@@ -65,8 +65,8 @@ function conflict(blockingBuildIds?: string[]): ResponseError {
 	);
 }
 
-function renderPage(isOwnProfile = true) {
-	render(WithUserContext, { component: KeyboardsPage, isOwnProfile });
+async function renderPage(isOwnProfile = true) {
+	await render(WithUserContext, { component: KeyboardsPage, isOwnProfile });
 }
 
 const dialog = () => page.getByRole('dialog').last();
@@ -112,7 +112,7 @@ afterEach(() => {
 
 describe('keyboards page', () => {
 	it('lists the keyboards and lets the owner add one', async () => {
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('65% · WK');
 		await expect.element(page.getByRole('button', { name: 'Add keyboard' })).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('keyboards page', () => {
 				}
 			]
 		});
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('$420.00');
 		await expect
@@ -144,7 +144,7 @@ describe('keyboards page', () => {
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
-		renderPage(false);
+		await renderPage(false);
 		await openManta();
 
 		await expect
@@ -172,7 +172,7 @@ describe('keyboards page', () => {
 				}
 			]
 		});
-		renderPage(false);
+		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Manta|Zoom65/ });
 		await expect.element(cards().first()).toHaveTextContent('Manta');
 
@@ -184,7 +184,7 @@ describe('keyboards page', () => {
 	});
 
 	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {
-		renderPage();
+		await renderPage();
 		await openManta();
 
 		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
@@ -209,7 +209,7 @@ describe('keyboards page', () => {
 		it('leaves a rejected photo out of the full-size gallery', async () => {
 			const withRejected = { ...manta, images: [manta.images![0], rejected, manta.images![1]] };
 			api.listKeyboards.mockResolvedValue({ items: [withRejected] });
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
@@ -233,7 +233,7 @@ describe('keyboards page', () => {
 				...manta,
 				images: [{ imageId: 'img-1', status: ImageStatus.Rejected, rejectionReason: 'Explicit' }]
 			});
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await expect
@@ -243,7 +243,7 @@ describe('keyboards page', () => {
 		});
 
 		it("doesn't re-fetch a keyboard with no pending photo", async () => {
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await expect.element(dialog().getByRole('button', { name: 'Edit' })).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe('keyboards page', () => {
 			api.createKeyboardImage.mockRejectedValue(
 				new ResponseError(new Response(null, { status: 429 }))
 			);
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -279,7 +279,7 @@ describe('keyboards page', () => {
 			api.createKeyboardImage
 				.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/a' } as never)
 				.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/b' } as never);
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await userEvent.upload(page.elementLocator(document.querySelector('input[type="file"]')!), [
@@ -315,7 +315,7 @@ describe('keyboards page', () => {
 			);
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
 			api.createKeyboardImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/a' } as never);
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await userEvent.upload(
@@ -341,7 +341,7 @@ describe('keyboards page', () => {
 			api.createKeyboardImage.mockRejectedValue(
 				new ResponseError(new Response(null, { status: 429 }))
 			);
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await userEvent.upload(page.elementLocator(document.querySelector('input[type="file"]')!), [
@@ -369,7 +369,7 @@ describe('keyboards page', () => {
 			plateMaterials(['POM']);
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
 			api.createKeyboardPlate.mockResolvedValue({ id: 'p1', material: 'POM' });
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await addPlate('POM');
@@ -392,7 +392,7 @@ describe('keyboards page', () => {
 			api.createKeyboard.mockResolvedValue(created);
 			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
 			api.getKeyboard.mockResolvedValue(created);
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await addPlate('POM');
@@ -416,7 +416,7 @@ describe('keyboards page', () => {
 				new ResponseError(new Response(null, { status: 429 }))
 			);
 			api.getKeyboard.mockResolvedValue(created);
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await addPlate('POM');
@@ -441,7 +441,7 @@ describe('keyboards page', () => {
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
 			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
 			api.getKeyboard.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await addPlate('POM');
@@ -458,7 +458,7 @@ describe('keyboards page', () => {
 
 		it('says so when the create fails', async () => {
 			api.createKeyboard.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 
 			await fillNewKeyboard();
 			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
@@ -473,7 +473,7 @@ describe('keyboards page', () => {
 		it('saves and returns to the updated keyboard', async () => {
 			api.updateKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
 			api.getKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -501,7 +501,7 @@ describe('keyboards page', () => {
 			api.listKeyboards.mockResolvedValue({ items: [withParts] });
 			api.updateKeyboard.mockResolvedValue(withParts);
 			api.getKeyboard.mockResolvedValue(withParts);
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -533,7 +533,7 @@ describe('keyboards page', () => {
 				keyboard: { id: 'kb-1', brand: 'Bowl', name: 'Manta' },
 				buildDate: new Date('2026-08-03')
 			});
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -567,7 +567,7 @@ describe('keyboards page', () => {
 			api.deleteKeyboardPlate.mockResolvedValue(null);
 			api.updateKeyboard.mockRejectedValueOnce(new Error('network')).mockResolvedValue(manta);
 			api.getKeyboard.mockResolvedValue({ ...manta, plates: [{ id: 'p2', material: 'PC' }] });
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -588,7 +588,7 @@ describe('keyboards page', () => {
 
 		it('says so when the save fails', async () => {
 			api.updateKeyboard.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -602,7 +602,7 @@ describe('keyboards page', () => {
 		it('removes a photo and refreshes the keyboard', async () => {
 			api.deleteKeyboardImage.mockResolvedValue(undefined);
 			api.getKeyboard.mockResolvedValue({ ...manta, images: [manta.images![0]] });
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -622,7 +622,7 @@ describe('keyboards page', () => {
 			const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 			vi.stubGlobal('fetch', fetchMock);
 			api.createKeyboardImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/c' } as never);
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -654,7 +654,7 @@ describe('keyboards page', () => {
 			page.getByRole('alert').filter({ hasText: 'Discard your changes?' });
 
 		it('asks before closing a form with edits, and keeps it open on "Keep editing"', async () => {
-			renderPage();
+			await renderPage();
 			await fillNewKeyboard();
 
 			await userEvent.keyboard('{Escape}');
@@ -670,7 +670,7 @@ describe('keyboards page', () => {
 		});
 
 		it('closes an untouched form straight away', async () => {
-			renderPage();
+			await renderPage();
 			await page.getByRole('button', { name: 'Add keyboard' }).click();
 			await expect.element(dialog().getByLabelText('Name')).toBeInTheDocument();
 
@@ -680,7 +680,7 @@ describe('keyboards page', () => {
 		});
 
 		it('stops asking once an edit is cancelled', async () => {
-			renderPage();
+			await renderPage();
 			await openManta();
 			await dialog().getByRole('button', { name: 'Edit' }).click();
 			await dialog().getByLabelText('Name').fill('Manta R2');
@@ -696,7 +696,7 @@ describe('keyboards page', () => {
 		it('stops asking once an edit is saved', async () => {
 			api.updateKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
 			api.getKeyboard.mockResolvedValue({ ...manta, name: 'Manta R2' });
-			renderPage();
+			await renderPage();
 			await openManta();
 			await dialog().getByRole('button', { name: 'Edit' }).click();
 			await dialog().getByLabelText('Name').fill('Manta R2');
@@ -719,7 +719,7 @@ describe('keyboards page', () => {
 
 		it('asks first, then deletes and closes', async () => {
 			api.deleteKeyboard.mockResolvedValue(undefined);
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await confirmDelete();
@@ -735,7 +735,7 @@ describe('keyboards page', () => {
 				buildDate: new Date('2026-09-10T12:00:00Z'),
 				keyboard: { id: 'kb-1', brand: 'Bowl', name: 'Manta' }
 			} as never);
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await confirmDelete();
@@ -751,7 +751,7 @@ describe('keyboards page', () => {
 
 		it('says it is still used when kbdb names no builds', async () => {
 			api.deleteKeyboard.mockRejectedValue(conflict());
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await confirmDelete();
@@ -767,7 +767,7 @@ describe('keyboards page', () => {
 
 		it('reports any other failure', async () => {
 			api.deleteKeyboard.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openManta();
 
 			await confirmDelete();

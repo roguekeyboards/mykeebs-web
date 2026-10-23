@@ -19,7 +19,7 @@ const trigger = () => page.getByRole('button', { name: /rogue\.serenity/ });
 
 describe('ProfileMenu.svelte', () => {
 	it('is a disclosure: the button reports and controls its panel, with no menu roles', async () => {
-		render(ProfileMenu);
+		await render(ProfileMenu);
 		await expect.element(trigger()).toHaveAttribute('aria-expanded', 'false');
 
 		await trigger().click();
@@ -34,7 +34,7 @@ describe('ProfileMenu.svelte', () => {
 	});
 
 	it('closes on Escape and returns focus to the button', async () => {
-		render(ProfileMenu);
+		await render(ProfileMenu);
 		await trigger().click();
 		await page.getByRole('link', { name: 'Edit profile' }).element().focus();
 
@@ -45,7 +45,7 @@ describe('ProfileMenu.svelte', () => {
 	});
 
 	it('signs out from the panel', async () => {
-		render(ProfileMenu);
+		await render(ProfileMenu);
 		await trigger().click();
 
 		await page.getByRole('button', { name: 'Sign out' }).click();

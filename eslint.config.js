@@ -38,6 +38,15 @@ export default defineConfig(
 		}
 	},
 	{
+		files: ['src/**/*.{test,spec}.{js,ts}'],
+		languageOptions: {
+			parserOptions: { project: './tsconfig.json', tsconfigRootDir: import.meta.dirname }
+		},
+		rules: {
+			'@typescript-eslint/no-floating-promises': 'error'
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

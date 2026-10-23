@@ -36,8 +36,8 @@ const mantaBuild: Build = {
 	buildDate: new Date('2026-09-10T12:00:00Z')
 };
 
-function renderPage() {
-	render(WithUserContext, { component: BuildsPage, isOwnProfile: true });
+async function renderPage() {
+	await render(WithUserContext, { component: BuildsPage, isOwnProfile: true });
 }
 
 const dialog = () => page.getByRole('dialog').last();
@@ -65,7 +65,7 @@ afterEach(() => {
 
 describe('builds page', () => {
 	it('lists builds grouped by keyboard', async () => {
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('link', { name: /Manta/ })).toBeInTheDocument();
 	});
@@ -76,7 +76,7 @@ describe('builds page', () => {
 		builds.createBuildImage
 			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/a' } as never)
 			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/b' } as never);
-		renderPage();
+		await renderPage();
 
 		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
 
@@ -106,7 +106,7 @@ describe('builds page', () => {
 		builds.createBuildImage
 			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/a' } as never)
 			.mockResolvedValueOnce({ uploadUrl: 'https://bucket.example/b' } as never);
-		renderPage();
+		await renderPage();
 
 		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
 
@@ -125,7 +125,7 @@ describe('builds page', () => {
 		builds.createBuildImage.mockRejectedValue(
 			new ResponseError(new Response(null, { status: 429 }))
 		);
-		renderPage();
+		await renderPage();
 		await expect.element(page.getByRole('button', { name: 'Add build' })).toBeInTheDocument();
 		builds.listBuilds.mockRejectedValue(new Error('network'));
 
@@ -141,7 +141,7 @@ describe('builds page', () => {
 		builds.createBuildImage.mockRejectedValue(
 			new ResponseError(new Response(null, { status: 429 }))
 		);
-		renderPage();
+		await renderPage();
 
 		await startBuildWithPhotos(jpg('a.jpg'), jpg('b.jpg'));
 
@@ -157,7 +157,7 @@ describe('builds page', () => {
 	});
 
 	it('asks before closing a new build with unsaved edits', async () => {
-		renderPage();
+		await renderPage();
 		await page.getByRole('button', { name: 'Add build' }).click();
 		await dialog().getByRole('button', { name: 'Choose keyboard…' }).click();
 		await dialog().getByRole('option', { name: /Manta/ }).click();

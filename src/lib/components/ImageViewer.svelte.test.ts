@@ -1,5 +1,5 @@
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ImageViewer from './ImageViewer.svelte';
 
@@ -9,7 +9,7 @@ describe('ImageViewer.svelte arrows', () => {
 	it('names the arrows for photos by default and steps with them', async () => {
 		const onPrev = vi.fn();
 		const onNext = vi.fn();
-		render(ImageViewer, { ...base, onPrev, onNext });
+		await render(ImageViewer, { ...base, onPrev, onNext });
 
 		await page.getByRole('button', { name: 'Previous photo' }).click();
 		await page.getByRole('button', { name: 'Next photo' }).click();
@@ -19,14 +19,14 @@ describe('ImageViewer.svelte arrows', () => {
 	});
 
 	it('names the arrows after what is being browsed', async () => {
-		render(ImageViewer, { ...base, itemLabel: 'kit', onPrev: () => {}, onNext: () => {} });
+		await render(ImageViewer, { ...base, itemLabel: 'kit', onPrev: () => {}, onNext: () => {} });
 
 		await expect.element(page.getByRole('button', { name: 'Previous kit' })).toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: 'Next kit' })).toBeInTheDocument();
 	});
 
 	it('shows no arrows when there is nothing to step to', async () => {
-		render(ImageViewer, base);
+		await render(ImageViewer, base);
 
 		await expect.element(page.getByRole('button', { name: 'Close' })).toBeInTheDocument();
 		await expect
@@ -37,7 +37,7 @@ describe('ImageViewer.svelte arrows', () => {
 
 describe('ImageViewer.svelte as a dialog', () => {
 	it('is a dialog named after the photo, with focus on Close', async () => {
-		render(ImageViewer, base);
+		await render(ImageViewer, base);
 
 		await expect
 			.element(page.getByRole('dialog', { name: 'Neo65 Cu, full size' }))
@@ -46,7 +46,7 @@ describe('ImageViewer.svelte as a dialog', () => {
 	});
 
 	it('keeps Tab inside the viewer, wrapping at both ends', async () => {
-		render(ImageViewer, { ...base, onPrev: () => {}, onNext: () => {} });
+		await render(ImageViewer, { ...base, onPrev: () => {}, onNext: () => {} });
 		await expect.element(page.getByRole('button', { name: 'Close' })).toHaveFocus();
 
 		await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
@@ -60,15 +60,15 @@ describe('ImageViewer.svelte as a dialog', () => {
 		const opener = document.createElement('button');
 		opener.textContent = 'Open photo';
 		document.body.append(opener);
+		onTestFinished(() => opener.remove());
 		opener.focus();
-		const { rerender } = render(ImageViewer, { ...base, open: false });
+		const { rerender } = await render(ImageViewer, { ...base, open: false });
 
 		await rerender({ ...base, open: true });
 		await expect.element(page.getByRole('button', { name: 'Close' })).toHaveFocus();
 		await rerender({ ...base, open: false });
 
 		expect(document.activeElement).toBe(opener);
-		opener.remove();
 	});
 });
 
@@ -82,7 +82,7 @@ describe('ImageViewer.svelte keyboard zoom and pan', () => {
 	}
 
 	async function renderLoaded(props: Record<string, unknown> = {}) {
-		render(ImageViewer, { ...base, src: await largeImage(), ...props });
+		await render(ImageViewer, { ...base, src: await largeImage(), ...props });
 		const img = document.querySelector<HTMLImageElement>('img')!;
 		await vi.waitFor(() => expect(img.complete && img.naturalWidth > 0).toBe(true));
 		return img;

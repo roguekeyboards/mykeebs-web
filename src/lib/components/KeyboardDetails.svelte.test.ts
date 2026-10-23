@@ -15,7 +15,7 @@ function keyboard(url: string): Keyboard {
 describe('KeyboardDetails.svelte', () => {
 	it('hides an image that fails to load and reports it', async () => {
 		const onImageError = vi.fn();
-		render(KeyboardDetails, {
+		await render(KeyboardDetails, {
 			keyboard: keyboard(BROKEN),
 			onImageClick: vi.fn(),
 			onImageError,
@@ -28,7 +28,7 @@ describe('KeyboardDetails.svelte', () => {
 
 	it('shows the image again once a refetch brings a fresh URL', async () => {
 		const onImageError = vi.fn();
-		const { rerender } = render(KeyboardDetails, {
+		const { rerender } = await render(KeyboardDetails, {
 			keyboard: keyboard(BROKEN),
 			onImageClick: vi.fn(),
 			onImageError,
@@ -55,7 +55,11 @@ describe('KeyboardDetails.svelte', () => {
 		};
 
 		it('shows a rejected image by its reason and marks a pending one', async () => {
-			render(KeyboardDetails, { keyboard: moderated, onImageClick: vi.fn(), showPrice: true });
+			await render(KeyboardDetails, {
+				keyboard: moderated,
+				onImageClick: vi.fn(),
+				showPrice: true
+			});
 
 			await expect
 				.element(page.getByRole('img', { name: 'Photo removed by moderation: Explicit' }))
@@ -69,7 +73,7 @@ describe('KeyboardDetails.svelte', () => {
 
 		it('opens the gallery at the position among the images that can be viewed', async () => {
 			const onImageClick = vi.fn();
-			render(KeyboardDetails, { keyboard: moderated, onImageClick, showPrice: true });
+			await render(KeyboardDetails, { keyboard: moderated, onImageClick, showPrice: true });
 
 			await page.getByRole('button', { name: 'View full size image' }).nth(1).click();
 
@@ -98,12 +102,12 @@ describe('KeyboardDetails.svelte', () => {
 			currency: 'USD'
 		};
 
-		function renderParts(showPrice: boolean) {
-			render(KeyboardDetails, { keyboard: parts, onImageClick: vi.fn(), showPrice });
+		async function renderParts(showPrice: boolean) {
+			await render(KeyboardDetails, { keyboard: parts, onImageClick: vi.fn(), showPrice });
 		}
 
 		it('lists each part, with its own purchase or as part of the keyboard', async () => {
-			renderParts(true);
+			await renderParts(true);
 
 			const items = page.getByRole('listitem');
 			await expect.element(items.nth(0)).toHaveTextContent(/^\s*POM\s*Came with the keyboard\s*$/);
@@ -115,7 +119,7 @@ describe('KeyboardDetails.svelte', () => {
 		});
 
 		it('shows the total cost next to the base price', async () => {
-			renderParts(true);
+			await renderParts(true);
 
 			await expect.element(page.getByText('Total cost')).toBeInTheDocument();
 			await expect.element(page.getByText('$340.00')).toBeInTheDocument();
@@ -124,7 +128,7 @@ describe('KeyboardDetails.svelte', () => {
 		});
 
 		it('hides part prices and the total along with the base price', async () => {
-			renderParts(false);
+			await renderParts(false);
 
 			await expect.element(page.getByText('CannonKeys')).toBeInTheDocument();
 			await expect.element(page.getByText('$40.00')).not.toBeInTheDocument();

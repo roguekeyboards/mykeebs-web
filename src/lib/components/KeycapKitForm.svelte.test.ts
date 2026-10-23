@@ -14,7 +14,7 @@ const kit: KeycapKit = { kitId: 'kit-1', name: 'Base' };
 
 async function submitted(isPrimary: boolean, toggle: boolean): Promise<KeycapKitInput> {
 	const onSubmit = vi.fn();
-	render(KeycapKitForm, {
+	await render(KeycapKitForm, {
 		initial: kit,
 		isPrimary,
 		saving: false,
@@ -30,7 +30,7 @@ async function submitted(isPrimary: boolean, toggle: boolean): Promise<KeycapKit
 
 describe('KeycapKitForm.svelte', () => {
 	it("starts ticked for the set's primary kit", async () => {
-		render(KeycapKitForm, {
+		await render(KeycapKitForm, {
 			initial: kit,
 			isPrimary: true,
 			saving: false,
@@ -58,9 +58,9 @@ describe('KeycapKitForm.svelte', () => {
 });
 
 describe('KeycapKitForm.svelte cleared price', () => {
-	function renderKit(initial: KeycapKit) {
+	async function renderKit(initial: KeycapKit) {
 		const onSubmit = vi.fn();
-		render(FormWithDirty, {
+		await render(FormWithDirty, {
 			form: KeycapKitForm,
 			formProps: { initial, saving: false, error: null, onSubmit, onCancel: () => {} }
 		});
@@ -68,7 +68,7 @@ describe('KeycapKitForm.svelte cleared price', () => {
 	}
 
 	it('leaves the form clean once the price is typed into and cleared', async () => {
-		renderKit(kit);
+		await renderKit(kit);
 		const dirty = page.getByTestId('dirty');
 
 		await page.getByLabelText('Price').fill('5');
@@ -79,7 +79,7 @@ describe('KeycapKitForm.svelte cleared price', () => {
 	});
 
 	it('drops a cleared price rather than keeping the old value', async () => {
-		const onSubmit = renderKit({ ...kit, purchase: { vendor: 'NovelKeys', price: 120 } });
+		const onSubmit = await renderKit({ ...kit, purchase: { vendor: 'NovelKeys', price: 120 } });
 
 		await page.getByLabelText('Price').fill('');
 		await page.getByRole('button', { name: 'Save changes' }).click();
@@ -89,7 +89,12 @@ describe('KeycapKitForm.svelte cleared price', () => {
 	});
 
 	it('marks the name required, and flags it after a failed save', async () => {
-		render(KeycapKitForm, { saving: false, error: null, onSubmit: vi.fn(), onCancel: () => {} });
+		await render(KeycapKitForm, {
+			saving: false,
+			error: null,
+			onSubmit: vi.fn(),
+			onCancel: () => {}
+		});
 		const name = page.getByLabelText('Name');
 		await expect.element(name).toBeRequired();
 
@@ -101,8 +106,8 @@ describe('KeycapKitForm.svelte cleared price', () => {
 });
 
 describe('KeycapKitForm.svelte image moderation', () => {
-	function renderKit(initial: KeycapKit, props: Record<string, unknown> = {}) {
-		render(KeycapKitForm, {
+	async function renderKit(initial: KeycapKit, props: Record<string, unknown> = {}) {
+		await render(KeycapKitForm, {
 			initial,
 			isPrimary: false,
 			saving: false,
@@ -114,14 +119,17 @@ describe('KeycapKitForm.svelte image moderation', () => {
 	}
 
 	it('marks a photo that is pending review', async () => {
-		renderKit({ ...kit, image: { url: 'https://img.example/k.png', status: ImageStatus.Pending } });
+		await renderKit({
+			...kit,
+			image: { url: 'https://img.example/k.png', status: ImageStatus.Pending }
+		});
 
 		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
 	});
 
 	it('shows a rejected photo by its reason, and offers to remove it', async () => {
 		const onImageRemove = vi.fn(async () => {});
-		renderKit(
+		await renderKit(
 			{ ...kit, image: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' } },
 			{ onImageRemove }
 		);
@@ -134,7 +142,7 @@ describe('KeycapKitForm.svelte image moderation', () => {
 	});
 
 	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
-		renderKit(kit, {
+		await renderKit(kit, {
 			onImageUpload: vi
 				.fn()
 				.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))

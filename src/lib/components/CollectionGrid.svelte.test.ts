@@ -14,9 +14,9 @@ const card = createRawSnippet((item: () => Item) => ({
 	render: () => `<article>${item().name}</article>`
 }));
 
-function renderGrid(overrides: Record<string, unknown> = {}) {
+async function renderGrid(overrides: Record<string, unknown> = {}) {
 	const fetchPage = vi.fn(async () => ({ items: [manta, agar, kafka] }));
-	render(CollectionGrid, {
+	await render(CollectionGrid, {
 		userId: 'user-1',
 		fetchPage,
 		itemKey: (item: Item) => item.id,
@@ -47,7 +47,7 @@ describe('CollectionGrid.svelte', () => {
 			.fn()
 			.mockResolvedValueOnce({ items: [manta], nextCursor: 'c-2' })
 			.mockResolvedValueOnce({ items: [agar, kafka] });
-		renderGrid({ fetchPage });
+		await renderGrid({ fetchPage });
 
 		await expect.element(page.getByRole('article')).toHaveLength(3);
 		expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']);
@@ -58,7 +58,7 @@ describe('CollectionGrid.svelte', () => {
 	});
 
 	it('shows loading until the items arrive', async () => {
-		renderGrid({ fetchPage: () => new Promise(() => {}) });
+		await renderGrid({ fetchPage: () => new Promise(() => {}) });
 
 		await expect
 			.element(page.getByRole('status').filter({ hasText: 'Loading…' }))
@@ -66,7 +66,7 @@ describe('CollectionGrid.svelte', () => {
 	});
 
 	it('says so when loading fails', async () => {
-		renderGrid({ fetchPage: async () => Promise.reject(new Error('network')) });
+		await renderGrid({ fetchPage: async () => Promise.reject(new Error('network')) });
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not load this collection.' }))
@@ -74,7 +74,7 @@ describe('CollectionGrid.svelte', () => {
 	});
 
 	it('shows the empty message for an empty collection', async () => {
-		renderGrid({ fetchPage: async () => ({ items: [] }) });
+		await renderGrid({ fetchPage: async () => ({ items: [] }) });
 
 		await expect
 			.element(page.getByRole('status').filter({ hasText: 'No keyboards yet.' }))
@@ -83,7 +83,7 @@ describe('CollectionGrid.svelte', () => {
 
 	describe('status filter', () => {
 		it('narrows the list to one order status', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('button', { name: 'Delivered' }).click();
@@ -96,7 +96,7 @@ describe('CollectionGrid.svelte', () => {
 		});
 
 		it('says no matches when a filter empties a non-empty collection', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('button', { name: 'Cancelled' }).click();
@@ -107,7 +107,7 @@ describe('CollectionGrid.svelte', () => {
 		});
 
 		it('is not offered for items without an order status', async () => {
-			renderGrid({ getOrderStatus: undefined });
+			await renderGrid({ getOrderStatus: undefined });
 			await shown();
 
 			await expect
@@ -118,7 +118,7 @@ describe('CollectionGrid.svelte', () => {
 
 	describe('search', () => {
 		it('opens a search box that narrows the list as you type', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('button', { name: 'Filter' }).click();
@@ -130,7 +130,7 @@ describe('CollectionGrid.svelte', () => {
 		});
 
 		it('clears and closes on Escape', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('button', { name: 'Filter' }).click();
@@ -143,7 +143,7 @@ describe('CollectionGrid.svelte', () => {
 
 	describe('sorting', () => {
 		it('sorts by the chosen option, with missing values last', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Price');
@@ -152,7 +152,7 @@ describe('CollectionGrid.svelte', () => {
 		});
 
 		it('flips the order with the direction button', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await page.getByRole('button', { name: 'Sort descending' }).click();
@@ -167,7 +167,7 @@ describe('CollectionGrid.svelte', () => {
 	describe('adding', () => {
 		it('offers an add button when it can add', async () => {
 			const onAdd = vi.fn();
-			renderGrid({ onAdd, addLabel: 'Add keyboard' });
+			await renderGrid({ onAdd, addLabel: 'Add keyboard' });
 			await shown();
 
 			await page.getByRole('button', { name: 'Add keyboard' }).click();
@@ -176,7 +176,7 @@ describe('CollectionGrid.svelte', () => {
 		});
 
 		it('offers no add button otherwise', async () => {
-			renderGrid();
+			await renderGrid();
 			await shown();
 
 			await expect.element(page.getByRole('button', { name: /^Add/ })).not.toBeInTheDocument();

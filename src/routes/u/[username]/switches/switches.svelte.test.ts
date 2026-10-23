@@ -56,8 +56,8 @@ function conflict(blockingBuildIds?: string[]): ResponseError {
 	);
 }
 
-function renderPage(isOwnProfile = true) {
-	render(WithUserContext, { component: SwitchesPage, isOwnProfile });
+async function renderPage(isOwnProfile = true) {
+	await render(WithUserContext, { component: SwitchesPage, isOwnProfile });
 }
 
 const dialog = () => page.getByRole('dialog').last();
@@ -88,7 +88,7 @@ afterEach(() => {
 
 describe('switches page', () => {
 	it('lists the switches and lets the owner add one', async () => {
-		renderPage();
+		await renderPage();
 
 		await expect.element(page.getByRole('button', { name: /Aperol/ })).toHaveTextContent('Linear');
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('switches page', () => {
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
-		renderPage(false);
+		await renderPage(false);
 		await openAperol();
 
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).not.toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('switches page', () => {
 				}
 			]
 		});
-		renderPage(false);
+		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
 		await expect.element(cards().first()).toHaveTextContent('Aperol');
 
@@ -135,7 +135,7 @@ describe('switches page', () => {
 	});
 
 	it('opens the photo full size', async () => {
-		renderPage();
+		await renderPage();
 		await openAperol();
 
 		await dialog().getByRole('button', { name: 'View full size image' }).click();
@@ -155,7 +155,7 @@ describe('switches page', () => {
 				name: 'Oil King'
 			} as never);
 			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/s' } as never);
-			renderPage();
+			await renderPage();
 
 			await fillNewSwitch();
 			await userEvent.upload(fileInput(), png('oil-king.png'));
@@ -196,7 +196,7 @@ describe('switches page', () => {
 				name: 'Oil King'
 			} as never);
 			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/s' } as never);
-			renderPage();
+			await renderPage();
 
 			await fillNewSwitch();
 			await userEvent.upload(fileInput(), png('oil-king.png'));
@@ -221,7 +221,7 @@ describe('switches page', () => {
 				name: 'Oil King'
 			} as never);
 			api.setSwitchImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
-			renderPage();
+			await renderPage();
 
 			await fillNewSwitch();
 			await userEvent.upload(fileInput(), png('oil-king.png'));
@@ -240,7 +240,7 @@ describe('switches page', () => {
 
 		it('says so when the create fails', async () => {
 			api.createSwitch.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 
 			await fillNewSwitch();
 			await dialog().getByRole('button', { name: 'Add switch' }).click();
@@ -254,7 +254,7 @@ describe('switches page', () => {
 	describe('editing a switch', () => {
 		it('saves and returns to the updated switch', async () => {
 			api.updateSwitch.mockResolvedValue({ ...aperol, name: 'Aperol V2' });
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -272,7 +272,7 @@ describe('switches page', () => {
 
 		it('says so when the save fails', async () => {
 			api.updateSwitch.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -286,7 +286,7 @@ describe('switches page', () => {
 		it('removes the photo and refreshes the switch', async () => {
 			api.deleteSwitchImage.mockResolvedValue(undefined);
 			api.getSwitch.mockResolvedValue({ ...aperol, image: undefined });
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -300,7 +300,7 @@ describe('switches page', () => {
 			const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 			vi.stubGlobal('fetch', fetchMock);
 			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/t' } as never);
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
@@ -325,7 +325,7 @@ describe('switches page', () => {
 	});
 
 	it('asks before closing a form with unsaved edits', async () => {
-		renderPage();
+		await renderPage();
 		await fillNewSwitch();
 
 		await userEvent.keyboard('{Escape}');
@@ -345,7 +345,7 @@ describe('switches page', () => {
 
 		it('asks first, then deletes and closes', async () => {
 			api.deleteSwitch.mockResolvedValue(undefined);
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await confirmDelete();
@@ -360,7 +360,7 @@ describe('switches page', () => {
 				id: 'b-1',
 				keyboard: { id: 'kb-1', brand: 'Bowl', name: 'Manta' }
 			} as never);
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await confirmDelete();
@@ -376,7 +376,7 @@ describe('switches page', () => {
 
 		it('says it is still used when kbdb names no builds', async () => {
 			api.deleteSwitch.mockRejectedValue(conflict());
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await confirmDelete();
@@ -392,7 +392,7 @@ describe('switches page', () => {
 
 		it('reports any other failure', async () => {
 			api.deleteSwitch.mockRejectedValue(new Error('network'));
-			renderPage();
+			await renderPage();
 			await openAperol();
 
 			await confirmDelete();
@@ -418,7 +418,7 @@ describe('switches page image moderation', () => {
 		api.getSwitch
 			.mockImplementationOnce(() => new Promise<Switch>((resolve) => (resolveOld = resolve)))
 			.mockResolvedValue({ ...aperol, image: { url: PIXEL, status: ImageStatus.Pending } });
-		renderPage();
+		await renderPage();
 		await openAperol();
 		await dialog().getByRole('button', { name: 'Edit' }).click();
 
@@ -438,7 +438,7 @@ describe('switches page image moderation', () => {
 			...aperol,
 			image: { url: PIXEL, status: ImageStatus.Approved }
 		});
-		renderPage();
+		await renderPage();
 		await openAperol();
 
 		await expect.element(dialog().getByTitle('Pending review')).not.toBeInTheDocument();

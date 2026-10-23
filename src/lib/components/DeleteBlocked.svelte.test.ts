@@ -5,7 +5,7 @@ import DeleteBlocked from './DeleteBlocked.svelte';
 
 describe('DeleteBlocked.svelte', () => {
 	it('names the builds that block the delete', async () => {
-		render(DeleteBlocked, { builds: ['Manta', 'Owlab Spring'], onCancel: vi.fn() });
+		await render(DeleteBlocked, { builds: ['Manta', 'Owlab Spring'], onCancel: vi.fn() });
 
 		await expect
 			.element(
@@ -18,7 +18,7 @@ describe('DeleteBlocked.svelte', () => {
 
 	it('offers only Cancel, never a way to delete anyway', async () => {
 		const onCancel = vi.fn();
-		render(DeleteBlocked, { builds: ['Manta'], onCancel });
+		await render(DeleteBlocked, { builds: ['Manta'], onCancel });
 
 		await expect.element(page.getByRole('button')).toHaveTextContent('Cancel');
 		await page.getByRole('button').click();

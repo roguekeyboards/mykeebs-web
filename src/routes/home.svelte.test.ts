@@ -24,7 +24,7 @@ beforeEach(() => {
 describe('home page', () => {
 	describe('signed out', () => {
 		it('introduces the site instead of redirecting', async () => {
-			render(HomePage);
+			await render(HomePage);
 
 			await expect
 				.element(
@@ -38,7 +38,7 @@ describe('home page', () => {
 		});
 
 		it('signs in, or creates an account, from one button', async () => {
-			render(HomePage);
+			await render(HomePage);
 
 			await page.getByRole('button', { name: 'Sign in or create an account' }).click();
 
@@ -46,7 +46,7 @@ describe('home page', () => {
 		});
 
 		it('links to Discover', async () => {
-			render(HomePage);
+			await render(HomePage);
 
 			await expect
 				.element(page.getByRole('link', { name: /Discover builders/ }))
@@ -63,7 +63,7 @@ describe('home page', () => {
 			state.profile.status = 'ready';
 			state.profile.data = { username: 'rogue.serenity' };
 
-			render(HomePage);
+			await render(HomePage);
 
 			await vi.waitFor(() =>
 				expect(goto).toHaveBeenCalledWith('/u/rogue.serenity/keyboards', { replace: true })
@@ -73,7 +73,7 @@ describe('home page', () => {
 		it('goes to profile setup when there is no profile yet', async () => {
 			state.profile.status = 'none';
 
-			render(HomePage);
+			await render(HomePage);
 
 			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/profile/edit', { replace: true }));
 		});
@@ -81,7 +81,7 @@ describe('home page', () => {
 		it('waits, showing nothing, while the profile loads', async () => {
 			state.profile.status = 'loading';
 
-			render(HomePage);
+			await render(HomePage);
 
 			await expect
 				.element(page.getByRole('button', { name: 'Sign in or create an account' }))
@@ -93,7 +93,7 @@ describe('home page', () => {
 	it('shows nothing while sign-in state is still loading', async () => {
 		state.auth.status = 'loading';
 
-		render(HomePage);
+		await render(HomePage);
 
 		await expect.element(page.getByRole('heading')).not.toBeInTheDocument();
 		expect(goto).not.toHaveBeenCalled();

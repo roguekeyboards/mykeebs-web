@@ -15,7 +15,12 @@ function sw(url: string): Switch {
 describe('SwitchDetails.svelte', () => {
 	it('hides an image that fails to load and reports it', async () => {
 		const onImageError = vi.fn();
-		render(SwitchDetails, { sw: sw(BROKEN), onImageClick: vi.fn(), onImageError, showPrice: true });
+		await render(SwitchDetails, {
+			sw: sw(BROKEN),
+			onImageClick: vi.fn(),
+			onImageError,
+			showPrice: true
+		});
 
 		await vi.waitFor(() => expect(onImageError).toHaveBeenCalledOnce());
 		await expect.element(page.getByRole('img', { name: 'Aperol' })).not.toBeInTheDocument();
@@ -23,7 +28,7 @@ describe('SwitchDetails.svelte', () => {
 
 	it('shows the image again once a refetch brings a fresh URL', async () => {
 		const onImageError = vi.fn();
-		const { rerender } = render(SwitchDetails, {
+		const { rerender } = await render(SwitchDetails, {
 			sw: sw(BROKEN),
 			onImageClick: vi.fn(),
 			onImageError,
@@ -40,7 +45,7 @@ describe('SwitchDetails.svelte', () => {
 
 describe('SwitchDetails.svelte image moderation', () => {
 	it('marks an image that is pending review', async () => {
-		render(SwitchDetails, {
+		await render(SwitchDetails, {
 			sw: { ...sw(FRESH), image: { url: FRESH, status: ImageStatus.Pending } },
 			onImageClick: vi.fn(),
 			showPrice: true
@@ -50,7 +55,7 @@ describe('SwitchDetails.svelte image moderation', () => {
 	});
 
 	it('shows a rejected image by its reason', async () => {
-		render(SwitchDetails, {
+		await render(SwitchDetails, {
 			sw: {
 				...sw(FRESH),
 				image: { status: ImageStatus.Rejected, rejectionReason: 'unprocessable' }

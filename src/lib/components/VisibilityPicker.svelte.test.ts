@@ -6,7 +6,7 @@ import VisibilityPicker from './VisibilityPicker.svelte';
 
 describe('VisibilityPicker.svelte', () => {
 	it('marks the current value as the checked radio', async () => {
-		render(VisibilityPicker, { value: Visibility.Private });
+		await render(VisibilityPicker, { value: Visibility.Private });
 
 		await expect
 			.element(page.getByRole('radio', { name: 'Private' }))
@@ -17,7 +17,7 @@ describe('VisibilityPicker.svelte', () => {
 	});
 
 	it('exposes all three tiers at once', async () => {
-		render(VisibilityPicker, { value: Visibility.Private });
+		await render(VisibilityPicker, { value: Visibility.Private });
 
 		await expect.element(page.getByRole('radio', { name: 'Private' })).toBeInTheDocument();
 		await expect.element(page.getByRole('radio', { name: 'Signed in' })).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe('VisibilityPicker.svelte', () => {
 	});
 
 	it('selects a tier on click', async () => {
-		render(VisibilityPicker, { value: Visibility.Private });
+		await render(VisibilityPicker, { value: Visibility.Private });
 
 		await userEvent.click(page.getByRole('radio', { name: 'Public' }));
 
@@ -35,7 +35,7 @@ describe('VisibilityPicker.svelte', () => {
 	});
 
 	it('moves selection with the arrow keys and wraps', async () => {
-		render(VisibilityPicker, { value: Visibility.Private });
+		await render(VisibilityPicker, { value: Visibility.Private });
 
 		await userEvent.click(page.getByRole('radio', { name: 'Private' }));
 		await userEvent.keyboard('{ArrowRight}');
@@ -51,7 +51,7 @@ describe('VisibilityPicker.svelte', () => {
 	});
 
 	it('keeps only the selected tier in the tab order', async () => {
-		render(VisibilityPicker, { value: Visibility.Authenticated });
+		await render(VisibilityPicker, { value: Visibility.Authenticated });
 
 		await expect
 			.element(page.getByRole('radio', { name: 'Signed in' }))

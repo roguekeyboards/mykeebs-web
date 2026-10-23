@@ -47,9 +47,9 @@ const sw: SwitchModel = {
 	image: { url: 'https://img.example/aperol.png' }
 };
 
-function renderForm(props: Partial<Parameters<typeof SwitchForm>[1]> = {}) {
+async function renderForm(props: Partial<Parameters<typeof SwitchForm>[1]> = {}) {
 	const mocks = { onSubmit: vi.fn(), onCancel: vi.fn() };
-	render(FormWithDirty, {
+	await render(FormWithDirty, {
 		form: SwitchForm,
 		formProps: { saving: false, error: null, ...mocks, ...props }
 	});
@@ -86,7 +86,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('requires a brand, name, and type', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await page.getByLabelText('Brand').fill('HMX');
 		await page.getByLabelText('Name').fill('Aperol');
@@ -99,7 +99,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('marks brand, name, and type required, and flags only the empty ones after a failed save', async () => {
-		renderForm();
+		await renderForm();
 		const type = page.getByLabelText('Type');
 		await expect.element(page.getByLabelText('Brand')).toBeRequired();
 		await expect.element(type).toBeRequired();
@@ -115,7 +115,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('submits a minimal switch trimmed, private, and without empty sections', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await page.getByLabelText('Brand').fill(' HMX ');
 		await page.getByLabelText('Name').fill(' Aperol ');
@@ -142,7 +142,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('nests every section that has a value into the submitted switch', async () => {
-		const { onSubmit } = renderForm();
+		const { onSubmit } = await renderForm();
 
 		await fillRequired();
 		await page.getByLabelText('Manufacturer').fill(' Huano ');
@@ -188,7 +188,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('round-trips an existing switch untouched, including values the lookups no longer offer', async () => {
-		const { onSubmit } = renderForm({ initial: sw });
+		const { onSubmit } = await renderForm({ initial: sw });
 
 		await expect.element(page.getByRole('heading', { name: 'Edit switch' })).toBeInTheDocument();
 		await expect.element(page.getByLabelText('Stem')).toHaveValue('Retired blend');
@@ -219,7 +219,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('sends factory lubed as absent rather than false once unticked', async () => {
-		const { onSubmit } = renderForm({ initial: sw });
+		const { onSubmit } = await renderForm({ initial: sw });
 
 		await page.getByLabelText('Factory lubed').click();
 		await submit('Save changes');
@@ -228,14 +228,14 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('labels the pins select and the factory lubed checkbox separately', async () => {
-		renderForm();
+		await renderForm();
 
 		await expect.element(page.getByRole('combobox', { name: 'Pins' })).toBeInTheDocument();
 		await expect.element(page.getByRole('checkbox', { name: 'Factory lubed' })).toBeInTheDocument();
 	});
 
 	it('ticks factory lubed when its text is clicked', async () => {
-		renderForm();
+		await renderForm();
 
 		await page.getByText('Factory lubed').click();
 
@@ -243,7 +243,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('summarizes each section and opens the ones an existing switch fills', async () => {
-		renderForm({ initial: sw });
+		await renderForm({ initial: sw });
 
 		await expect.element(page.getByText('— Polycarbonate · Nylon · Retired blend')).toBeVisible();
 		await expect.element(page.getByText('— 45g actuation · Stainless steel')).toBeVisible();
@@ -252,13 +252,13 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('opens Feel for a switch with only a spring value', async () => {
-		renderForm({ initial: { ...sw, force: undefined, spring: { preTravel: 2 } } });
+		await renderForm({ initial: { ...sw, force: undefined, spring: { preTravel: 2 } } });
 
 		await expect.element(page.getByLabelText('Pre-travel (mm)')).toBeVisible();
 	});
 
 	it('starts with every section collapsed for a new switch', async () => {
-		renderForm();
+		await renderForm();
 
 		await expect.element(page.getByText('— Not set').nth(2)).toBeInTheDocument();
 		await expect.element(page.getByLabelText('Stem')).not.toBeVisible();
@@ -266,7 +266,7 @@ describe('SwitchForm.svelte', () => {
 
 	describe('order dates', () => {
 		it('asks for an order date, defaulting to today, once ordered', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await page.getByLabelText('Order status').selectOptions('Ordered');
@@ -276,7 +276,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('asks for a delivery date, defaulting to today, once delivered', async () => {
-			renderForm();
+			await renderForm();
 			await openSection('Purchase');
 
 			await page.getByLabelText('Order status').selectOptions('Delivered');
@@ -285,7 +285,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('drops dates the new status would not have', async () => {
-			const { onSubmit } = renderForm({ initial: sw });
+			const { onSubmit } = await renderForm({ initial: sw });
 
 			await page.getByLabelText('Order status').selectOptions('Planned');
 			await submit('Save changes');
@@ -296,7 +296,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('leaves existing dates alone on open, even if the status would not set them', async () => {
-			const { onSubmit } = renderForm({
+			const { onSubmit } = await renderForm({
 				initial: { ...sw, purchase: { ...sw.purchase, orderStatus: 'Planned' } }
 			});
 
@@ -310,13 +310,13 @@ describe('SwitchForm.svelte', () => {
 
 	describe('dirty', () => {
 		it('starts clean for an existing switch', async () => {
-			renderForm({ initial: sw });
+			await renderForm({ initial: sw });
 
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
 
 		it('turns dirty on an edit and clean again when it is undone', async () => {
-			renderForm({ initial: sw });
+			await renderForm({ initial: sw });
 
 			await page.getByLabelText('Pins').selectOptions('3');
 			await expect.element(dirty()).toHaveTextContent('true');
@@ -326,7 +326,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('turns dirty when a photo is staged', async () => {
-			renderForm();
+			await renderForm();
 
 			await userEvent.upload(fileInput(), png('a.png'));
 
@@ -336,7 +336,7 @@ describe('SwitchForm.svelte', () => {
 
 	describe('image on a new switch', () => {
 		it('stages a picked photo and submits it with the switch', async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 			const a = png('a.png');
 
 			await userEvent.upload(fileInput(), a);
@@ -349,7 +349,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('replaces the staged photo when another is picked', async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 			const b = png('b.png');
 
 			await userEvent.upload(fileInput(), png('a.png'));
@@ -361,7 +361,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('drops the staged photo when it is removed', async () => {
-			const { onSubmit } = renderForm();
+			const { onSubmit } = await renderForm();
 
 			await userEvent.upload(fileInput(), png('a.png'));
 			await page.getByRole('button', { name: 'Remove' }).click();
@@ -376,7 +376,7 @@ describe('SwitchForm.svelte', () => {
 	describe('image on an existing switch', () => {
 		it('uploads a picked photo straight away', async () => {
 			const onImageUpload = vi.fn(async () => {});
-			renderForm({ initial: sw, onImageUpload });
+			await renderForm({ initial: sw, onImageUpload });
 			const a = png('a.png');
 
 			await userEvent.upload(fileInput(), a);
@@ -385,7 +385,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('says so when an upload fails', async () => {
-			renderForm({ initial: sw, onImageUpload: vi.fn().mockRejectedValue(new Error('x')) });
+			await renderForm({ initial: sw, onImageUpload: vi.fn().mockRejectedValue(new Error('x')) });
 
 			await userEvent.upload(fileInput(), png('a.png'));
 
@@ -395,7 +395,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
-			renderForm({
+			await renderForm({
 				initial: sw,
 				onImageUpload: vi
 					.fn()
@@ -412,7 +412,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('marks a photo that is pending review', async () => {
-			renderForm({
+			await renderForm({
 				initial: { ...sw, image: { url: 'https://img.example/s.png', status: ImageStatus.Pending } }
 			});
 
@@ -421,7 +421,7 @@ describe('SwitchForm.svelte', () => {
 
 		it('shows a rejected photo by its reason, and offers to remove or replace it', async () => {
 			const onImageRemove = vi.fn(async () => {});
-			renderForm({
+			await renderForm({
 				initial: { ...sw, image: { status: ImageStatus.Rejected, rejectionReason: 'Violence' } },
 				onImageRemove
 			});
@@ -436,7 +436,7 @@ describe('SwitchForm.svelte', () => {
 
 		it('removes the photo', async () => {
 			const onImageRemove = vi.fn(async () => {});
-			renderForm({ initial: sw, onImageRemove });
+			await renderForm({ initial: sw, onImageRemove });
 
 			await page.getByRole('button', { name: 'Remove' }).click();
 
@@ -444,7 +444,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('says so when removing fails', async () => {
-			renderForm({ initial: sw, onImageRemove: vi.fn().mockRejectedValue(new Error('x')) });
+			await renderForm({ initial: sw, onImageRemove: vi.fn().mockRejectedValue(new Error('x')) });
 
 			await page.getByRole('button', { name: 'Remove' }).click();
 
@@ -470,7 +470,7 @@ describe('SwitchForm.svelte', () => {
 			'Price',
 			'Quantity'
 		])('%s leaves the form clean once typed into and cleared', async (label) => {
-			renderForm({ initial: withoutNumbers });
+			await renderForm({ initial: withoutNumbers });
 
 			await page.getByLabelText(label).fill('5');
 			await expect.element(dirty()).toHaveTextContent('true');
@@ -480,7 +480,7 @@ describe('SwitchForm.svelte', () => {
 		});
 
 		it('drops cleared numbers rather than keeping the old values', async () => {
-			const { onSubmit } = renderForm({ initial: sw });
+			const { onSubmit } = await renderForm({ initial: sw });
 
 			await page.getByLabelText('Actuation force (g)').fill('');
 			await page.getByLabelText('Pre-travel (mm)').fill('');
@@ -495,7 +495,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it("doesn't submit on Enter in a text field", async () => {
-		const { onSubmit } = renderForm({ initial: sw });
+		const { onSubmit } = await renderForm({ initial: sw });
 
 		await page.getByLabelText('Name').click();
 		await userEvent.keyboard('{Enter}');
@@ -504,7 +504,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('locks the buttons while saving and shows a save error', async () => {
-		renderForm({ initial: sw, saving: true, error: 'kbdb said no' });
+		await renderForm({ initial: sw, saving: true, error: 'kbdb said no' });
 
 		await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 		await expect.element(page.getByRole('button', { name: 'Cancel' })).toBeDisabled();
@@ -512,7 +512,7 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	it('cancels', async () => {
-		const { onCancel } = renderForm();
+		const { onCancel } = await renderForm();
 
 		await page.getByRole('button', { name: 'Cancel' }).click();
 

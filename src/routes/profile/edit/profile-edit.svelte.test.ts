@@ -62,7 +62,7 @@ afterEach(() => {
 
 describe('Profile edit page links', () => {
 	it('names each remove button after its link and removes only that link', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('button', { name: 'Remove GitHub link' }).click();
 
@@ -75,7 +75,7 @@ describe('Profile edit page links', () => {
 	});
 
 	it('falls back to the position for a link without a label yet', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('button', { name: 'Add link' }).click();
 
@@ -85,7 +85,7 @@ describe('Profile edit page links', () => {
 
 describe('Profile edit page link fields', () => {
 	it('labels each link field by its position', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect.element(page.getByRole('textbox', { name: 'Link 1 label' })).toHaveValue('GitHub');
 		await expect
@@ -102,7 +102,7 @@ describe('Profile edit page link fields', () => {
 
 describe('Profile edit page title', () => {
 	it('titles the tab for editing an existing profile', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await vi.waitFor(() => expect(document.title).toBe('Edit profile · mykeebs'));
 	});
@@ -111,7 +111,7 @@ describe('Profile edit page title', () => {
 		profileState.status = 'none';
 		profileState.data = undefined;
 
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await vi.waitFor(() => expect(document.title).toBe('Set up profile · mykeebs'));
 	});
@@ -135,7 +135,7 @@ const saveButton = () => page.getByRole('button', { name: 'Save changes' });
 describe('Profile edit page states', () => {
 	it('waits while auth or the profile is loading', async () => {
 		profileState.status = 'loading';
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect
 			.element(page.getByRole('status').filter({ hasText: 'Loading…' }))
@@ -145,14 +145,14 @@ describe('Profile edit page states', () => {
 	it('asks a signed-out visitor to sign in', async () => {
 		authState.status = 'signed-out';
 		authState.user = null;
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect.element(page.getByText('Sign in to edit your profile.')).toBeInTheDocument();
 	});
 
 	it('says so when the profile fails to load', async () => {
 		profileState.status = 'error';
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not load your profile.' }))
@@ -160,7 +160,7 @@ describe('Profile edit page states', () => {
 	});
 
 	it('fills the form from the existing profile', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect.element(usernameField()).toHaveValue('rogue.serenity');
 		await expect.element(page.getByLabelText('Discord username')).toHaveValue('rogue#1');
@@ -174,7 +174,7 @@ describe('Profile edit page states', () => {
 	it('sets up a new profile without a photo or cancel until it is saved', async () => {
 		profileState.status = 'none';
 		profileState.data = undefined;
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect
 			.element(page.getByRole('heading', { name: "Let's set up your profile" }))
@@ -188,7 +188,7 @@ describe('Profile edit page states', () => {
 describe('Profile edit page saving', () => {
 	it('saves the trimmed profile and goes to it', async () => {
 		save.mockResolvedValue({ ...existing, username: 'rogue.serenity' });
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByLabelText('Discord username').fill('  ');
 		await page.getByLabelText('Bio').fill('  Clacky.  ');
@@ -207,7 +207,7 @@ describe('Profile edit page saving', () => {
 	});
 
 	it('shows where the profile will live as the username is typed', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await usernameField().fill('keeb.fan');
 
@@ -215,7 +215,7 @@ describe('Profile edit page saving', () => {
 	});
 
 	it('refuses an invalid username', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await usernameField().fill('Not Valid');
 		await saveButton().click();
@@ -225,7 +225,7 @@ describe('Profile edit page saving', () => {
 	});
 
 	it('refuses a link with no URL', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('textbox', { name: 'Link 2 URL' }).fill('');
 		await saveButton().click();
@@ -237,7 +237,7 @@ describe('Profile edit page saving', () => {
 	});
 
 	it('refuses a link that is not https', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('textbox', { name: 'Link 2 URL' }).fill('http://example.social/@rogue');
 		await saveButton().click();
@@ -248,7 +248,7 @@ describe('Profile edit page saving', () => {
 
 	it('says when the username is taken', async () => {
 		save.mockRejectedValue(conflict('https://kbdb.dev/problems/username-unavailable'));
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await saveButton().click();
 
@@ -265,7 +265,7 @@ describe('Profile edit page saving', () => {
 
 	it('says when the profile changed elsewhere', async () => {
 		save.mockRejectedValue(conflict('https://kbdb.dev/problems/version-conflict'));
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await saveButton().click();
 
@@ -276,7 +276,7 @@ describe('Profile edit page saving', () => {
 
 	it('says when the save fails for any other reason', async () => {
 		save.mockRejectedValue(new Error('network'));
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await saveButton().click();
 
@@ -286,7 +286,7 @@ describe('Profile edit page saving', () => {
 	});
 
 	it('cancels back to the profile', async () => {
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('button', { name: 'Cancel' }).click();
 
@@ -302,7 +302,7 @@ describe('Profile edit page photo', () => {
 		const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 		vi.stubGlobal('fetch', fetchMock);
 		api.setProfileImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/me' } as never);
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await userEvent.upload(fileInput(), png);
 
@@ -319,7 +319,7 @@ describe('Profile edit page photo', () => {
 
 	it('says so, without asking for an upload URL, when the image cannot be read', async () => {
 		vi.mocked(prepareImage).mockRejectedValueOnce(new UnsupportedImageError());
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await userEvent.upload(fileInput(), new File(['heic'], 'me.heic', { type: 'image/heic' }));
 
@@ -335,7 +335,7 @@ describe('Profile edit page photo', () => {
 			vi.fn(async () => new Response(null, { status: 403 }))
 		);
 		api.setProfileImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/me' } as never);
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await userEvent.upload(fileInput(), png);
 
@@ -347,7 +347,7 @@ describe('Profile edit page photo', () => {
 
 	it('removes the photo and refreshes the profile', async () => {
 		api.deleteProfileImage.mockResolvedValue(undefined);
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('button', { name: 'Remove', exact: true }).click();
 
@@ -357,7 +357,7 @@ describe('Profile edit page photo', () => {
 
 	it('says so when removing the photo fails', async () => {
 		api.deleteProfileImage.mockRejectedValue(new Error('network'));
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await page.getByRole('button', { name: 'Remove', exact: true }).click();
 
@@ -368,7 +368,7 @@ describe('Profile edit page photo', () => {
 
 	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
 		api.setProfileImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await userEvent.upload(fileInput(), png);
 
@@ -382,7 +382,7 @@ describe('Profile edit page photo', () => {
 			...existing,
 			avatar: { url: 'https://img.example/new.png', status: ImageStatus.Pending }
 		};
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect.element(page.getByText(/^Pending review/)).toBeInTheDocument();
 	});
@@ -392,7 +392,7 @@ describe('Profile edit page photo', () => {
 			...existing,
 			avatar: { status: ImageStatus.Rejected, rejectionReason: 'Explicit' }
 		};
-		render(ProfileEditPage);
+		await render(ProfileEditPage);
 
 		await expect.element(page.getByText(/Removed by moderation: Explicit/)).toBeInTheDocument();
 		await expect
