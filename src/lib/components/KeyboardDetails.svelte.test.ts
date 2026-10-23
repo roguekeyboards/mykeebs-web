@@ -111,7 +111,7 @@ describe('KeyboardDetails.svelte', () => {
 
 			const items = page.getByRole('listitem');
 			await expect.element(items.nth(0)).toMatchTextContent(/^\s*POM\s*Came with the keyboard\s*$/);
-			await expect.element(items.nth(1)).not.toMatchTextContent('Came with the keyboard');
+			await expect.element(items.nth(1)).not.toHaveTextContent('Came with the keyboard');
 			await expect.element(items.nth(1)).toMatchTextContent('Aluminum · Silver · 1.5mm');
 			await expect.element(items.nth(1)).toMatchTextContent('CannonKeys');
 			await expect.element(items.nth(1)).toMatchTextContent('$40.00');

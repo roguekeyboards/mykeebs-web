@@ -62,8 +62,8 @@ describe('BuildForm.svelte stale references', () => {
 		const items = page.getByRole('listitem');
 		await expect.element(items.filter({ hasText: 'Oil King' })).toMatchTextContent(NOTE);
 		await expect.element(items.filter({ hasText: '8008 2 — Aesthetic' })).toMatchTextContent(NOTE);
-		await expect.element(items.filter({ hasText: 'Aperol' })).not.toMatchTextContent(NOTE);
-		await expect.element(items.filter({ hasText: '8008 2 — Base' })).not.toMatchTextContent(NOTE);
+		await expect.element(items.filter({ hasText: 'Aperol' })).not.toHaveTextContent(NOTE);
+		await expect.element(items.filter({ hasText: '8008 2 — Base' })).not.toHaveTextContent(NOTE);
 	});
 
 	it('flags the keyboard when it is the one kbdb rejected', async () => {
@@ -109,10 +109,10 @@ describe('BuildForm.svelte cleared stabilizer price', () => {
 		const price = page.getByLabelText('Price');
 
 		await price.fill('15');
-		await expect.element(dirty).toMatchTextContent('true');
+		await expect.element(dirty).toHaveTextContent('true');
 		await price.fill('');
 
-		await expect.element(dirty).toMatchTextContent('false');
+		await expect.element(dirty).toHaveTextContent('false');
 	});
 
 	it('drops a cleared price rather than keeping the old value', async () => {
@@ -433,11 +433,11 @@ describe('BuildForm.svelte plate and PCB', () => {
 		await expect.element(plate().getByRole('option', { name: 'POM · 1.5mm' })).toBeInTheDocument();
 		await expect.element(plate()).toHaveValue('p2');
 		await expect.element(pcb()).toHaveValue('c1');
-		await expect.element(page.getByTestId('dirty')).toMatchTextContent('false');
+		await expect.element(page.getByTestId('dirty')).toHaveTextContent('false');
 
 		await plate().selectOptions('POM · 1.5mm');
 		await pcb().selectOptions('Solder · Wireless');
-		await expect.element(page.getByTestId('dirty')).toMatchTextContent('true');
+		await expect.element(page.getByTestId('dirty')).toHaveTextContent('true');
 		await page.getByRole('button', { name: 'Save changes' }).click();
 
 		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());

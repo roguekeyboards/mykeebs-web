@@ -98,11 +98,11 @@ describe('ImageViewer.svelte keyboard zoom and pan', () => {
 		await renderLoaded();
 
 		await userEvent.keyboard('++');
-		await expect.element(zoomLevel()).toMatchTextContent('200%');
+		await expect.element(zoomLevel()).toHaveTextContent('200%');
 		await userEvent.keyboard('-');
-		await expect.element(zoomLevel()).toMatchTextContent('150%');
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
 		await userEvent.keyboard('0');
-		await expect.element(zoomLevel()).toMatchTextContent('100%');
+		await expect.element(zoomLevel()).toHaveTextContent('100%');
 	});
 
 	it('steps between photos with the arrows until zoomed, then moves the photo instead', async () => {

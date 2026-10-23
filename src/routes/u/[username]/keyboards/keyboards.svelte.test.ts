@@ -142,7 +142,7 @@ describe('keyboards page', () => {
 		await expect.element(page.getByRole('button', { name: /Manta/ })).toMatchTextContent('$420.00');
 		await expect
 			.element(page.getByRole('button', { name: /Manta/ }))
-			.not.toMatchTextContent('$300.00');
+			.not.toHaveTextContent('$300.00');
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {

@@ -97,8 +97,8 @@ describe('keyboard builds page', () => {
 		const items = page.getByRole('listitem');
 		await expect.element(items.nth(0)).toMatchTextContent(/Jun 30, 2026\s*Current/);
 		await expect.element(items.nth(0)).toMatchTextContent('$405.45');
-		await expect.element(items.nth(1)).toMatchTextContent('Nov 2, 2025');
-		await expect.element(items.nth(2)).toMatchTextContent('Undated');
+		await expect.element(items.nth(1)).toHaveTextContent('Nov 2, 2025');
+		await expect.element(items.nth(2)).toHaveTextContent('Undated');
 		expect(builds.listBuilds).toHaveBeenCalledWith({
 			userId: 'user-1',
 			keyboardId: 'kb-1',
@@ -112,7 +112,7 @@ describe('keyboard builds page', () => {
 			.mockResolvedValueOnce({ items: [older] });
 		await renderPage();
 
-		await expect.element(page.getByRole('listitem').nth(1)).toMatchTextContent('Nov 2, 2025');
+		await expect.element(page.getByRole('listitem').nth(1)).toHaveTextContent('Nov 2, 2025');
 		expect(builds.listBuilds).toHaveBeenLastCalledWith({
 			userId: 'user-1',
 			keyboardId: 'kb-1',
