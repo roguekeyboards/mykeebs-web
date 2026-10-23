@@ -42,26 +42,19 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    # Chromium's system packages come preinstalled; installing them with apt on
+    # the runner depends on a mirror that is sometimes very slow.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
         with:
           packages-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Chromium system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+      # A no-op while the image matches the lockfile's Playwright; downloads the
+      # right browser if they drift apart.
+      - run: npx playwright install chromium
 
       - run: npm run test
 
