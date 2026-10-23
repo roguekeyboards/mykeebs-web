@@ -1,19 +1,21 @@
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { signOut } from '#lib/auth/auth.svelte.js';
 import ProfileMenu from './ProfileMenu.svelte';
 
-vi.mock('#lib/auth/auth.svelte.js', () => ({
-	auth: { status: 'signed-in', user: { id: 'user-1', email: 'jay@example.com' } },
-	signOut: vi.fn()
+const profileState = vi.hoisted(() => ({
+	status: 'ready',
+	data: { userId: 'user-1', username: 'rogue.serenity', discoverable: true } as unknown
 }));
-vi.mock('#lib/profile/profile.svelte.js', () => ({
-	profile: {
-		status: 'ready',
-		data: { userId: 'user-1', username: 'rogue.serenity', discoverable: true }
-	}
-}));
+
+vi.mock('#lib/auth/auth.svelte.js', () => ({ signOut: vi.fn() }));
+vi.mock('#lib/profile/profile.svelte.js', () => ({ profile: profileState }));
+
+beforeEach(() => {
+	profileState.status = 'ready';
+	profileState.data = { userId: 'user-1', username: 'rogue.serenity', discoverable: true };
+});
 
 const trigger = () => page.getByRole('button', { name: /rogue\.serenity/ });
 
@@ -51,5 +53,13 @@ describe('ProfileMenu.svelte', () => {
 		await page.getByRole('button', { name: 'Sign out' }).click();
 
 		expect(signOut).toHaveBeenCalledOnce();
+	});
+
+	it('calls you "you" until you have a profile', async () => {
+		profileState.status = 'none';
+		profileState.data = undefined;
+		await render(ProfileMenu);
+
+		await expect.element(page.getByRole('button', { name: 'you' })).toBeInTheDocument();
 	});
 });

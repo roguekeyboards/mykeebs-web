@@ -11,14 +11,14 @@ const ID_TOKEN_KEY = 'stytch_id_token';
 
 const REFRESH_SKEW_SECONDS = 60;
 
-type User = { id: string; email: string | null };
+type User = { id: string };
 type AuthState =
 	{ status: 'loading' } | { status: 'signed-out' } | { status: 'signed-in'; user: User };
 
 let state = $state<AuthState>({ status: 'loading' });
 let initPromise: Promise<void> | undefined;
 
-type AccessTokenPayload = { sub: string; email?: string; exp: number };
+type AccessTokenPayload = { sub: string; exp: number };
 
 function decodeAccessTokenPayload(token: string): AccessTokenPayload | null {
 	try {
@@ -42,9 +42,7 @@ function syncFromStoredToken() {
 	const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 	const payload = token ? decodeAccessTokenPayload(token) : null;
 	if (token && !payload) clearStoredTokens();
-	state = payload
-		? { status: 'signed-in', user: { id: payload.sub, email: payload.email ?? null } }
-		: { status: 'signed-out' };
+	state = payload ? { status: 'signed-in', user: { id: payload.sub } } : { status: 'signed-out' };
 }
 
 export function initAuth(): Promise<void> {

@@ -33,7 +33,7 @@ const existing = vi.hoisted((): Profile => ({
 
 const authState = vi.hoisted(() => ({
 	status: 'signed-in',
-	user: { id: 'user-1', email: null } as { id: string; email: null } | null
+	user: { id: 'user-1' } as { id: string } | null
 }));
 
 vi.mock('#lib/auth/auth.svelte.js', () => ({ auth: authState }));
@@ -53,7 +53,7 @@ vi.mock('#lib/account/delete-account.js', () => ({ deleteAccount: vi.fn(async ()
 beforeEach(() => {
 	vi.clearAllMocks();
 	authState.status = 'signed-in';
-	authState.user = { id: 'user-1', email: null };
+	authState.user = { id: 'user-1' };
 	profileState.status = 'ready';
 	profileState.data = existing;
 });

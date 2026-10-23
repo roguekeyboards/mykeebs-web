@@ -11,7 +11,7 @@ vi.mock('#lib/api/client.js', () => ({
 
 type Store = typeof import('./profile.svelte');
 let store: Store;
-let authState: { user: { id: string; email: string | null } | null };
+let authState: { user: { id: string } | null };
 let api: {
 	getProfile: ReturnType<typeof vi.fn>;
 	createProfile: ReturnType<typeof vi.fn>;
@@ -25,7 +25,7 @@ function notFound(): ResponseError {
 }
 
 function signIn(id = 'user-1') {
-	authState.user = { id, email: null };
+	authState.user = { id };
 }
 
 beforeEach(async () => {

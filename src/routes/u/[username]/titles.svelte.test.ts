@@ -20,7 +20,7 @@ vi.mock('$app/state', () => ({
 	}
 }));
 vi.mock('#lib/auth/auth.svelte.js', () => ({
-	auth: { status: 'signed-in', user: { id: 'user-1', email: null } }
+	auth: { status: 'signed-in', user: { id: 'user-1' } }
 }));
 vi.mock('#lib/api/client.js', () => {
 	const empty = async () => ({ items: [] });
