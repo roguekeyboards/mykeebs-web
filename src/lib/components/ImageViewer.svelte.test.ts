@@ -1,5 +1,5 @@
 import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ImageViewer from './ImageViewer.svelte';
 
@@ -60,6 +60,7 @@ describe('ImageViewer.svelte as a dialog', () => {
 		const opener = document.createElement('button');
 		opener.textContent = 'Open photo';
 		document.body.append(opener);
+		onTestFinished(() => opener.remove());
 		opener.focus();
 		const { rerender } = await render(ImageViewer, { ...base, open: false });
 
@@ -68,7 +69,6 @@ describe('ImageViewer.svelte as a dialog', () => {
 		await rerender({ ...base, open: false });
 
 		expect(document.activeElement).toBe(opener);
-		opener.remove();
 	});
 });
 

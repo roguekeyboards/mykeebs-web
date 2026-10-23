@@ -38,6 +38,14 @@ export default defineConfig(
 		}
 	},
 	{
+		files: ['**/*.svelte.test.ts'],
+		languageOptions: { parserOptions: { projectService: true } },
+		rules: {
+			// vitest-browser-svelte's render() is async; an unawaited one races the test.
+			'@typescript-eslint/no-floating-promises': 'error'
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}
