@@ -2,14 +2,16 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": ["config:recommended", "helpers:pinGitHubActionDigestsToSemver", ":semanticCommits"],
 	"automerge": true,
+	"prHourlyLimit": 0,
 	"constraints": {
 		"npm": "^11"
 	},
 	"packageRules": [
 		{
-			"description": "Major updates need a human look; everything else merges once CI passes",
+			"description": "Major updates wait for approval on the Dependency Dashboard and need a human look; everything else merges once CI passes",
 			"matchUpdateTypes": ["major"],
-			"automerge": false
+			"automerge": false,
+			"dependencyDashboardApproval": true
 		},
 		{
 			"description": "Node in mise.toml and .node-version, and its @types/node, always move together",
@@ -33,6 +35,7 @@
 	],
 	"lockFileMaintenance": {
 		"enabled": true,
-		"automerge": true
+		"automerge": true,
+		"schedule": ["before 12pm on monday"]
 	}
 }
