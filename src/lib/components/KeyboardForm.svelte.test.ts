@@ -126,10 +126,10 @@ async function openSection(section: string) {
 
 const dirty = () => page.getByTestId('dirty');
 
-const part = (name: string) => page.getByRole('group', { name, exact: true });
+const part = (name: string) => page.getByRole('group', { name });
 
 const keyboardPurchase = () =>
-	page.getByRole('group').filter({ has: page.getByLabelText('Base price') });
+	page.getByRole('group').filter({ has: page.getByLabelText('Base price', { exact: false }) });
 
 describe('KeyboardForm.svelte', () => {
 	beforeEach(() => {
@@ -142,7 +142,7 @@ describe('KeyboardForm.svelte', () => {
 	it('requires a brand and name', async () => {
 		const { onSubmit } = await renderForm();
 
-		await page.getByLabelText('Brand').fill('   ');
+		await page.getByLabelText('Brand', { exact: false }).fill('   ');
 		await submit();
 
 		await expect
@@ -153,8 +153,8 @@ describe('KeyboardForm.svelte', () => {
 
 	it('marks brand and name required, and flags only the empty ones after a failed save', async () => {
 		await renderForm();
-		const brand = page.getByLabelText('Brand');
-		const name = page.getByLabelText('Name');
+		const brand = page.getByLabelText('Brand', { exact: false });
+		const name = page.getByLabelText('Name', { exact: false });
 		await expect.element(brand).toBeRequired();
 		await expect.element(name).toBeRequired();
 		await expect.element(name).not.toBeInvalid();
@@ -170,8 +170,8 @@ describe('KeyboardForm.svelte', () => {
 	it('submits a minimal keyboard trimmed, private, and without empty sections', async () => {
 		const { onSubmit } = await renderForm();
 
-		await page.getByLabelText('Brand').fill('  Bowl ');
-		await page.getByLabelText('Name').fill(' Manta  ');
+		await page.getByLabelText('Brand', { exact: false }).fill('  Bowl ');
+		await page.getByLabelText('Name', { exact: false }).fill(' Manta  ');
 		await submit();
 
 		expect(submitted(onSubmit)).toEqual([
@@ -194,32 +194,32 @@ describe('KeyboardForm.svelte', () => {
 	it('nests every section that has a value into the submitted keyboard', async () => {
 		const { onSubmit } = await renderForm();
 
-		await page.getByLabelText('Brand').fill('Bowl');
-		await page.getByLabelText('Name').fill('Manta');
+		await page.getByLabelText('Brand', { exact: false }).fill('Bowl');
+		await page.getByLabelText('Name', { exact: false }).fill('Manta');
 		await page.getByRole('radio', { name: 'Public' }).click();
-		await page.getByLabelText('Size').selectOptions('65%');
-		await page.getByLabelText('Layout').selectOptions('Alice');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('65%');
+		await page.getByLabelText('Layout', { exact: false }).selectOptions('Alice');
 
 		await openSection('Design');
-		await page.getByLabelText('Top case material').selectOptions('Aluminum');
+		await page.getByLabelText('Top case material', { exact: false }).selectOptions('Aluminum');
 		await page.getByLabelText('Bottom case color').fill(' Navy ');
 
 		await openSection('Plates');
 		await page.getByRole('button', { name: '+ Add plate' }).click();
-		await part('Plate 1').getByLabelText('Material').selectOptions('POM');
+		await part('Plate 1').getByLabelText('Material', { exact: false }).selectOptions('POM');
 		await page.getByRole('button', { name: '+ Add plate' }).click();
-		await part('Plate 2').getByLabelText('Material').selectOptions('FR4');
+		await part('Plate 2').getByLabelText('Material', { exact: false }).selectOptions('FR4');
 		await part('Plate 2').getByLabelText('Color').fill(' Green ');
 
 		await openSection('PCBs');
 		await page.getByRole('button', { name: '+ Add PCB' }).click();
 		await part('PCB 1').getByLabelText('Thickness (mm)').fill('1.6');
-		await part('PCB 1').getByLabelText('Assembly').selectOptions('Solder');
-		await part('PCB 1').getByLabelText('Connectivity').selectOptions('Wireless');
+		await part('PCB 1').getByLabelText('Assembly', { exact: false }).selectOptions('Solder');
+		await part('PCB 1').getByLabelText('Connectivity', { exact: false }).selectOptions('Wireless');
 
 		await openSection('Purchase');
-		await keyboardPurchase().getByLabelText('Vendor').selectOptions('NovelKeys');
-		await page.getByLabelText('Base price').fill('399.5');
+		await keyboardPurchase().getByLabelText('Vendor', { exact: false }).selectOptions('NovelKeys');
+		await page.getByLabelText('Base price', { exact: false }).fill('399.5');
 
 		await page.getByLabelText('Notes').fill(' First Alice ');
 		await submit();
@@ -254,9 +254,11 @@ describe('KeyboardForm.svelte', () => {
 
 		await expect.element(page.getByRole('heading', { name: 'Edit keyboard' })).toBeInTheDocument();
 		await expect
-			.element(keyboardPurchase().getByLabelText('Vendor'))
+			.element(keyboardPurchase().getByLabelText('Vendor', { exact: false }))
 			.toHaveValue('Group buy direct');
-		await expect.element(part('Plate 2').getByLabelText('Material')).toHaveValue('Carbon fiber');
+		await expect
+			.element(part('Plate 2').getByLabelText('Material', { exact: false }))
+			.toHaveValue('Carbon fiber');
 		await submit('Save changes');
 
 		const [input] = submitted(onSubmit);
@@ -311,7 +313,7 @@ describe('KeyboardForm.svelte', () => {
 		await renderForm({ initial: keyboard });
 
 		await expect
-			.element(page.getByLabelText('Base price'))
+			.element(page.getByLabelText('Base price', { exact: false }))
 			.toHaveAccessibleDescription('Excludes plates and PCBs bought separately.');
 	});
 
@@ -320,7 +322,7 @@ describe('KeyboardForm.svelte', () => {
 			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: 'Remove plate 1' }).click();
-			await part('PCB 1').getByLabelText('Firmware').selectOptions('VIA');
+			await part('PCB 1').getByLabelText('Firmware', { exact: false }).selectOptions('VIA');
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
@@ -336,7 +338,7 @@ describe('KeyboardForm.svelte', () => {
 			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: '+ Add plate' }).click();
-			await part('Plate 3').getByLabelText('Material').selectOptions('Aluminum');
+			await part('Plate 3').getByLabelText('Material', { exact: false }).selectOptions('Aluminum');
 			await submit('Save changes');
 
 			const plates = submitted(onSubmit)[0].plates!;
@@ -353,8 +355,12 @@ describe('KeyboardForm.svelte', () => {
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: 'Every plate needs a material.' }))
 				.toBeInTheDocument();
-			await expect.element(part('Plate 3').getByLabelText('Material')).toBeInvalid();
-			await expect.element(part('Plate 1').getByLabelText('Material')).not.toBeInvalid();
+			await expect
+				.element(part('Plate 3').getByLabelText('Material', { exact: false }))
+				.toBeInvalid();
+			await expect
+				.element(part('Plate 1').getByLabelText('Material', { exact: false }))
+				.not.toBeInvalid();
 			expect(onSubmit).not.toHaveBeenCalled();
 		});
 
@@ -362,7 +368,7 @@ describe('KeyboardForm.svelte', () => {
 			const { onSubmit } = await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: '+ Add PCB' }).click();
-			await part('PCB 2').getByLabelText('Assembly').selectOptions('Hotswap');
+			await part('PCB 2').getByLabelText('Assembly', { exact: false }).selectOptions('Hotswap');
 			await submit('Save changes');
 
 			await expect
@@ -372,12 +378,18 @@ describe('KeyboardForm.svelte', () => {
 						.filter({ hasText: 'Every PCB needs an assembly and connectivity.' })
 				)
 				.toBeInTheDocument();
-			await expect.element(part('PCB 2').getByLabelText('Connectivity')).toBeInvalid();
-			await expect.element(part('PCB 2').getByLabelText('Assembly')).not.toBeInvalid();
-			await expect.element(part('PCB 1').getByLabelText('Connectivity')).not.toBeInvalid();
+			await expect
+				.element(part('PCB 2').getByLabelText('Connectivity', { exact: false }))
+				.toBeInvalid();
+			await expect
+				.element(part('PCB 2').getByLabelText('Assembly', { exact: false }))
+				.not.toBeInvalid();
+			await expect
+				.element(part('PCB 1').getByLabelText('Connectivity', { exact: false }))
+				.not.toBeInvalid();
 			expect(onSubmit).not.toHaveBeenCalled();
 
-			await part('PCB 2').getByLabelText('Connectivity').selectOptions('Wired');
+			await part('PCB 2').getByLabelText('Connectivity', { exact: false }).selectOptions('Wired');
 			await submit('Save changes');
 			expect(submitted(onSubmit)[0].pcbs?.[1]).toEqual({
 				assembly: 'Hotswap',
@@ -392,9 +404,9 @@ describe('KeyboardForm.svelte', () => {
 			await part('PCB 1')
 				.getByText(/^Purchase —/)
 				.click();
-			await part('PCB 1').getByLabelText('Vendor').selectOptions('CannonKeys');
+			await part('PCB 1').getByLabelText('Vendor', { exact: false }).selectOptions('CannonKeys');
 			await part('PCB 1').getByLabelText('Price').fill('65');
-			await part('PCB 1').getByLabelText('Order status').selectOptions('Ordered');
+			await part('PCB 1').getByLabelText('Order status', { exact: false }).selectOptions('Ordered');
 			await expect
 				.element(part('PCB 1').getByLabelText('Order date'))
 				.toHaveValue(todayDateInput());
@@ -422,7 +434,9 @@ describe('KeyboardForm.svelte', () => {
 				]
 			};
 			const first = await renderForm({ initial: withPurchase });
-			await expect.element(part('Plate 1').getByLabelText('Vendor')).toBeVisible();
+			await expect
+				.element(part('Plate 1').getByLabelText('Vendor', { exact: false }))
+				.toBeVisible();
 			await expect.element(part('Plate 1').getByText('— CannonKeys · Planned')).toBeVisible();
 			await submit('Save changes');
 			expect(submitted(first.onSubmit)[0].plates?.[0].purchase).toEqual({
@@ -431,8 +445,8 @@ describe('KeyboardForm.svelte', () => {
 				orderStatus: 'Planned'
 			});
 
-			await part('Plate 1').getByLabelText('Vendor').selectOptions('—');
-			await part('Plate 1').getByLabelText('Order status').selectOptions('—');
+			await part('Plate 1').getByLabelText('Vendor', { exact: false }).selectOptions('—');
+			await part('Plate 1').getByLabelText('Order status', { exact: false }).selectOptions('—');
 			await part('Plate 1').getByLabelText('Price').fill('');
 			await submit('Save changes');
 			expect(submission(first.onSubmit, 1)[0].plates[0]).toEqual({
@@ -445,9 +459,9 @@ describe('KeyboardForm.svelte', () => {
 	it('offers only the layouts that fit the chosen size', async () => {
 		await renderForm();
 
-		await page.getByLabelText('Size').selectOptions('60%');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('60%');
 
-		const layout = page.getByLabelText('Layout');
+		const layout = page.getByLabelText('Layout', { exact: false });
 		await expect.element(layout.getByRole('option', { name: 'HHKB' })).toBeInTheDocument();
 		await expect.element(layout.getByRole('option', { name: 'Alice' })).not.toBeInTheDocument();
 	});
@@ -455,21 +469,21 @@ describe('KeyboardForm.svelte', () => {
 	it('clears the layout when the size changes to one it does not fit', async () => {
 		await renderForm();
 
-		await page.getByLabelText('Size').selectOptions('65%');
-		await page.getByLabelText('Layout').selectOptions('Alice');
-		await page.getByLabelText('Size').selectOptions('60%');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('65%');
+		await page.getByLabelText('Layout', { exact: false }).selectOptions('Alice');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('60%');
 
-		await expect.element(page.getByLabelText('Layout')).toHaveValue('');
+		await expect.element(page.getByLabelText('Layout', { exact: false })).toHaveValue('');
 	});
 
 	it('keeps the layout when the size changes to one it still fits', async () => {
 		await renderForm();
 
-		await page.getByLabelText('Size').selectOptions('65%');
-		await page.getByLabelText('Layout').selectOptions('ANSI');
-		await page.getByLabelText('Size').selectOptions('TKL');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('65%');
+		await page.getByLabelText('Layout', { exact: false }).selectOptions('ANSI');
+		await page.getByLabelText('Size', { exact: false }).selectOptions('TKL');
 
-		await expect.element(page.getByLabelText('Layout')).toHaveValue('ANSI');
+		await expect.element(page.getByLabelText('Layout', { exact: false })).toHaveValue('ANSI');
 	});
 
 	describe('order dates', () => {
@@ -477,10 +491,14 @@ describe('KeyboardForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Planned');
 			await expect.element(keyboardPurchase().getByLabelText('Order date')).not.toBeInTheDocument();
 
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Ordered');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Ordered');
 			await expect
 				.element(keyboardPurchase().getByLabelText('Order date'))
 				.toHaveValue(todayDateInput());
@@ -493,7 +511,9 @@ describe('KeyboardForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Delivered');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Delivered');
 
 			await expect
 				.element(keyboardPurchase().getByLabelText('Order date'))
@@ -507,9 +527,13 @@ describe('KeyboardForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Ordered');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Ordered');
 			await keyboardPurchase().getByLabelText('Order date').fill('2026-03-04');
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Delivered');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Delivered');
 
 			await expect
 				.element(keyboardPurchase().getByLabelText('Order date'))
@@ -519,7 +543,9 @@ describe('KeyboardForm.svelte', () => {
 		it('drops dates the new status would not have', async () => {
 			const { onSubmit } = await renderForm({ initial: keyboard });
 
-			await keyboardPurchase().getByLabelText('Order status').selectOptions('Planned');
+			await keyboardPurchase()
+				.getByLabelText('Order status', { exact: false })
+				.selectOptions('Planned');
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
@@ -550,10 +576,10 @@ describe('KeyboardForm.svelte', () => {
 		it('turns dirty on an edit and clean again when it is undone', async () => {
 			await renderForm({ initial: keyboard });
 
-			await page.getByLabelText('Name').fill('Manta 2');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta 2');
 			await expect.element(dirty()).toHaveTextContent('true');
 
-			await page.getByLabelText('Name').fill('Manta');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta');
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
 
@@ -572,7 +598,7 @@ describe('KeyboardForm.svelte', () => {
 
 			await page.getByRole('button', { name: 'Remove plate 1' }).click();
 			await page.getByRole('button', { name: '+ Add plate' }).click();
-			await part('Plate 1').getByLabelText('Material').selectOptions('POM');
+			await part('Plate 1').getByLabelText('Material', { exact: false }).selectOptions('POM');
 
 			await expect.element(dirty()).toHaveTextContent('true');
 		});
@@ -602,8 +628,8 @@ describe('KeyboardForm.svelte', () => {
 			await userEvent.upload(fileInput(), [a, b]);
 			await expect.element(page.getByAltText('Selected keyboard').nth(1)).toBeInTheDocument();
 
-			await page.getByLabelText('Brand').fill('Bowl');
-			await page.getByLabelText('Name').fill('Manta');
+			await page.getByLabelText('Brand', { exact: false }).fill('Bowl');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta');
 			await submit();
 
 			expect(submitted(onSubmit)[1]?.map((f) => f.name)).toEqual(['a.png', 'b.png']);
@@ -623,8 +649,8 @@ describe('KeyboardForm.svelte', () => {
 				)
 				.toBeInTheDocument();
 			await expect.element(page.getByRole('button', { name: '+ Add photo' })).toBeDisabled();
-			await page.getByLabelText('Brand').fill('Bowl');
-			await page.getByLabelText('Name').fill('Manta');
+			await page.getByLabelText('Brand', { exact: false }).fill('Bowl');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta');
 			await submit();
 
 			expect(submitted(onSubmit)[1]?.map((f) => f.name)).toEqual(
@@ -639,8 +665,8 @@ describe('KeyboardForm.svelte', () => {
 
 			await userEvent.upload(fileInput(), [a, b]);
 			await page.getByRole('button', { name: 'Remove image 2 of 2' }).click();
-			await page.getByLabelText('Brand').fill('Bowl');
-			await page.getByLabelText('Name').fill('Manta');
+			await page.getByLabelText('Brand', { exact: false }).fill('Bowl');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta');
 			await submit();
 
 			expect(submitted(onSubmit)[1]?.map((f) => f.name)).toEqual(['a.png']);
@@ -652,7 +678,7 @@ describe('KeyboardForm.svelte', () => {
 			const mocks = { onSubmit: vi.fn(), onCancel: vi.fn() };
 			const formProps = { saving: false, error: null, ...mocks, initial: keyboard };
 			const { rerender } = await render(FormWithDirty, { form: KeyboardForm, formProps });
-			await page.getByLabelText('Name').fill('Manta R2');
+			await page.getByLabelText('Name', { exact: false }).fill('Manta R2');
 
 			await rerender({
 				form: KeyboardForm,
@@ -668,7 +694,7 @@ describe('KeyboardForm.svelte', () => {
 			await expect
 				.element(page.getByRole('button', { name: 'Remove image 2 of 2' }))
 				.toBeInTheDocument();
-			await expect.element(page.getByLabelText('Name')).toHaveValue('Manta R2');
+			await expect.element(page.getByLabelText('Name', { exact: false })).toHaveValue('Manta R2');
 			await expect.element(dirty()).toHaveTextContent('true');
 		});
 
@@ -800,9 +826,9 @@ describe('KeyboardForm.svelte', () => {
 			await renderForm();
 			await openSection('Purchase');
 
-			await page.getByLabelText('Base price').fill('5');
+			await page.getByLabelText('Base price', { exact: false }).fill('5');
 			await expect.element(dirty()).toHaveTextContent('true');
-			await page.getByLabelText('Base price').fill('');
+			await page.getByLabelText('Base price', { exact: false }).fill('');
 
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
@@ -821,7 +847,7 @@ describe('KeyboardForm.svelte', () => {
 		it('drops a cleared price rather than keeping the old value', async () => {
 			const { onSubmit } = await renderForm({ initial: keyboard });
 
-			await page.getByLabelText('Base price').fill('');
+			await page.getByLabelText('Base price', { exact: false }).fill('');
 			await submit('Save changes');
 
 			expect(submitted(onSubmit)[0].purchase?.price).toBeNullable();
@@ -840,7 +866,7 @@ describe('KeyboardForm.svelte', () => {
 	it("doesn't submit on Enter in a text field", async () => {
 		const { onSubmit } = await renderForm({ initial: keyboard });
 
-		await page.getByLabelText('Name').click();
+		await page.getByLabelText('Name', { exact: false }).click();
 		await userEvent.keyboard('{Enter}');
 
 		expect(onSubmit).not.toHaveBeenCalled();

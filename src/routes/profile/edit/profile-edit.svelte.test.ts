@@ -164,8 +164,10 @@ describe('Profile edit page states', () => {
 
 		await expect.element(usernameField()).toHaveValue('rogue.serenity');
 		await expect.element(page.getByLabelText('Discord username')).toHaveValue('rogue#1');
-		await expect.element(page.getByLabelText('Bio')).toHaveValue('No, I am a meat popsicle.');
-		await expect.element(page.getByLabelText('Currency')).toHaveValue('EUR');
+		await expect
+			.element(page.getByLabelText('Bio', { exact: false }))
+			.toHaveValue('No, I am a meat popsicle.');
+		await expect.element(page.getByLabelText('Currency', { exact: false })).toHaveValue('EUR');
 		await expect.element(page.getByLabelText('Show prices to me')).not.toBeChecked();
 		await expect.element(page.getByLabelText('Show prices to others')).toBeChecked();
 		await expect.element(page.getByLabelText('Make my profile discoverable')).toBeChecked();
@@ -191,7 +193,7 @@ describe('Profile edit page saving', () => {
 		await render(ProfileEditPage);
 
 		await page.getByLabelText('Discord username').fill('  ');
-		await page.getByLabelText('Bio').fill('  Clacky.  ');
+		await page.getByLabelText('Bio', { exact: false }).fill('  Clacky.  ');
 		await page.getByRole('button', { name: 'Add link' }).click();
 		await saveButton().click();
 
@@ -349,7 +351,7 @@ describe('Profile edit page photo', () => {
 		api.deleteProfileImage.mockResolvedValue(undefined);
 		await render(ProfileEditPage);
 
-		await page.getByRole('button', { name: 'Remove', exact: true }).click();
+		await page.getByRole('button', { name: 'Remove' }).click();
 
 		await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalled());
 		expect(api.deleteProfileImage).toHaveBeenCalledWith({ identifier: 'user-1' });
@@ -359,7 +361,7 @@ describe('Profile edit page photo', () => {
 		api.deleteProfileImage.mockRejectedValue(new Error('network'));
 		await render(ProfileEditPage);
 
-		await page.getByRole('button', { name: 'Remove', exact: true }).click();
+		await page.getByRole('button', { name: 'Remove' }).click();
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not remove your photo.' }))
@@ -395,8 +397,6 @@ describe('Profile edit page photo', () => {
 		await render(ProfileEditPage);
 
 		await expect.element(page.getByText(/Removed by moderation: Explicit/)).toBeInTheDocument();
-		await expect
-			.element(page.getByRole('button', { name: 'Remove', exact: true }))
-			.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
 	});
 });

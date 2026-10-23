@@ -75,7 +75,7 @@ describe('KeyboardDetails.svelte', () => {
 			const onImageClick = vi.fn();
 			await render(KeyboardDetails, { keyboard: moderated, onImageClick, showPrice: true });
 
-			await page.getByRole('button', { name: 'View full size image' }).nth(1).click();
+			await page.getByRole('button', { name: 'View full size image', exact: false }).nth(1).click();
 
 			expect(onImageClick).toHaveBeenCalledWith(1);
 		});

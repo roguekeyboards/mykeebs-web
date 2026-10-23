@@ -71,9 +71,9 @@ async function openAperol() {
 
 async function fillNewSwitch() {
 	await page.getByRole('button', { name: 'Add switch' }).click();
-	await dialog().getByLabelText('Brand').fill('Gateron');
-	await dialog().getByLabelText('Name').fill('Oil King');
-	await dialog().getByLabelText('Type').selectOptions('Linear');
+	await dialog().getByLabelText('Brand', { exact: false }).fill('Gateron');
+	await dialog().getByLabelText('Name', { exact: false }).fill('Oil King');
+	await dialog().getByLabelText('Type', { exact: false }).selectOptions('Linear');
 }
 
 beforeEach(() => {
@@ -138,7 +138,7 @@ describe('switches page', () => {
 		await renderPage();
 		await openAperol();
 
-		await dialog().getByRole('button', { name: 'View full size image' }).click();
+		await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
 
 		await vi.waitFor(() =>
 			expect(document.querySelector('img.select-none')?.getAttribute('src')).toBe(PIXEL)
@@ -258,7 +258,7 @@ describe('switches page', () => {
 			await openAperol();
 
 			await dialog().getByRole('button', { name: 'Edit' }).click();
-			await dialog().getByLabelText('Name').fill('Aperol V2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Aperol V2');
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 
 			await expect.element(page.getByRole('dialog', { name: 'Aperol V2' })).toBeInTheDocument();
@@ -333,7 +333,7 @@ describe('switches page', () => {
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Discard your changes?' }))
 			.toBeInTheDocument();
-		await expect.element(dialog().getByLabelText('Name')).toHaveValue('Oil King');
+		await expect.element(dialog().getByLabelText('Name', { exact: false })).toHaveValue('Oil King');
 	});
 
 	describe('deleting a switch', () => {

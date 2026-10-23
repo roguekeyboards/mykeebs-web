@@ -151,8 +151,8 @@ describe('keycap sets page', () => {
 			await renderPage();
 
 			await page.getByRole('button', { name: 'Add keycap set' }).click();
-			await dialog().getByLabelText('Brand').fill('GMK');
-			await dialog().getByLabelText('Name').fill('Botanical');
+			await dialog().getByLabelText('Brand', { exact: false }).fill('GMK');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Botanical');
 			await dialog().getByRole('button', { name: 'Add keycap set' }).click();
 
 			await expect.element(dialog().getByRole('button', { name: '+ Add kit' })).toBeInTheDocument();
@@ -170,8 +170,8 @@ describe('keycap sets page', () => {
 			await renderPage();
 
 			await page.getByRole('button', { name: 'Add keycap set' }).click();
-			await dialog().getByLabelText('Brand').fill('GMK');
-			await dialog().getByLabelText('Name').fill('Botanical');
+			await dialog().getByLabelText('Brand', { exact: false }).fill('GMK');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Botanical');
 			await dialog().getByRole('button', { name: 'Add keycap set' }).click();
 
 			await expect
@@ -187,7 +187,7 @@ describe('keycap sets page', () => {
 			await openOlivia();
 
 			await page.getByRole('button', { name: 'Edit set' }).click();
-			await dialog().getByLabelText('Name').fill('Olivia++');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Olivia++');
 			await dialog().getByRole('button', { name: 'Save changes' }).click();
 
 			await expect.element(dialog().getByRole('button', { name: 'Edit set' })).toBeInTheDocument();
@@ -217,14 +217,16 @@ describe('keycap sets page', () => {
 		await renderPage();
 		await openOlivia();
 		await page.getByRole('button', { name: 'Edit set' }).click();
-		await dialog().getByLabelText('Name').fill('Olivia R2');
+		await dialog().getByLabelText('Name', { exact: false }).fill('Olivia R2');
 
 		await userEvent.keyboard('{Escape}');
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Discard your changes?' }))
 			.toBeInTheDocument();
-		await expect.element(dialog().getByLabelText('Name')).toHaveValue('Olivia R2');
+		await expect
+			.element(dialog().getByLabelText('Name', { exact: false }))
+			.toHaveValue('Olivia R2');
 	});
 
 	describe('deleting a set', () => {
@@ -299,14 +301,16 @@ describe('keycap sets page', () => {
 			await openOlivia();
 			await openKit('Base');
 			await page.getByRole('button', { name: 'Edit kit' }).click();
-			await dialog().getByLabelText('Name').fill('Base R2');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Base R2');
 
 			await userEvent.keyboard('{Escape}');
 
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: 'Discard your changes?' }))
 				.toBeInTheDocument();
-			await expect.element(dialog().getByLabelText('Name')).toHaveValue('Base R2');
+			await expect
+				.element(dialog().getByLabelText('Name', { exact: false }))
+				.toHaveValue('Base R2');
 		});
 
 		it('steps through the kits with the arrows, wrapping at the ends', async () => {
@@ -355,7 +359,7 @@ describe('keycap sets page', () => {
 			await openOlivia();
 			await openKit('Base');
 
-			await dialog().getByRole('button', { name: 'View full size image' }).click();
+			await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
 
 			await expect.element(page.getByRole('button', { name: 'Next kit' })).toHaveLength(2);
 			await expect
@@ -368,7 +372,7 @@ describe('keycap sets page', () => {
 			await renderPage();
 			await openOlivia();
 			await page.getByRole('button', { name: '+ Add kit' }).click();
-			await dialog().getByLabelText('Name').fill('Spacebars');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Spacebars');
 			await userEvent.upload(
 				page.elementLocator(
 					document.querySelector('[role="dialog"]:last-of-type input[type="file"]')!
@@ -466,7 +470,7 @@ describe('keycap sets page', () => {
 			await openOlivia();
 
 			await page.getByRole('button', { name: '+ Add kit' }).click();
-			await dialog().getByLabelText('Name').fill('Spacebars');
+			await dialog().getByLabelText('Name', { exact: false }).fill('Spacebars');
 			await userEvent.upload(
 				page.elementLocator(
 					document.querySelector('[role="dialog"]:last-of-type input[type="file"]')!

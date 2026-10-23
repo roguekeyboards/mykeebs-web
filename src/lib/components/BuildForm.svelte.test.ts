@@ -412,8 +412,8 @@ describe('BuildForm.svelte plate and PCB', () => {
 		return onSubmit;
 	}
 
-	const plate = () => page.getByLabelText('Plate');
-	const pcb = () => page.getByLabelText('PCB');
+	const plate = () => page.getByLabelText('Plate', { exact: false });
+	const pcb = () => page.getByLabelText('PCB', { exact: false });
 
 	it("offers the keyboard's parts by id, labelled to tell same-material plates apart", async () => {
 		const onSubmit = await renderParts(async () => ({

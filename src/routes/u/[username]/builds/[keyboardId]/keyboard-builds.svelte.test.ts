@@ -202,7 +202,10 @@ describe('keyboard builds page', () => {
 			await renderPage();
 			await openCurrent();
 
-			await dialog().getByRole('button', { name: 'View full size image' }).nth(1).click();
+			await dialog()
+				.getByRole('button', { name: 'View full size image', exact: false })
+				.nth(1)
+				.click();
 
 			await expect.element(page.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
 		});
@@ -420,7 +423,10 @@ describe('keyboard builds page image moderation', () => {
 		await openCurrent();
 
 		const shown = () => document.querySelector('img.select-none')?.getAttribute('src');
-		await dialog().getByRole('button', { name: 'View full size image' }).first().click();
+		await dialog()
+			.getByRole('button', { name: 'View full size image', exact: false })
+			.first()
+			.click();
 		await vi.waitFor(() => expect(shown()).toBe('https://img.example/1.png'));
 	});
 });
