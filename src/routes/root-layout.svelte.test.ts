@@ -29,7 +29,7 @@ describe('root layout', () => {
 	it('puts the page content inside the main landmark', async () => {
 		await renderLayout();
 
-		await expect.element(page.getByRole('main')).toHaveTextContent('Page content');
+		await expect.element(page.getByRole('main')).toMatchTextContent('Page content');
 	});
 
 	it('offers a skip link as the first stop, and it moves focus to the content', async () => {

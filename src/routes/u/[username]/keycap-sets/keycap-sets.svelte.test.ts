@@ -135,13 +135,13 @@ describe('keycap sets page', () => {
 		});
 		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Olivia|Botanical/ });
-		await expect.element(cards().first()).toHaveTextContent('Botanical');
+		await expect.element(cards().first()).toMatchTextContent('Botanical');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
-		await expect.element(cards().first()).toHaveTextContent('Olivia');
+		await expect.element(cards().first()).toMatchTextContent('Olivia');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
-		await expect.element(cards().first()).toHaveTextContent('Botanical');
+		await expect.element(cards().first()).toMatchTextContent('Botanical');
 	});
 
 	describe('creating a set', () => {

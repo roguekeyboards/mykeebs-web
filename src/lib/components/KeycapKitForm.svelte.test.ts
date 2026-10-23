@@ -72,10 +72,10 @@ describe('KeycapKitForm.svelte cleared price', () => {
 		const dirty = page.getByTestId('dirty');
 
 		await page.getByLabelText('Price').fill('5');
-		await expect.element(dirty).toHaveTextContent('true');
+		await expect.element(dirty).toMatchTextContent('true');
 		await page.getByLabelText('Price').fill('');
 
-		await expect.element(dirty).toHaveTextContent('false');
+		await expect.element(dirty).toMatchTextContent('false');
 	});
 
 	it('drops a cleared price rather than keeping the old value', async () => {

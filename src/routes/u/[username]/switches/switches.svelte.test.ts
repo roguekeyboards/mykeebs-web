@@ -90,7 +90,7 @@ describe('switches page', () => {
 	it('lists the switches and lets the owner add one', async () => {
 		await renderPage();
 
-		await expect.element(page.getByRole('button', { name: /Aperol/ })).toHaveTextContent('Linear');
+		await expect.element(page.getByRole('button', { name: /Aperol/ })).toMatchTextContent('Linear');
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).toBeInTheDocument();
 		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).toBeInTheDocument();
 		await expect
@@ -125,13 +125,13 @@ describe('switches page', () => {
 		});
 		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
-		await expect.element(cards().first()).toHaveTextContent('Aperol');
+		await expect.element(cards().first()).toMatchTextContent('Aperol');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
-		await expect.element(cards().first()).toHaveTextContent('Banana');
+		await expect.element(cards().first()).toMatchTextContent('Banana');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
-		await expect.element(cards().first()).toHaveTextContent('Aperol');
+		await expect.element(cards().first()).toMatchTextContent('Aperol');
 	});
 
 	it('opens the photo full size', async () => {

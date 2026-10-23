@@ -114,7 +114,9 @@ describe('keyboards page', () => {
 	it('lists the keyboards and lets the owner add one', async () => {
 		await renderPage();
 
-		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('65% · WK');
+		await expect
+			.element(page.getByRole('button', { name: /Manta/ }))
+			.toMatchTextContent('65% · WK');
 		await expect.element(page.getByRole('button', { name: 'Add keyboard' })).toBeInTheDocument();
 		await expect
 			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
@@ -137,10 +139,10 @@ describe('keyboards page', () => {
 		});
 		await renderPage();
 
-		await expect.element(page.getByRole('button', { name: /Manta/ })).toHaveTextContent('$420.00');
+		await expect.element(page.getByRole('button', { name: /Manta/ })).toMatchTextContent('$420.00');
 		await expect
 			.element(page.getByRole('button', { name: /Manta/ }))
-			.not.toHaveTextContent('$300.00');
+			.not.toMatchTextContent('$300.00');
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
@@ -174,13 +176,13 @@ describe('keyboards page', () => {
 		});
 		await renderPage(false);
 		const cards = () => page.getByRole('button', { name: /Manta|Zoom65/ });
-		await expect.element(cards().first()).toHaveTextContent('Manta');
+		await expect.element(cards().first()).toMatchTextContent('Manta');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
-		await expect.element(cards().first()).toHaveTextContent('Zoom65');
+		await expect.element(cards().first()).toMatchTextContent('Zoom65');
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
-		await expect.element(cards().first()).toHaveTextContent('Manta');
+		await expect.element(cards().first()).toMatchTextContent('Manta');
 	});
 
 	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {

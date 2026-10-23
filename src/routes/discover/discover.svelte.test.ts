@@ -35,7 +35,7 @@ describe('Discover page', () => {
 
 		const link = page.getByRole('link', { name: /@rogue\.serenity/ });
 		await expect.element(link).toHaveAttribute('href', '/u/rogue.serenity');
-		await expect.element(link).toHaveTextContent('rogue#1');
+		await expect.element(link).toMatchTextContent('rogue#1');
 		expect(listProfiles).toHaveBeenCalledWith({ username: undefined });
 	});
 

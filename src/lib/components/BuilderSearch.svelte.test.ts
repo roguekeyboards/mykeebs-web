@@ -40,7 +40,7 @@ describe('BuilderSearch.svelte', () => {
 		await userEvent.fill(searchbox(), ' rog ');
 
 		const match = page.getByRole('button', { name: /@rogue\.serenity/ });
-		await expect.element(match).toHaveTextContent('rogue#1');
+		await expect.element(match).toMatchTextContent('rogue#1');
 		expect(listProfiles).toHaveBeenCalledWith({ username: 'rog', limit: 6 });
 	});
 

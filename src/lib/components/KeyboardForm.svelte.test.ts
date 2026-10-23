@@ -544,27 +544,27 @@ describe('KeyboardForm.svelte', () => {
 		it('starts clean for an existing keyboard', async () => {
 			await renderForm({ initial: keyboard });
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('turns dirty on an edit and clean again when it is undone', async () => {
 			await renderForm({ initial: keyboard });
 
 			await page.getByLabelText('Name').fill('Manta 2');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 
 			await page.getByLabelText('Name').fill('Manta');
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it("tracks edits to a part's fields", async () => {
 			await renderForm({ initial: keyboard });
 
 			await part('Plate 2').getByLabelText('Color').fill('White');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 			await part('Plate 2').getByLabelText('Color').fill('Black');
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('stays dirty when a removed part is replaced by an identical new one', async () => {
@@ -574,14 +574,14 @@ describe('KeyboardForm.svelte', () => {
 			await page.getByRole('button', { name: '+ Add plate' }).click();
 			await part('Plate 1').getByLabelText('Material').selectOptions('POM');
 
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 		});
 
 		it('turns dirty when a part is added or removed', async () => {
 			await renderForm({ initial: keyboard });
 
 			await page.getByRole('button', { name: 'Remove PCB 1' }).click();
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 		});
 
 		it('turns dirty when a photo is staged', async () => {
@@ -589,7 +589,7 @@ describe('KeyboardForm.svelte', () => {
 
 			await userEvent.upload(fileInput(), [png('a.png')]);
 
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 		});
 	});
 
@@ -669,7 +669,7 @@ describe('KeyboardForm.svelte', () => {
 				.element(page.getByRole('button', { name: 'Remove image 2 of 2' }))
 				.toBeInTheDocument();
 			await expect.element(page.getByLabelText('Name')).toHaveValue('Manta R2');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 		});
 
 		it('uploads a picked photo straight away', async () => {
@@ -801,10 +801,10 @@ describe('KeyboardForm.svelte', () => {
 			await openSection('Purchase');
 
 			await page.getByLabelText('Base price').fill('5');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 			await page.getByLabelText('Base price').fill('');
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('plate thickness leaves the form clean once typed into and cleared', async () => {
@@ -812,10 +812,10 @@ describe('KeyboardForm.svelte', () => {
 			const thickness = part('Plate 1').getByLabelText('Thickness (mm)');
 
 			await thickness.fill('5');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 			await thickness.fill('');
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('drops a cleared price rather than keeping the old value', async () => {

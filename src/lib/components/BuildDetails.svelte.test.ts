@@ -45,9 +45,9 @@ describe('BuildDetails.svelte', () => {
 		await renderDetails();
 
 		const kits = page.getByRole('listitem').filter({ hasText: '—' });
-		await expect.element(kits.nth(0)).toHaveTextContent('Olivia — Base');
-		await expect.element(kits.nth(1)).toHaveTextContent('Olivia — Novelties');
-		await expect.element(kits.nth(2)).toHaveTextContent('WoB — Base');
+		await expect.element(kits.nth(0)).toMatchTextContent('Olivia — Base');
+		await expect.element(kits.nth(1)).toMatchTextContent('Olivia — Novelties');
+		await expect.element(kits.nth(2)).toMatchTextContent('WoB — Base');
 	});
 
 	it('opens a kit by its set and kit id', async () => {

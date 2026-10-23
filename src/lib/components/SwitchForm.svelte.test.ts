@@ -312,17 +312,17 @@ describe('SwitchForm.svelte', () => {
 		it('starts clean for an existing switch', async () => {
 			await renderForm({ initial: sw });
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('turns dirty on an edit and clean again when it is undone', async () => {
 			await renderForm({ initial: sw });
 
 			await page.getByLabelText('Pins').selectOptions('3');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 
 			await page.getByLabelText('Pins').selectOptions('5');
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('turns dirty when a photo is staged', async () => {
@@ -330,7 +330,7 @@ describe('SwitchForm.svelte', () => {
 
 			await userEvent.upload(fileInput(), png('a.png'));
 
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 		});
 	});
 
@@ -473,10 +473,10 @@ describe('SwitchForm.svelte', () => {
 			await renderForm({ initial: withoutNumbers });
 
 			await page.getByLabelText(label).fill('5');
-			await expect.element(dirty()).toHaveTextContent('true');
+			await expect.element(dirty()).toMatchTextContent('true');
 			await page.getByLabelText(label).fill('');
 
-			await expect.element(dirty()).toHaveTextContent('false');
+			await expect.element(dirty()).toMatchTextContent('false');
 		});
 
 		it('drops cleared numbers rather than keeping the old values', async () => {

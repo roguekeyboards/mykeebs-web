@@ -20,7 +20,7 @@ describe('DeleteBlocked.svelte', () => {
 		const onCancel = vi.fn();
 		await render(DeleteBlocked, { builds: ['Manta'], onCancel });
 
-		await expect.element(page.getByRole('button')).toHaveTextContent('Cancel');
+		await expect.element(page.getByRole('button')).toMatchTextContent('Cancel');
 		await page.getByRole('button').click();
 
 		expect(onCancel).toHaveBeenCalled();

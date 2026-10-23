@@ -110,12 +110,12 @@ describe('KeyboardDetails.svelte', () => {
 			await renderParts(true);
 
 			const items = page.getByRole('listitem');
-			await expect.element(items.nth(0)).toHaveTextContent(/^\s*POM\s*Came with the keyboard\s*$/);
-			await expect.element(items.nth(1)).not.toHaveTextContent('Came with the keyboard');
-			await expect.element(items.nth(1)).toHaveTextContent('Aluminum · Silver · 1.5mm');
-			await expect.element(items.nth(1)).toHaveTextContent('CannonKeys');
-			await expect.element(items.nth(1)).toHaveTextContent('$40.00');
-			await expect.element(items.nth(2)).toHaveTextContent('Hotswap · QMK');
+			await expect.element(items.nth(0)).toMatchTextContent(/^\s*POM\s*Came with the keyboard\s*$/);
+			await expect.element(items.nth(1)).not.toMatchTextContent('Came with the keyboard');
+			await expect.element(items.nth(1)).toMatchTextContent('Aluminum · Silver · 1.5mm');
+			await expect.element(items.nth(1)).toMatchTextContent('CannonKeys');
+			await expect.element(items.nth(1)).toMatchTextContent('$40.00');
+			await expect.element(items.nth(2)).toMatchTextContent('Hotswap · QMK');
 		});
 
 		it('shows the total cost next to the base price', async () => {
