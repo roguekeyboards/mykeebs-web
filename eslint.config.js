@@ -39,7 +39,9 @@ export default defineConfig(
 	},
 	{
 		files: ['**/*.svelte.test.ts'],
-		languageOptions: { parserOptions: { projectService: true } },
+		languageOptions: {
+			parserOptions: { project: './tsconfig.json', tsconfigRootDir: import.meta.dirname }
+		},
 		rules: {
 			// vitest-browser-svelte's render() is async; an unawaited one races the test.
 			'@typescript-eslint/no-floating-promises': 'error'
