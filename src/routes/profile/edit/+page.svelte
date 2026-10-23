@@ -12,6 +12,8 @@
 	import { cleanLinks, USERNAME_RULES, usernameLooksValid } from '#lib/profile/profile-input.js';
 	import { uploadImage } from '#lib/upload.js';
 	import { isPending, rejectionText, uploadErrorMessage } from '#lib/image-moderation.js';
+	import DeleteAccount from '#lib/account/DeleteAccount.svelte';
+	import { deleteAccount } from '#lib/account/delete-account.js';
 
 	const MAX_LINKS = 5;
 
@@ -394,5 +396,9 @@
 				{/if}
 			</div>
 		</form>
+		{#if profile.status === 'ready' && auth.user}
+			{@const userId = auth.user.id}
+			<DeleteAccount username={profile.data!.username} onDelete={() => deleteAccount(userId)} />
+		{/if}
 	{/if}
 </div>
