@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Visibility } from '@rogueserenity/kbdb-api-client';
-	import { mixedVisibilityMeta, visibilityMeta } from '$lib/visibility';
+	import { mixedVisibilityMeta, visibilityMeta } from '#lib/visibility.js';
 	import VisibilityIcon from './VisibilityIcon.svelte';
 
 	let {

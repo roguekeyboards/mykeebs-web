@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PUBLIC_STYTCH_CLIENT_ID } from '$env/static/public';
+import { PUBLIC_STYTCH_CLIENT_ID } from '$app/env/public';
 import { generateCodeChallenge } from './pkce';
 
 const ORIGIN = 'http://localhost:5173';
@@ -407,12 +407,16 @@ describe('getAccessToken', () => {
 		localStorage.setItem(ACCESS_KEY, tokenExpiringIn(30));
 		localStorage.setItem(REFRESH_KEY, 'r-1');
 		localStorage.setItem(ID_TOKEN_KEY, 'id-1');
+
 		fetchMock.mockResolvedValue(
-			tokenResponse({ access_token: tokenExpiringIn(3600), refresh_token: 'r-2', id_token: 'id-2' })
+			tokenResponse({
+				access_token: tokenExpiringIn(3600),
+				refresh_token: 'r-2',
+				id_token: 'id-2'
+			})
 		);
 
 		await authModule.getAccessToken();
-
 		expect(localStorage.getItem(ID_TOKEN_KEY)).toBe('id-2');
 	});
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { auth, signIn } from './auth.svelte';
-	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
+	import ProfileMenu from '#lib/components/ProfileMenu.svelte';
 </script>
 
 {#if auth.user}

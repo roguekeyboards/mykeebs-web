@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { consumeStateMatches, exchangeCodeForToken } from '$lib/auth/auth.svelte';
+	import { consumeStateMatches, exchangeCodeForToken } from '#lib/auth/auth.svelte.js';
 
 	let error = $state<string | null>(null);
 
@@ -23,9 +23,9 @@
 		}
 
 		exchangeCodeForToken(code)
-			// replaceState drops ?code= from history, keeping the single-use
+			// replace drops ?code= from history, keeping the single-use
 			// code out of back-navigation and the Referer of later requests.
-			.then(() => goto(resolve('/'), { replaceState: true }))
+			.then(() => goto(resolve('/'), { replace: true }))
 			.catch(() => {
 				error = 'Sign-in failed. Please try again.';
 			});

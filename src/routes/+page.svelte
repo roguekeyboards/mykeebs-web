@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { auth, signIn } from '$lib/auth/auth.svelte';
-	import { profile } from '$lib/profile/profile.svelte';
+	import { auth, signIn } from '#lib/auth/auth.svelte.js';
+	import { profile } from '#lib/profile/profile.svelte.js';
 
 	$effect(() => {
 		if (auth.status !== 'signed-in') return;
 		if (profile.status === 'loading' || profile.status === 'idle') return;
 		if (profile.status === 'ready') {
 			goto(resolve('/u/[username]/keyboards', { username: profile.data!.username }), {
-				replaceState: true
+				replace: true
 			});
 		} else if (profile.status === 'none') {
-			goto(resolve('/profile/edit'), { replaceState: true });
+			goto(resolve('/profile/edit'), { replace: true });
 		} else {
-			goto(resolve('/discover'), { replaceState: true });
+			goto(resolve('/discover'), { replace: true });
 		}
 	});
 </script>

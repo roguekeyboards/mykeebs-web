@@ -3,14 +3,17 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
-	import { PUBLIC_KBDB_API_BASE_PATH } from '$env/static/public';
+	import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
-	import { initAuth } from '$lib/auth/auth.svelte';
-	import { initProfile, profile } from '$lib/profile/profile.svelte';
-	import AuthControl from '$lib/auth/AuthControl.svelte';
-	import BuilderSearch from '$lib/components/BuilderSearch.svelte';
-	import { setProfileSubNavContext, type ProfileSubNavContext } from '$lib/profile-subnav-context';
+	import favicon from '#lib/assets/favicon.svg';
+	import { initAuth } from '#lib/auth/auth.svelte.js';
+	import { initProfile, profile } from '#lib/profile/profile.svelte.js';
+	import AuthControl from '#lib/auth/AuthControl.svelte';
+	import BuilderSearch from '#lib/components/BuilderSearch.svelte';
+	import {
+		setProfileSubNavContext,
+		type ProfileSubNavContext
+	} from '#lib/profile-subnav-context.js';
 
 	let { children } = $props();
 

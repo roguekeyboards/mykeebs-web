@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import type { Profile } from '@rogueserenity/kbdb-api-client';
-	import { profilesApi } from '$lib/api/client';
-	import Avatar from '$lib/components/Avatar.svelte';
+	import { profilesApi } from '#lib/api/client.js';
+	import Avatar from '#lib/components/Avatar.svelte';
 
 	let query = $state('');
 	let results = $state<Profile[]>([]);

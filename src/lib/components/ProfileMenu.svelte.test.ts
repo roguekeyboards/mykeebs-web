@@ -1,14 +1,14 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { signOut } from '$lib/auth/auth.svelte';
+import { signOut } from '#lib/auth/auth.svelte.js';
 import ProfileMenu from './ProfileMenu.svelte';
 
-vi.mock('$lib/auth/auth.svelte', () => ({
+vi.mock('#lib/auth/auth.svelte.js', () => ({
 	auth: { status: 'signed-in', user: { id: 'user-1', email: 'jay@example.com' } },
 	signOut: vi.fn()
 }));
-vi.mock('$lib/profile/profile.svelte', () => ({
+vi.mock('#lib/profile/profile.svelte.js', () => ({
 	profile: {
 		status: 'ready',
 		data: { userId: 'user-1', username: 'rogue.serenity', discoverable: true }

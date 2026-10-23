@@ -2,10 +2,10 @@ import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { Profile, ProfileListPage } from '@rogueserenity/kbdb-api-client';
-import { profilesApi } from '$lib/api/client';
+import { profilesApi } from '#lib/api/client.js';
 import DiscoverPage from './+page.svelte';
 
-vi.mock('$lib/api/client', () => ({ profilesApi: { listProfiles: vi.fn() } }));
+vi.mock('#lib/api/client.js', () => ({ profilesApi: { listProfiles: vi.fn() } }));
 
 const listProfiles = vi.mocked(profilesApi.listProfiles);
 

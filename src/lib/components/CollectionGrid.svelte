@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
-	import { updateWhere } from '$lib/stale-images';
-	import { fetchAllPages } from '$lib/pagination';
-	import { filterByStatus, searchItems, sortItems } from '$lib/collection-filter';
+	import { updateWhere } from '#lib/stale-images.js';
+	import { fetchAllPages } from '#lib/pagination.js';
+	import { filterByStatus, searchItems, sortItems } from '#lib/collection-filter.js';
 	import type { Snippet } from 'svelte';
 	import { ArrowDown, ArrowUp, Plus, Search } from '@lucide/svelte';
 	import {
@@ -9,7 +9,7 @@
 		statusFilterIcon,
 		statusFilterLabel,
 		type StatusFilter
-	} from '$lib/order-status';
+	} from '#lib/order-status.js';
 
 	type Page = { items?: T[]; nextCursor?: string | null };
 	type SortOption = { label: string; getValue: (item: T) => string | number | undefined };

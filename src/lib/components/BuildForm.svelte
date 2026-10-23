@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { isPending, primaryImageUrl, uploadErrorMessage } from '$lib/image-moderation';
-	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
-	import RejectedImage from '$lib/components/RejectedImage.svelte';
+	import { isPending, primaryImageUrl, uploadErrorMessage } from '#lib/image-moderation.js';
+	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { tick, untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type {
@@ -17,15 +17,15 @@
 	} from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
-	import { lookupsApi, keyboardsApi, switchesApi, keycapSetsApi } from '$lib/api/client';
-	import { primaryKitImageUrl } from '$lib/keycap-set';
-	import { kitKey, type StaleBuildRefs } from '$lib/build-refs';
-	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
-	import { getUserContext } from '$lib/user-context';
-	import ItemPicker, { type ItemPickerCache } from '$lib/components/ItemPicker.svelte';
+	import { lookupsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
+	import { primaryKitImageUrl } from '#lib/keycap-set.js';
+	import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
+	import { pcbLabel, plateLabel } from '#lib/keyboard-parts.js';
+	import { getUserContext } from '#lib/user-context.js';
+	import ItemPicker, { type ItemPickerCache } from '#lib/components/ItemPicker.svelte';
 	import { X } from '@lucide/svelte';
-	import { toDateInput, todayDateInput } from '$lib/format';
-	import { limitNotice, MAX_IMAGES, takeWithinLimit } from '$lib/image-limit';
+	import { toDateInput, todayDateInput } from '#lib/format.js';
+	import { limitNotice, MAX_IMAGES, takeWithinLimit } from '#lib/image-limit.js';
 
 	let {
 		initial,

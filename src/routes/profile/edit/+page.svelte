@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { ProfileInput, ProfileLink } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
-	import { auth } from '$lib/auth/auth.svelte';
-	import { profile, saveProfile, refreshProfile } from '$lib/profile/profile.svelte';
-	import { profilesApi } from '$lib/api/client';
-	import Avatar from '$lib/components/Avatar.svelte';
+	import { auth } from '#lib/auth/auth.svelte.js';
+	import { profile, saveProfile, refreshProfile } from '#lib/profile/profile.svelte.js';
+	import { profilesApi } from '#lib/api/client.js';
+	import Avatar from '#lib/components/Avatar.svelte';
 	import { X } from '@lucide/svelte';
-	import { cleanLinks, USERNAME_RULES, usernameLooksValid } from '$lib/profile/profile-input';
-	import { uploadImage } from '$lib/upload';
-	import { isPending, rejectionText, uploadErrorMessage } from '$lib/image-moderation';
+	import { cleanLinks, USERNAME_RULES, usernameLooksValid } from '#lib/profile/profile-input.js';
+	import { uploadImage } from '#lib/upload.js';
+	import { isPending, rejectionText, uploadErrorMessage } from '#lib/image-moderation.js';
 
 	const MAX_LINKS = 5;
 

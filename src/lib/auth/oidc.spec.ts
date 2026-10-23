@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PUBLIC_OIDC_ISSUER } from '$env/static/public';
+import { PUBLIC_OIDC_ISSUER } from '$app/env/public';
 
 type OidcModule = typeof import('./oidc');
 let oidc: OidcModule;

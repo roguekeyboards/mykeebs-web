@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Build, BuildInput } from '@rogueserenity/kbdb-api-client';
 	import { resolve } from '$app/paths';
-	import { buildsApi } from '$lib/api/client';
-	import { stagedUploadMessage, uploadImage, uploadStaged } from '$lib/upload';
-	import { primaryImageUrl } from '$lib/image-moderation';
-	import PageNotice from '$lib/components/PageNotice.svelte';
-	import { groupByKeyboard, type KeyboardBuildGroup } from '$lib/build-groups';
-	import { perItemImageRefetcher, withFreshImages } from '$lib/stale-images';
+	import { buildsApi } from '#lib/api/client.js';
+	import { stagedUploadMessage, uploadImage, uploadStaged } from '#lib/upload.js';
+	import { primaryImageUrl } from '#lib/image-moderation.js';
+	import PageNotice from '#lib/components/PageNotice.svelte';
+	import { groupByKeyboard, type KeyboardBuildGroup } from '#lib/build-groups.js';
+	import { perItemImageRefetcher, withFreshImages } from '#lib/stale-images.js';
 	import {
 		STALE_REFS_MESSAGE,
 		staleBuildRefsFromError,
 		type StaleBuildRefs
-	} from '$lib/build-refs';
-	import { formatDate, formatPrice } from '$lib/format';
-	import { getUserContext } from '$lib/user-context';
-	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
-	import Modal from '$lib/components/Modal.svelte';
-	import BuildForm from '$lib/components/BuildForm.svelte';
-	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
+	} from '#lib/build-refs.js';
+	import { formatDate, formatPrice } from '#lib/format.js';
+	import { getUserContext } from '#lib/user-context.js';
+	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import Modal from '#lib/components/Modal.svelte';
+	import BuildForm from '#lib/components/BuildForm.svelte';
+	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
 
 	const userContext = getUserContext();
 	const showPrice = $derived(userContext.showPrice);

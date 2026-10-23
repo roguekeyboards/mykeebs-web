@@ -2,7 +2,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus } from '@rogueserenity/kbdb-api-client';
-import type { ModeratedImage } from '$lib/image-moderation';
+import type { ModeratedImage } from '#lib/image-moderation.js';
 import KeycapKitDetails from './KeycapKitDetails.svelte';
 
 const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';

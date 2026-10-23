@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
 import { ResponseError } from '@rogueserenity/kbdb-api-client';
-import { profilesApi } from '$lib/api/client';
-import WithUserContext from '$lib/components/test-support/WithUserContext.svelte';
+import { profilesApi } from '#lib/api/client.js';
+import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import UserLayout from './+layout.svelte';
 import OverviewPage from './+page.svelte';
 import KeyboardsPage from './keyboards/+page.svelte';
@@ -19,10 +19,10 @@ vi.mock('$app/state', () => ({
 		url: new URL('http://localhost/u/rogue.serenity')
 	}
 }));
-vi.mock('$lib/auth/auth.svelte', () => ({
+vi.mock('#lib/auth/auth.svelte.js', () => ({
 	auth: { status: 'signed-in', user: { id: 'user-1', email: null } }
 }));
-vi.mock('$lib/api/client', () => {
+vi.mock('#lib/api/client.js', () => {
 	const empty = async () => ({ items: [] });
 	return {
 		profilesApi: { getProfile: vi.fn() },

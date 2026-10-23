@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import type { Profile } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
-	import { profilesApi } from '$lib/api/client';
-	import { auth } from '$lib/auth/auth.svelte';
-	import { setUserContext } from '$lib/user-context';
-	import { getProfileSubNavContext } from '$lib/profile-subnav-context';
-	import Avatar from '$lib/components/Avatar.svelte';
+	import { profilesApi } from '#lib/api/client.js';
+	import { auth } from '#lib/auth/auth.svelte.js';
+	import { setUserContext } from '#lib/user-context.js';
+	import { getProfileSubNavContext } from '#lib/profile-subnav-context.js';
+	import Avatar from '#lib/components/Avatar.svelte';
 
 	const profileSubNav = getProfileSubNavContext();
 

@@ -8,14 +8,14 @@ import {
 	type Keyboard,
 	type KeyboardInput
 } from '@rogueserenity/kbdb-api-client';
-import { lookupsApi } from '$lib/api/client';
-import { todayDateInput } from '$lib/format';
-import { pcbInput, plateInput, type KeyboardParts } from '$lib/keyboard-parts';
-import { MAX_IMAGES } from '$lib/image-limit';
+import { lookupsApi } from '#lib/api/client.js';
+import { todayDateInput } from '#lib/format.js';
+import { pcbInput, plateInput, type KeyboardParts } from '#lib/keyboard-parts.js';
+import { MAX_IMAGES } from '#lib/image-limit.js';
 import KeyboardForm from './KeyboardForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';
 
-vi.mock('$lib/api/client', () => ({ lookupsApi: { getLookup: vi.fn() } }));
+vi.mock('#lib/api/client.js', () => ({ lookupsApi: { getLookup: vi.fn() } }));
 
 const lookups: Record<string, unknown[]> = {
 	keyboard_size: ['60%', '65%', 'TKL'],

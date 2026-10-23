@@ -37,7 +37,10 @@ export default defineConfig({
 						instances: [{ browser: 'chromium', headless: true }]
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**']
+					exclude: ['src/lib/server/**'],
+					// Browser mode has no dev-server page to define the globals
+					// `$app/env/public` reads; kit generates this module to do it.
+					setupFiles: ['.svelte-kit/generated/dev/env/service-worker.js']
 				}
 			},
 

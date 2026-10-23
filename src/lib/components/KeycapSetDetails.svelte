@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
 	import OrderStatusBadge from './OrderStatusBadge.svelte';
-	import { formatPrice } from '$lib/format';
-	import { isPending } from '$lib/image-moderation';
+	import { formatPrice } from '#lib/format.js';
+	import { isPending } from '#lib/image-moderation.js';
 	import PendingReviewBadge from './PendingReviewBadge.svelte';
 	import RejectedImage from './RejectedImage.svelte';
 

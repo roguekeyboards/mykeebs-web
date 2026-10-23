@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/page-title';
+	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type {
 		KeycapKit,
@@ -8,25 +8,25 @@
 		KeycapSetInput
 	} from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
-	import { keycapSetsApi, buildsApi } from '$lib/api/client';
-	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '$lib/stale-images';
-	import { adjacentKitId, earliestKitDate, primaryKitImageUrl } from '$lib/keycap-set';
-	import { getUserContext } from '$lib/user-context';
-	import CollectionGrid from '$lib/components/CollectionGrid.svelte';
-	import Modal from '$lib/components/Modal.svelte';
-	import DeleteBlocked from '$lib/components/DeleteBlocked.svelte';
-	import { deleteFailure } from '$lib/delete-blocked';
-	import { stagedUploadOutcome, uploadImage, uploadStaged } from '$lib/upload';
-	import PageNotice from '$lib/components/PageNotice.svelte';
-	import { anyPending } from '$lib/image-moderation';
-	import VisibilityBadge from '$lib/components/VisibilityBadge.svelte';
-	import OrderStatusBadge from '$lib/components/OrderStatusBadge.svelte';
-	import ImageViewer from '$lib/components/ImageViewer.svelte';
-	import KeycapSetDetails from '$lib/components/KeycapSetDetails.svelte';
-	import KeycapSetForm from '$lib/components/KeycapSetForm.svelte';
-	import KeycapKitForm from '$lib/components/KeycapKitForm.svelte';
-	import KeycapKitDetails from '$lib/components/KeycapKitDetails.svelte';
-	import { formatPrice } from '$lib/format';
+	import { keycapSetsApi, buildsApi } from '#lib/api/client.js';
+	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '#lib/stale-images.js';
+	import { adjacentKitId, earliestKitDate, primaryKitImageUrl } from '#lib/keycap-set.js';
+	import { getUserContext } from '#lib/user-context.js';
+	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import Modal from '#lib/components/Modal.svelte';
+	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
+	import { deleteFailure } from '#lib/delete-blocked.js';
+	import { stagedUploadOutcome, uploadImage, uploadStaged } from '#lib/upload.js';
+	import PageNotice from '#lib/components/PageNotice.svelte';
+	import { anyPending } from '#lib/image-moderation.js';
+	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
+	import OrderStatusBadge from '#lib/components/OrderStatusBadge.svelte';
+	import ImageViewer from '#lib/components/ImageViewer.svelte';
+	import KeycapSetDetails from '#lib/components/KeycapSetDetails.svelte';
+	import KeycapSetForm from '#lib/components/KeycapSetForm.svelte';
+	import KeycapKitForm from '#lib/components/KeycapKitForm.svelte';
+	import KeycapKitDetails from '#lib/components/KeycapKitDetails.svelte';
+	import { formatPrice } from '#lib/format.js';
 	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
 
 	const userContext = getUserContext();

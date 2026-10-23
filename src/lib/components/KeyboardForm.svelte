@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { isPending, uploadErrorMessage } from '$lib/image-moderation';
-	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
-	import RejectedImage from '$lib/components/RejectedImage.svelte';
+	import { isPending, uploadErrorMessage } from '#lib/image-moderation.js';
+	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
 	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
 	import { Visibility } from '@rogueserenity/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import PurchaseFields from './PurchaseFields.svelte';
-	import { lookupsApi } from '$lib/api/client';
+	import { lookupsApi } from '#lib/api/client.js';
 	import { X } from '@lucide/svelte';
 	import {
 		pcbDraft,
@@ -19,8 +19,8 @@
 		purchaseInput,
 		purchaseSummary,
 		type KeyboardParts
-	} from '$lib/keyboard-parts';
-	import { limitNotice, MAX_IMAGES, takeWithinLimit } from '$lib/image-limit';
+	} from '#lib/keyboard-parts.js';
+	import { limitNotice, MAX_IMAGES, takeWithinLimit } from '#lib/image-limit.js';
 
 	let {
 		initial,

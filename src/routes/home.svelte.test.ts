@@ -2,7 +2,7 @@ import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { goto } from '$app/navigation';
-import { signIn } from '$lib/auth/auth.svelte';
+import { signIn } from '#lib/auth/auth.svelte.js';
 import HomePage from './+page.svelte';
 
 const state = vi.hoisted(() => ({
@@ -11,8 +11,8 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
-vi.mock('$lib/auth/auth.svelte', () => ({ auth: state.auth, signIn: vi.fn() }));
-vi.mock('$lib/profile/profile.svelte', () => ({ profile: state.profile }));
+vi.mock('#lib/auth/auth.svelte.js', () => ({ auth: state.auth, signIn: vi.fn() }));
+vi.mock('#lib/profile/profile.svelte.js', () => ({ profile: state.profile }));
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -66,7 +66,7 @@ describe('home page', () => {
 			render(HomePage);
 
 			await vi.waitFor(() =>
-				expect(goto).toHaveBeenCalledWith('/u/rogue.serenity/keyboards', { replaceState: true })
+				expect(goto).toHaveBeenCalledWith('/u/rogue.serenity/keyboards', { replace: true })
 			);
 		});
 
@@ -75,9 +75,7 @@ describe('home page', () => {
 
 			render(HomePage);
 
-			await vi.waitFor(() =>
-				expect(goto).toHaveBeenCalledWith('/profile/edit', { replaceState: true })
-			);
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/profile/edit', { replace: true }));
 		});
 
 		it('waits, showing nothing, while the profile loads', async () => {

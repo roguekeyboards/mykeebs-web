@@ -1,5 +1,5 @@
 import { ProblemFromJSON, ResponseError, type Build } from '@rogueserenity/kbdb-api-client';
-import { formatDate } from '$lib/format';
+import { formatDate } from '#lib/format.js';
 
 export async function blockingBuildIdsFromError(err: unknown): Promise<string[] | null> {
 	if (!(err instanceof ResponseError) || err.response.status !== 409) return null;

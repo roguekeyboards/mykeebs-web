@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Keyboard } from '@rogueserenity/kbdb-api-client';
-	import PurchaseDetails from '$lib/components/PurchaseDetails.svelte';
-	import { formatPrice } from '$lib/format';
-	import { pcbLabel, plateLabel } from '$lib/keyboard-parts';
-	import { isPending, viewableImages } from '$lib/image-moderation';
-	import PendingReviewBadge from '$lib/components/PendingReviewBadge.svelte';
-	import RejectedImage from '$lib/components/RejectedImage.svelte';
+	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
+	import { formatPrice } from '#lib/format.js';
+	import { pcbLabel, plateLabel } from '#lib/keyboard-parts.js';
+	import { isPending, viewableImages } from '#lib/image-moderation.js';
+	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
+	import RejectedImage from '#lib/components/RejectedImage.svelte';
 
 	let {
 		keyboard,

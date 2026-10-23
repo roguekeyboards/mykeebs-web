@@ -44,9 +44,9 @@ Name new test files to match whichever project they belong in. Run a single file
 - Tabs, single quotes, no trailing commas, 100-char print width — enforced by Prettier
   (`prettier.config.js`); don't hand-format against it.
 - Svelte 5 runes mode is forced project-wide (see `vite.config.ts`'s `compilerOptions.runes`).
-- Env vars are read via `$env/static/public` — anything new needs a `PUBLIC_` prefix to be exposed
-  to client code. Add it to `.env.example`, `.env.production` (the deployed value) and the `env:`
-  block in `.github/workflows/ci.yml`; `src/lib/build-config.spec.ts` fails until all three match.
+- Env vars are declared in `src/env.ts` (`defineEnvVars`) and read via `$app/env/public`. Add a new
+  one there, and to `.env.example`, `.env.production` (the deployed value) and the `env:` block in
+  `.github/workflows/ci.yml`; `src/lib/build-config.spec.ts` fails until all three match.
 - Node is pinned in `mise.toml`. `.node-version` mirrors it for Cloudflare's build, and Renovate
   updates both, plus `@types/node`, in one grouped PR.
 - This is a pure SPA (`adapter-static`, no server routes) — but `vite dev` and `svelte-check` still

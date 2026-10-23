@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { todayDateInput } from '$lib/format';
-	import type { PurchaseDraft } from '$lib/keyboard-parts';
+	import { todayDateInput } from '#lib/format.js';
+	import type { PurchaseDraft } from '#lib/keyboard-parts.js';
 
 	let {
 		purchase = $bindable(),

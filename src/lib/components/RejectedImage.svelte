@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ImageOff } from '@lucide/svelte';
-	import { rejectionText } from '$lib/image-moderation';
+	import { rejectionText } from '#lib/image-moderation.js';
 
 	let { reason, class: className = '' }: { reason: string | undefined; class?: string } = $props();
 

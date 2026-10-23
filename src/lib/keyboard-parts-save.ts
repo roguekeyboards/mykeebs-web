@@ -1,5 +1,5 @@
 import type { Build, Keyboard, KeyboardsApi } from '@rogueserenity/kbdb-api-client';
-import { blockingBuildIdsFromError, blockingBuildLabels } from '$lib/delete-blocked';
+import { blockingBuildIdsFromError, blockingBuildLabels } from '#lib/delete-blocked.js';
 import {
 	pcbDraft,
 	pcbInput,
@@ -8,7 +8,7 @@ import {
 	plateInput,
 	plateLabel,
 	type KeyboardParts
-} from '$lib/keyboard-parts';
+} from '#lib/keyboard-parts.js';
 
 export type PartsApi = Pick<
 	KeyboardsApi,

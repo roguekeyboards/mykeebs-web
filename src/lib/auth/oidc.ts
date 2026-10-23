@@ -1,4 +1,4 @@
-import { PUBLIC_OIDC_ISSUER } from '$env/static/public';
+import { PUBLIC_OIDC_ISSUER } from '$app/env/public';
 
 export type OidcEndpoints = { authorization: string; token: string; endSession: string };
 

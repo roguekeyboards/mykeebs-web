@@ -2,8 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { Profile } from '@rogueserenity/kbdb-api-client';
-	import { profilesApi } from '$lib/api/client';
-	import Avatar from '$lib/components/Avatar.svelte';
+	import { profilesApi } from '#lib/api/client.js';
+	import Avatar from '#lib/components/Avatar.svelte';
 
 	let { class: className = '' }: { class?: string } = $props();
 

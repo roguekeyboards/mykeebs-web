@@ -6,7 +6,7 @@ import type {
 	Purchase,
 	PurchaseInput
 } from '@rogueserenity/kbdb-api-client';
-import { toDateInput } from '$lib/format';
+import { toDateInput } from '#lib/format.js';
 
 export type PurchaseDraft = {
 	vendor: string;
