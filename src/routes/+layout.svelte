@@ -5,7 +5,11 @@
 	import { Menu, X } from '@lucide/svelte';
 	import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 	import './layout.css';
-	import favicon from '#lib/assets/favicon.svg';
+	import favicon from '@rogueserenity/mykeebs-brand/favicon.svg';
+	import faviconIco from '@rogueserenity/mykeebs-brand/favicon.ico';
+	import appleTouchIcon from '@rogueserenity/mykeebs-brand/apple-touch-icon.png';
+	import logo from '@rogueserenity/mykeebs-brand/logo-horizontal-on-dark.svg';
+	import mark from '@rogueserenity/mykeebs-brand/mark-on-dark.svg';
 	import { initAuth } from '#lib/auth/auth.svelte.js';
 	import { initProfile, profile } from '#lib/profile/profile.svelte.js';
 	import AuthControl from '#lib/auth/AuthControl.svelte';
@@ -48,7 +52,11 @@
 	});
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+	<link rel="icon" href={faviconIco} sizes="32x32" />
+	<link rel="icon" href={favicon} type="image/svg+xml" />
+	<link rel="apple-touch-icon" href={appleTouchIcon} />
+</svelte:head>
 <a href="#main" class="skip-link">Skip to content</a>
 <header class="app-header">
 	<div class="md:hidden">
@@ -67,8 +75,8 @@
 		</button>
 	</div>
 	<div class="app-brand">
-		<span class="app-brand-key">⌨</span>
-		mykeebs
+		<img src={mark} alt="mykeebs" class="sm:hidden" />
+		<img src={logo} alt="mykeebs" class="hidden sm:block" />
 	</div>
 	<div class="hidden md:block">
 		<nav class="app-nav" aria-label="Main">
