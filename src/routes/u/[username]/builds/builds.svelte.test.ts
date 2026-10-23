@@ -123,7 +123,9 @@ describe('builds page', () => {
 
 	it("doesn't call a created build a failed create when reloading the list fails", async () => {
 		builds.createBuildImage.mockRejectedValue(
-			new ResponseError(new Response(null, { status: 429 }))
+			new ResponseError(
+				new Response(null, { status: 429, headers: { 'Content-Type': 'application/problem+json' } })
+			)
 		);
 		await renderPage();
 		await expect.element(page.getByRole('button', { name: 'Add build' })).toBeInTheDocument();
@@ -139,7 +141,9 @@ describe('builds page', () => {
 
 	it('stops uploading and says so when uploads are unavailable', async () => {
 		builds.createBuildImage.mockRejectedValue(
-			new ResponseError(new Response(null, { status: 429 }))
+			new ResponseError(
+				new Response(null, { status: 429, headers: { 'Content-Type': 'application/problem+json' } })
+			)
 		);
 		await renderPage();
 

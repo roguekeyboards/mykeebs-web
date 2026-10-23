@@ -260,7 +260,12 @@ describe('keyboards page', () => {
 
 		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
 			api.createKeyboardImage.mockRejectedValue(
-				new ResponseError(new Response(null, { status: 429 }))
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
 			);
 			await renderPage();
 			await openManta();
@@ -347,7 +352,12 @@ describe('keyboards page', () => {
 		it('closes and says so when uploads are unavailable, without trying the rest', async () => {
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
 			api.createKeyboardImage.mockRejectedValue(
-				new ResponseError(new Response(null, { status: 429 }))
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
 			);
 			await renderPage();
 
@@ -423,7 +433,12 @@ describe('keyboards page', () => {
 			api.createKeyboard.mockResolvedValue(created);
 			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
 			api.createKeyboardImage.mockRejectedValue(
-				new ResponseError(new Response(null, { status: 429 }))
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
 			);
 			api.getKeyboard.mockResolvedValue(created);
 			await renderPage();

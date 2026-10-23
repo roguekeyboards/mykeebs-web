@@ -371,7 +371,11 @@ describe('Profile edit page photo', () => {
 	});
 
 	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
-		api.setProfileImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
+		api.setProfileImage.mockRejectedValue(
+			new ResponseError(
+				new Response(null, { status: 429, headers: { 'Content-Type': 'application/problem+json' } })
+			)
+		);
 		await render(ProfileEditPage);
 
 		await userEvent.upload(fileInput(), png);

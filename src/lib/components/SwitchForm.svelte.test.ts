@@ -399,9 +399,14 @@ describe('SwitchForm.svelte', () => {
 		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
 			await renderForm({
 				initial: sw,
-				onImageUpload: vi
-					.fn()
-					.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+				onImageUpload: vi.fn().mockRejectedValue(
+					new ResponseError(
+						new Response(null, {
+							status: 429,
+							headers: { 'Content-Type': 'application/problem+json' }
+						})
+					)
+				)
 			});
 
 			await userEvent.upload(fileInput(), png('a.png'));

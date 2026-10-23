@@ -78,7 +78,10 @@ describe('uploadStaged', () => {
 	const files = ['a', 'b', 'c'].map(
 		(name) => new File([name], `${name}.png`, { type: 'image/png' })
 	);
-	const unavailable = () => new ResponseError(new Response(null, { status: 429 }));
+	const unavailable = () =>
+		new ResponseError(
+			new Response(null, { status: 429, headers: { 'Content-Type': 'application/problem+json' } })
+		);
 
 	it('uploads every file in order and reports nothing when all succeed', async () => {
 		const upload = vi.fn<(file: File) => Promise<void>>(async () => {});

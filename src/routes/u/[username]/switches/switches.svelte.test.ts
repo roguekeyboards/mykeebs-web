@@ -220,7 +220,14 @@ describe('switches page', () => {
 				brand: 'Gateron',
 				name: 'Oil King'
 			} as never);
-			api.setSwitchImage.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })));
+			api.setSwitchImage.mockRejectedValue(
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
+			);
 			await renderPage();
 
 			await fillNewSwitch();

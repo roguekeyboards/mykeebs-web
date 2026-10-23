@@ -83,10 +83,17 @@ describe('rejectionText', () => {
 });
 
 describe('uploadErrorMessage', () => {
-	const responseError = (status: number) => new ResponseError(new Response(null, { status }));
+	const responseError = (status: number, contentType = 'application/json') =>
+		new ResponseError(new Response(null, { status, headers: { 'Content-Type': contentType } }));
 
-	it('says uploads are unavailable on a 429', () => {
-		expect(uploadErrorMessage(responseError(429))).toBe(UPLOADS_UNAVAILABLE);
+	it("says uploads are unavailable on kbdb's upload-cap 429", () => {
+		expect(uploadErrorMessage(responseError(429, 'application/problem+json'))).toBe(
+			UPLOADS_UNAVAILABLE
+		);
+	});
+
+	it("doesn't mistake API Gateway's throttle 429 for the upload cap", () => {
+		expect(uploadErrorMessage(responseError(429))).toBe('Could not upload that image.');
 	});
 
 	it('is generic for anything else', () => {
