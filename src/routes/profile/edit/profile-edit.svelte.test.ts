@@ -7,6 +7,7 @@ import { profilesApi } from '#lib/api/client.js';
 import { refreshProfile, saveProfile } from '#lib/profile/profile.svelte.js';
 import ProfileEditPage from './+page.svelte';
 import { prepareImage, UnsupportedImageError } from '#lib/image-resize.js';
+import { deleteAccount } from '#lib/account/delete-account.js';
 
 vi.mock('#lib/image-resize.js', async (importOriginal) => ({
 	...(await importOriginal<typeof import('#lib/image-resize.js')>()),
@@ -47,6 +48,7 @@ vi.mock('#lib/api/client.js', () => ({
 	profilesApi: { setProfileImage: vi.fn(), deleteProfileImage: vi.fn() }
 }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+vi.mock('#lib/account/delete-account.js', () => ({ deleteAccount: vi.fn(async () => {}) }));
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -398,5 +400,31 @@ describe('Profile edit page photo', () => {
 
 		await expect.element(page.getByText(/Removed by moderation: Explicit/)).toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+	});
+});
+
+describe('Profile edit page account deletion', () => {
+	it("deletes the signed-in user's own account once their username is typed", async () => {
+		await render(ProfileEditPage);
+
+		await page.getByRole('button', { name: 'Delete account' }).click();
+		const dialog = page.getByRole('dialog', { name: 'Delete your account?' });
+		await dialog.getByRole('textbox').fill('rogue.serenity');
+		await dialog.getByRole('button', { name: 'Delete my account' }).click();
+
+		expect(deleteAccount).toHaveBeenCalledWith('user-1');
+	});
+
+	it('offers no account deletion while the profile is still being set up', async () => {
+		profileState.status = 'none';
+		profileState.data = undefined;
+		await render(ProfileEditPage);
+
+		await expect
+			.element(page.getByRole('heading', { name: "Let's set up your profile" }))
+			.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('button', { name: 'Delete account' }))
+			.not.toBeInTheDocument();
 	});
 });
