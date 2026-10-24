@@ -1,6 +1,11 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": ["config:recommended", "helpers:pinGitHubActionDigestsToSemver", ":semanticCommits"],
+	"extends": [
+		"config:recommended",
+		"helpers:pinGitHubActionDigestsToSemver",
+		":semanticCommits",
+		"security:minimumReleaseAgeNpm"
+	],
 	"automerge": true,
 	"prHourlyLimit": 0,
 	"constraints": {
@@ -23,6 +28,11 @@
 			"description": "adapter-static's majors require the matching SvelteKit major, so they arrive in one PR",
 			"groupName": "sveltekit",
 			"matchPackageNames": ["@sveltejs/kit", "@sveltejs/adapter-static"]
+		},
+		{
+			"description": "Our own packages, published by kbdb's releases, skip the release-age wait",
+			"matchPackageNames": ["@rogueserenity/**"],
+			"minimumReleaseAge": null
 		}
 	],
 	"hostRules": [
