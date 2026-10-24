@@ -31,7 +31,7 @@ Installing/updating `@rogueserenity/kbdb-api-client` requires a GitHub Packages 
 
 `main` is protected by a ruleset: no direct pushes. Every change goes on a branch (`<type>/<topic>`) and through a PR with a Conventional Commits title (`feat`/`fix`/`chore`/`ci`/`docs`/`test`/`refactor`/`build`), which the `PR Title` check enforces. `Lint`, `Typecheck`, `Test` and `Build` (`.github/workflows/ci.yml`) must pass, plus CodeQL. Merges are squash-only, so the PR title becomes the commit message on `main`; put `Closes #N` in the PR body.
 
-Renovate (`renovate.json`, run nightly by `.github/workflows/renovate.yml`) opens dependency PRs and automerges everything but major updates once checks pass. Majors wait on the Dependency Dashboard issue. It's pinned to npm 11 (`constraints`) because npm 12 wrongly refuses some registry tarballs.
+Renovate (`renovate.json`, run nightly by `.github/workflows/renovate.yml`) opens dependency PRs and automerges everything but major updates once checks pass. Majors wait on the Dependency Dashboard issue. npm updates wait until the release is 3 days old (`security:minimumReleaseAgeNpm`), except our own `@rogueserenity/*` packages. Lock file maintenance isn't covered by that wait. It's pinned to npm 11 (`constraints`) because npm 12 wrongly refuses some registry tarballs.
 
 **Deploys**: every merge to `main` deploys. Cloudflare Workers Builds (configured in the Cloudflare dashboard, not this repo) runs `npm run build` and `npx wrangler deploy`, publishing `build/` as the static-assets Worker `mykeebs-dev` (`wrangler.jsonc`) at https://jay.mykeebs.dev. The only build setting left in the dashboard is the `GITHUB_PACKAGES_TOKEN` secret. There are no per-PR previews.
 
