@@ -429,7 +429,12 @@ describe('keycap sets page', () => {
 
 		it('closes the kit and says so in the set when uploads are unavailable', async () => {
 			api.setKeycapKitImage.mockRejectedValue(
-				new ResponseError(new Response(null, { status: 429 }))
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
 			);
 
 			await addKitWithPhoto();
@@ -447,7 +452,12 @@ describe('keycap sets page', () => {
 
 		it('clears the kit notice once another kit is opened', async () => {
 			api.setKeycapKitImage.mockRejectedValue(
-				new ResponseError(new Response(null, { status: 429 }))
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
 			);
 			await addKitWithPhoto();
 			const notice = dialog().getByRole('alert').filter({ hasText: 'Uploads unavailable' });

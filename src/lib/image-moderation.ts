@@ -1,4 +1,5 @@
 import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
+import { isProblemResponse } from '#lib/api/throttle.js';
 
 export type ModeratedImage = { url?: string; status?: ImageStatus; rejectionReason?: string };
 
@@ -28,7 +29,9 @@ export function rejectionText(reason: string | undefined): string {
 export const UPLOADS_UNAVAILABLE = 'Uploads unavailable, try again later.';
 
 export function isUploadsUnavailable(err: unknown): boolean {
-	return err instanceof ResponseError && err.response.status === 429;
+	return (
+		err instanceof ResponseError && err.response.status === 429 && isProblemResponse(err.response)
+	);
 }
 
 export function uploadErrorMessage(err: unknown): string {

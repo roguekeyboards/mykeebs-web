@@ -293,9 +293,14 @@ describe('BuildForm.svelte photo limit', () => {
 	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
 		await renderWith({
 			initial: withImages(1),
-			onImageUpload: vi
-				.fn()
-				.mockRejectedValue(new ResponseError(new Response(null, { status: 429 })))
+			onImageUpload: vi.fn().mockRejectedValue(
+				new ResponseError(
+					new Response(null, {
+						status: 429,
+						headers: { 'Content-Type': 'application/problem+json' }
+					})
+				)
+			)
 		});
 
 		await userEvent.upload(fileInput(), [jpg('a.jpg')]);
