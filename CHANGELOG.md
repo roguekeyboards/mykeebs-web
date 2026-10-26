@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.1...v0.1.2) (2026-10-26)
+
+
+### Performance Improvements
+
+* load collections 100 items per page instead of kbdb's default 20 ([#112](https://github.com/rogueserenity/mykeebs-web/issues/112)) ([d410452](https://github.com/rogueserenity/mykeebs-web/commit/d410452b25b7e2df3b125e4c57bf63d5ccbcc7a0))
+
 ## [0.1.1](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.0...v0.1.1) (2026-10-26)
 
 
