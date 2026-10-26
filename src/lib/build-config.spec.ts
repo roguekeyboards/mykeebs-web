@@ -21,12 +21,13 @@ function envKeys(source: string): string[] {
 
 describe('env vars', () => {
 	const used = [
-		...new Set([
-			...sourceFiles(join(root, 'src')).flatMap((file) =>
-				[...readFileSync(file, 'utf8').matchAll(/\bPUBLIC_[A-Z_]+\b/g)].map(([name]) => name)
-			),
-			...[...read('vite.config.ts').matchAll(/\benv\.([A-Z][A-Z0-9_]*)/g)].map(([, name]) => name)
-		])
+		...new Set(
+			sourceFiles(join(root, 'src')).flatMap((file) =>
+				[...readFileSync(file, 'utf8').matchAll(/\b(?:PUBLIC|KBDB)_[A-Z_]+\b/g)].map(
+					([name]) => name
+				)
+			)
+		)
 	].sort();
 
 	it('are found', () => {

@@ -5,21 +5,19 @@ type CspDirectives = NonNullable<
 >;
 type CspSource = NonNullable<CspDirectives['connect-src']>[number];
 
-export interface CspHosts {
-	api: string;
-	issuer: string;
-	uploads: string;
-	images: string;
-}
+export type Env = Record<string, string | undefined>;
 
-export function cspDirectives(hosts: CspHosts): CspDirectives {
-	const [api, issuer, uploads, images] = [hosts.api, hosts.issuer, hosts.uploads, hosts.images].map(
-		origin
-	);
+export function cspDirectives(env: Env): CspDirectives {
+	const host = (key: string) => origin(key, env[key]);
 	return {
 		'default-src': ['self'],
-		'connect-src': ['self', api, issuer, uploads],
-		'img-src': ['self', 'data:', 'blob:', images],
+		'connect-src': [
+			'self',
+			host('PUBLIC_KBDB_API_BASE_PATH'),
+			host('PUBLIC_OIDC_ISSUER'),
+			host('KBDB_UPLOADS_ORIGIN')
+		],
+		'img-src': ['self', 'data:', 'blob:', host('KBDB_IMAGES_ORIGIN')],
 		'font-src': ['self', 'data:'],
 		'script-src': ['self', 'wasm-unsafe-eval'],
 		'style-src': ['self', 'unsafe-inline'],
@@ -29,7 +27,8 @@ export function cspDirectives(hosts: CspHosts): CspDirectives {
 	};
 }
 
-function origin(url: string): CspSource {
+function origin(key: string, url: string | undefined): CspSource {
+	if (!url) throw new Error(`${key} is not set; the CSP needs it`);
 	if (url.includes('*')) throw new Error(`CSP host must be exact, not a wildcard: ${url}`);
 	const parsed = new URL(url);
 	if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') {

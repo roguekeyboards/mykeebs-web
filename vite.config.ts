@@ -24,12 +24,7 @@ export default defineConfig(({ mode }) => {
 				adapter: adapter({ fallback: 'index.html' }),
 				csp: {
 					mode: 'hash',
-					directives: cspDirectives({
-						api: env.PUBLIC_KBDB_API_BASE_PATH,
-						issuer: env.PUBLIC_OIDC_ISSUER,
-						uploads: env.KBDB_UPLOADS_ORIGIN,
-						images: env.KBDB_IMAGES_ORIGIN
-					})
+					directives: cspDirectives(env)
 				}
 			})
 		],
