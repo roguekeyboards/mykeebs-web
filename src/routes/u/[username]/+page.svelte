@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
+	import { fetchAllPages } from '#lib/pagination.js';
 	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
 	import { formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
@@ -26,31 +27,15 @@
 	let stats = $state<CollectionStats | null>(null);
 	let countsLoading = $state(false);
 
-	async function fetchAll<T>(
-		fetchPage: (cursor: string | undefined) => Promise<{
-			items?: T[];
-			nextCursor?: string | null;
-		}>
-	): Promise<T[]> {
-		const all: T[] = [];
-		let cursor: string | undefined;
-		do {
-			const pageResult = await fetchPage(cursor);
-			all.push(...(pageResult.items ?? []));
-			cursor = pageResult.nextCursor ?? undefined;
-		} while (cursor);
-		return all;
-	}
-
 	// The API scopes these to what the viewer may see.
 	async function loadCounts(userId: string) {
 		countsLoading = true;
 		try {
 			const [keyboards, switches, keycapSets, builds] = await Promise.all([
-				fetchAll((cursor) => keyboardsApi.listKeyboards({ userId, cursor })),
-				fetchAll((cursor) => switchesApi.listSwitches({ userId, cursor })),
-				fetchAll((cursor) => keycapSetsApi.listKeycapSets({ userId, cursor })),
-				fetchAll((cursor) => buildsApi.listBuilds({ userId, cursor }))
+				fetchAllPages((request) => keyboardsApi.listKeyboards({ userId, ...request })),
+				fetchAllPages((request) => switchesApi.listSwitches({ userId, ...request })),
+				fetchAllPages((request) => keycapSetsApi.listKeycapSets({ userId, ...request })),
+				fetchAllPages((request) => buildsApi.listBuilds({ userId, ...request }))
 			]);
 			stats = collectionStats({ keyboards, switches, keycapSets, builds });
 		} catch {

@@ -1,6 +1,6 @@
 <script lang="ts" generics="T">
 	import { updateWhere } from '#lib/stale-images.js';
-	import { fetchAllPages } from '#lib/pagination.js';
+	import { fetchAllPages, type PageRequest } from '#lib/pagination.js';
 	import { filterByStatus, searchItems, sortItems } from '#lib/collection-filter.js';
 	import type { Snippet } from 'svelte';
 	import { ArrowDown, ArrowUp, Plus, Search } from '@lucide/svelte';
@@ -27,7 +27,7 @@
 		card
 	}: {
 		userId: string;
-		fetchPage: (userId: string, cursor: string | undefined) => Promise<Page>;
+		fetchPage: (userId: string, request: PageRequest) => Promise<Page>;
 		itemKey: (item: T) => string;
 		emptyMessage: string;
 		sortOptions: SortOption[];
@@ -87,7 +87,7 @@
 		loadError = null;
 		loading = true;
 		try {
-			const allItems = await fetchAllPages((cursor) => fetchPage(userId, cursor));
+			const allItems = await fetchAllPages((request) => fetchPage(userId, request));
 			if (token !== loadToken) return;
 			items = allItems;
 		} catch {

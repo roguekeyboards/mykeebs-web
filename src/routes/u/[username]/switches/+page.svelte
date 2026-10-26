@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
+	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Switch as SwitchModel, SwitchInput } from '@rogueserenity/kbdb-api-client';
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
@@ -196,8 +197,8 @@
 <CollectionGrid
 	bind:this={grid}
 	userId={userContext.userId}
-	fetchPage={(userId: string, cursor: string | undefined) =>
-		switchesApi.listSwitches({ userId, cursor })}
+	fetchPage={(userId: string, request: PageRequest) =>
+		switchesApi.listSwitches({ userId, ...request })}
 	itemKey={(sw) => sw.id ?? ''}
 	emptyMessage="No switches yet."
 	getName={(sw) => sw.name}

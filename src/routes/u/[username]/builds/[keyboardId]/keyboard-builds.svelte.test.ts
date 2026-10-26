@@ -102,7 +102,8 @@ describe('keyboard builds page', () => {
 		expect(builds.listBuilds).toHaveBeenCalledWith({
 			userId: 'user-1',
 			keyboardId: 'kb-1',
-			cursor: undefined
+			cursor: undefined,
+			limit: 100
 		});
 	});
 
@@ -116,7 +117,8 @@ describe('keyboard builds page', () => {
 		expect(builds.listBuilds).toHaveBeenLastCalledWith({
 			userId: 'user-1',
 			keyboardId: 'kb-1',
-			cursor: 'c-2'
+			cursor: 'c-2',
+			limit: 100
 		});
 	});
 

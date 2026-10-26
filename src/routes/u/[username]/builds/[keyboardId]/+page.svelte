@@ -74,7 +74,7 @@
 		try {
 			const [keyboard, builds] = await Promise.all([
 				keyboardsApi.getKeyboard({ userId, keyboardId: kId }).catch(() => null),
-				fetchAllPages((cursor) => buildsApi.listBuilds({ userId, keyboardId: kId, cursor }))
+				fetchAllPages((request) => buildsApi.listBuilds({ userId, keyboardId: kId, ...request }))
 			]);
 			if (token !== loadToken) return;
 			builds.sort(newestFirst);

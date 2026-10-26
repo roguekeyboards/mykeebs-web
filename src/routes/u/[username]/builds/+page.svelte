@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { Build, BuildInput } from '@rogueserenity/kbdb-api-client';
+	import type { BuildInput } from '@rogueserenity/kbdb-api-client';
 	import { resolve } from '$app/paths';
 	import { buildsApi } from '#lib/api/client.js';
+	import { fetchAllPages } from '#lib/pagination.js';
 	import { stagedUploadMessage, uploadImage, uploadStaged } from '#lib/upload.js';
 	import { primaryImageUrl } from '#lib/image-moderation.js';
 	import PageNotice from '#lib/components/PageNotice.svelte';
@@ -24,20 +25,12 @@
 	const userContext = getUserContext();
 	const showPrice = $derived(userContext.showPrice);
 
-	async function fetchGroupedBuilds(userId: string, cursor: string | undefined) {
-		// Grouping needs every build up front, so the full paginated set is
-		// fetched here and handed back as one synthetic page.
-		if (cursor) return { items: [], nextCursor: undefined };
-
-		const allBuilds: Build[] = [];
-		let nextCursor: string | undefined;
-		do {
-			const page = await buildsApi.listBuilds({ userId, cursor: nextCursor });
-			allBuilds.push(...(page.items ?? []));
-			nextCursor = page.nextCursor ?? undefined;
-		} while (nextCursor);
-
-		return { items: groupByKeyboard(allBuilds), nextCursor: undefined };
+	// Grouping needs every build up front, so they're handed back as one page.
+	async function fetchGroupedBuilds(userId: string) {
+		const allBuilds = await fetchAllPages((request) =>
+			buildsApi.listBuilds({ userId, ...request })
+		);
+		return { items: groupByKeyboard(allBuilds) };
 	}
 
 	type FormMode = { mode: 'create' } | { mode: 'closed' };
