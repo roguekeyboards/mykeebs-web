@@ -46,8 +46,8 @@ Name new test files to match whichever project they belong in. Run a single file
   (`prettier.config.js`); don't hand-format against it.
 - Svelte 5 runes mode is forced project-wide (see `vite.config.ts`'s `compilerOptions.runes`).
 - Env vars are declared in `src/env.ts` (`defineEnvVars`) and read via `$app/env/public`. Add a new
-  one there, and to `.env.example`, `.env.dev` and `.env.prod` (the deployed values) and the `env:`
-  block in `.github/workflows/ci.yml`; `src/lib/build-config.spec.ts` fails until they all match.
+  one there, and to `.env.example`, `.env.dev` and `.env.prod` (the deployed values);
+  `src/lib/build-config.spec.ts` fails until they all match. CI uses the committed files too.
   `KBDB_UPLOADS_ORIGIN` and `KBDB_IMAGES_ORIGIN` are build-only (read by `src/lib/csp.ts` when
   `vite.config.ts` loads, not by app code) and go in the same places.
 - The CSP is built from the env's hosts by `src/lib/csp.ts` and emitted by SvelteKit as a `<meta>`

@@ -12,14 +12,6 @@ permissions:
   contents: read
   packages: read
 
-# Placeholders: the build only needs these to be set, not to point anywhere real.
-env:
-  PUBLIC_STYTCH_CLIENT_ID: connected-app-test-ci
-  PUBLIC_KBDB_API_BASE_PATH: https://api.example.invalid
-  PUBLIC_OIDC_ISSUER: https://auth.example.invalid
-  KBDB_UPLOADS_ORIGIN: https://uploads.example.invalid
-  KBDB_IMAGES_ORIGIN: https://images.example.invalid
-
 jobs:
   lint:
     name: Lint
@@ -39,6 +31,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           packages-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: cp .env.dev .env
       - run: npm run check
 
   test:
@@ -65,6 +58,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      - run: cp .env.dev .env
       - run: npm run test
 
   build:
@@ -76,3 +70,4 @@ jobs:
         with:
           packages-token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
+      - run: npm run build:prod

@@ -7,6 +7,8 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { cspDirectives } from './src/lib/csp';
 
 export default defineConfig(({ mode }) => {
+	// SvelteKit's post-build analysis reloads this config with process.env.MODE, not --mode.
+	process.env.MODE ??= mode;
 	const env = loadEnv(mode, process.cwd(), '');
 	return {
 		plugins: [
