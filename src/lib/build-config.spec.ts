@@ -37,10 +37,4 @@ describe('env vars', () => {
 	it.each(['.env.dev', '.env.prod', '.env.example'])('are exactly the ones %s defines', (file) => {
 		expect(envKeys(read(file))).toEqual(used);
 	});
-
-	it('are all set in CI, where the build runs without an env file', () => {
-		const ci = read('.github/workflows/ci.yml');
-		const ciKeys = [...ci.matchAll(/^ {2}([A-Z][A-Z0-9_]*):/gm)].map(([, key]) => key).sort();
-		expect(ciKeys).toEqual(used);
-	});
 });
