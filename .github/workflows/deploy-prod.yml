@@ -24,14 +24,23 @@ jobs:
     environment:
       name: production
       url: https://mykeebs.info
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: ${{ env.TAG }}
       - uses: ./.github/actions/setup
         with:
           packages-token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build:prod
-      - run: npx wrangler deploy --env production
+      # versions upload/deploy leave the custom domain alone, so the token only needs
+      # Workers Editor on mykeebs-prod, not zone access.
+      - name: Deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.json
+        run: |
+          npx wrangler versions upload --env production --tag "$TAG" --message "$TAG"
+          version_id=$(jq -r 'select(.type == "version-upload") | .version_id' "$WRANGLER_OUTPUT_FILE_PATH")
+          npx wrangler versions deploy --env production "$version_id@100%" --message "$TAG" --yes
