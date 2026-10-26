@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.0...v0.1.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* give SvelteKit's post-build analysis the build mode, and build both envs in CI ([#104](https://github.com/rogueserenity/mykeebs-web/issues/104)) ([9bd70c8](https://github.com/rogueserenity/mykeebs-web/commit/9bd70c8e6f34f46343676af08c64764fa0c3a516))
+
 ## [0.1.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.0.1...v0.1.0) (2026-10-26)
 
 
