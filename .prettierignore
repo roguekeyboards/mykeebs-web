@@ -10,3 +10,6 @@ bun.lockb
 
 # Claude Code local settings
 .claude/
+
+# Written by release-please
+CHANGELOG.md
