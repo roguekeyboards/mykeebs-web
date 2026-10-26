@@ -16,14 +16,16 @@ function sourceFiles(dir: string): string[] {
 }
 
 function envKeys(source: string): string[] {
-	return [...source.matchAll(/^(PUBLIC_\w+)=/gm)].map(([, key]) => key).sort();
+	return [...source.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map(([, key]) => key).sort();
 }
 
-describe('public env vars', () => {
+describe('env vars', () => {
 	const used = [
 		...new Set(
 			sourceFiles(join(root, 'src')).flatMap((file) =>
-				[...readFileSync(file, 'utf8').matchAll(/\bPUBLIC_[A-Z_]+\b/g)].map(([name]) => name)
+				[...readFileSync(file, 'utf8').matchAll(/\b(?:PUBLIC|KBDB)_[A-Z_]+\b/g)].map(
+					([name]) => name
+				)
 			)
 		)
 	].sort();
@@ -38,7 +40,7 @@ describe('public env vars', () => {
 
 	it('are all set in CI, where the build runs without an env file', () => {
 		const ci = read('.github/workflows/ci.yml');
-		const ciKeys = [...ci.matchAll(/^ {2}(PUBLIC_\w+):/gm)].map(([, key]) => key).sort();
+		const ciKeys = [...ci.matchAll(/^ {2}([A-Z][A-Z0-9_]*):/gm)].map(([, key]) => key).sort();
 		expect(ciKeys).toEqual(used);
 	});
 });
