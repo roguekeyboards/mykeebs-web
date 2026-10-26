@@ -37,14 +37,19 @@ npm run dev
 ## Building and deploying
 
 ```sh
-npm run build
+npm run build        # dev values from .env.dev
+npm run build:prod   # prod values from .env.prod
 ```
 
-Produces a static build in `/build` (adapter-static), using the public values committed in
-`.env.production`. Preview it with `npm run preview`.
+Produces a static build in `/build` (adapter-static), using the public values committed in the env
+file. Preview it with `npm run preview`.
 
-Every merge to `main` deploys to https://jay.mykeebs.dev. Cloudflare Workers Builds runs the build
-and `wrangler deploy`, serving `build/` as a static-assets Worker (`wrangler.jsonc`).
+Every merge to `main` deploys to https://jay.mykeebs.dev: Cloudflare Workers Builds runs the build
+and `wrangler deploy`, serving `build/` as the static-assets Worker `mykeebs-dev` (`wrangler.jsonc`).
+
+Prod at https://mykeebs.info deploys on a release. release-please keeps a release PR open; merging
+it publishes a GitHub Release, and the `Deploy prod` workflow builds that tag with `.env.prod` and
+deploys the `mykeebs-prod` Worker. Run `Deploy prod` by hand with an older tag to roll back.
 
 ## Contributing
 

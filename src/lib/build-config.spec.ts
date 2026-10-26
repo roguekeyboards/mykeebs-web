@@ -34,7 +34,7 @@ describe('env vars', () => {
 		expect(used.length).toBeGreaterThan(0);
 	});
 
-	it.each(['.env.production', '.env.example'])('are exactly the ones %s defines', (file) => {
+	it.each(['.env.dev', '.env.prod', '.env.example'])('are exactly the ones %s defines', (file) => {
 		expect(envKeys(read(file))).toEqual(used);
 	});
 
