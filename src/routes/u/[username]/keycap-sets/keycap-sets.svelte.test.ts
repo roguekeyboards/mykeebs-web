@@ -81,7 +81,11 @@ describe('keycap sets page', () => {
 
 		await expect.element(page.getByRole('button', { name: /Olivia/ })).toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: 'Add keycap set' })).toBeInTheDocument();
-		expect(api.listKeycapSets).toHaveBeenCalledWith({ userId: 'user-1', cursor: undefined });
+		expect(api.listKeycapSets).toHaveBeenCalledWith({
+			userId: 'user-1',
+			cursor: undefined,
+			limit: 100
+		});
 	});
 
 	it('offers the owner cost and visibility sorts that visitors do not get', async () => {

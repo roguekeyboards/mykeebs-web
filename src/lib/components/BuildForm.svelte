@@ -614,7 +614,7 @@
 		{:else if keyboardPickerOpen}
 			<ItemPicker
 				userId={userContext.userId}
-				fetchPage={(userId, cursor) => keyboardsApi.listKeyboards({ userId, cursor })}
+				fetchPage={(userId, request) => keyboardsApi.listKeyboards({ userId, ...request })}
 				itemKey={(kb) => kb.id ?? ''}
 				getLabel={(kb) => kb.name}
 				getSublabel={(kb) => kb.brand}
@@ -810,7 +810,7 @@
 		{#if switchPickerOpen}
 			<ItemPicker
 				userId={userContext.userId}
-				fetchPage={(userId, cursor) => switchesApi.listSwitches({ userId, cursor })}
+				fetchPage={(userId, request) => switchesApi.listSwitches({ userId, ...request })}
 				itemKey={(sw) => sw.id ?? ''}
 				getLabel={(sw) => sw.name}
 				getSublabel={(sw) => sw.brand}
@@ -958,7 +958,7 @@
 		{:else if keycapSetPickerOpen}
 			<ItemPicker
 				userId={userContext.userId}
-				fetchPage={(userId, cursor) => keycapSetsApi.listKeycapSets({ userId, cursor })}
+				fetchPage={(userId, request) => keycapSetsApi.listKeycapSets({ userId, ...request })}
 				itemKey={(set) => set.id ?? ''}
 				getLabel={(set) => set.name}
 				getSublabel={(set) => set.brand}

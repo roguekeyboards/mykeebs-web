@@ -52,8 +52,8 @@ describe('CollectionGrid.svelte', () => {
 		await expect.element(page.getByRole('article')).toHaveLength(3);
 		expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']);
 		expect(fetchPage.mock.calls).toEqual([
-			['user-1', undefined],
-			['user-1', 'c-2']
+			['user-1', { cursor: undefined, limit: 100 }],
+			['user-1', { cursor: 'c-2', limit: 100 }]
 		]);
 	});
 

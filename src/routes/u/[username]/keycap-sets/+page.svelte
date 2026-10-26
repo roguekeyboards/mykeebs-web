@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
+	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type {
 		KeycapKit,
@@ -364,8 +365,8 @@
 <CollectionGrid
 	bind:this={grid}
 	userId={userContext.userId}
-	fetchPage={(userId: string, cursor: string | undefined) =>
-		keycapSetsApi.listKeycapSets({ userId, cursor })}
+	fetchPage={(userId: string, request: PageRequest) =>
+		keycapSetsApi.listKeycapSets({ userId, ...request })}
 	itemKey={(set) => set.id ?? ''}
 	emptyMessage="No keycap sets yet."
 	getName={(set) => set.name}

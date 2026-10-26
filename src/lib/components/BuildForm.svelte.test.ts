@@ -2,7 +2,7 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
-import { keyboardsApi } from '#lib/api/client.js';
+import { keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
 import { MAX_IMAGES } from '#lib/image-limit.js';
 import BuildFormWithUser from './test-support/BuildFormWithUser.svelte';
@@ -10,9 +10,12 @@ import '../../routes/layout.css';
 
 vi.mock('#lib/api/client.js', () => ({
 	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) },
-	keyboardsApi: { getKeyboard: vi.fn(async () => ({ id: 'kb', brand: '', name: '' })) },
-	switchesApi: {},
-	keycapSetsApi: {}
+	keyboardsApi: {
+		getKeyboard: vi.fn(async () => ({ id: 'kb', brand: '', name: '' })),
+		listKeyboards: vi.fn(async () => ({ items: [] }))
+	},
+	switchesApi: { listSwitches: vi.fn(async () => ({ items: [] })) },
+	keycapSetsApi: { listKeycapSets: vi.fn(async () => ({ items: [] })) }
 }));
 
 const build: Build = {
@@ -84,6 +87,22 @@ describe('BuildForm.svelte stale references', () => {
 
 		await expect.element(page.getByText('Manta')).toBeInTheDocument();
 		await expect.element(page.getByText(NOTE)).not.toBeInTheDocument();
+	});
+});
+
+describe('BuildForm.svelte pickers', () => {
+	it.each([
+		['keyboard', 'Change', () => keyboardsApi.listKeyboards],
+		['switch', '+ Add switch', () => switchesApi.listSwitches],
+		['keycap set', '+ Add keycap kit', () => keycapSetsApi.listKeycapSets]
+	])('loads the %s picker a full page at a time', async (_, button, list) => {
+		await renderForm(null);
+
+		await page.getByRole('button', { name: button, exact: true }).click();
+
+		await vi.waitFor(() =>
+			expect(list()).toHaveBeenCalledWith({ userId: 'user-1', cursor: undefined, limit: 100 })
+		);
 	});
 });
 

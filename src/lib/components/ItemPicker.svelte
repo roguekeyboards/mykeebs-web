@@ -6,6 +6,7 @@
 
 <script lang="ts" generics="T">
 	import { untrack } from 'svelte';
+	import { fetchAllPages, type PageRequest } from '#lib/pagination.js';
 	let {
 		userId,
 		fetchPage,
@@ -21,7 +22,7 @@
 		userId: string;
 		fetchPage: (
 			userId: string,
-			cursor: string | undefined
+			request: PageRequest
 		) => Promise<{
 			items?: T[];
 			nextCursor?: string | null;
@@ -132,18 +133,12 @@
 		const token = ++loadToken;
 		loadError = null;
 		loading = true;
-		(async () => {
-			const allItems: T[] = [];
-			let cursor: string | undefined;
-			do {
-				const page = await fetchPage(userId, cursor);
+		fetchAllPages((request) => fetchPage(userId, request))
+			.then((allItems) => {
 				if (token !== loadToken) return;
-				allItems.push(...(page.items ?? []));
-				cursor = page.nextCursor ?? undefined;
-			} while (cursor);
-			items = allItems;
-			if (cache) cache.items = allItems;
-		})()
+				items = allItems;
+				if (cache) cache.items = allItems;
+			})
 			.catch(() => {
 				if (token !== loadToken) return;
 				loadError = 'Could not load this collection.';
