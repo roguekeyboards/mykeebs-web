@@ -47,6 +47,11 @@ Name new test files to match whichever project they belong in. Run a single file
 - Env vars are declared in `src/env.ts` (`defineEnvVars`) and read via `$app/env/public`. Add a new
   one there, and to `.env.example`, `.env.production` (the deployed value) and the `env:` block in
   `.github/workflows/ci.yml`; `src/lib/build-config.spec.ts` fails until all three match.
+  `KBDB_UPLOADS_ORIGIN` and `KBDB_IMAGES_ORIGIN` are build-only (read in `vite.config.ts` for the
+  CSP, not by app code) and go in the same three places.
+- The CSP is built from the env's hosts by `src/lib/csp.ts` and emitted by SvelteKit as a `<meta>`
+  tag with a hash of its inline script. Headers a `<meta>` can't set (`frame-ancestors`, HSTS, …)
+  are in `static/_headers`, which Workers static assets apply to every response.
 - Node is pinned in `mise.toml`. `.node-version` mirrors it for Cloudflare's build, and Renovate
   updates both, plus `@types/node`, in one grouped PR.
 - This is a pure SPA (`adapter-static`, no server routes) — but `vite dev` and `svelte-check` still

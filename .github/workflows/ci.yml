@@ -17,6 +17,8 @@ env:
   PUBLIC_STYTCH_CLIENT_ID: connected-app-test-ci
   PUBLIC_KBDB_API_BASE_PATH: https://api.example.invalid
   PUBLIC_OIDC_ISSUER: https://auth.example.invalid
+  KBDB_UPLOADS_ORIGIN: https://uploads.example.invalid
+  KBDB_IMAGES_ORIGIN: https://images.example.invalid
 
 jobs:
   lint:
