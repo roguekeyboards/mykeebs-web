@@ -1,9 +1,18 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "mykeebs-dev",
+	"account_id": "9b74b720ce36ddde284a16e292014b49",
 	"compatibility_date": "2026-08-19",
 	"assets": {
 		"directory": "./build",
 		"not_found_handling": "single-page-application"
+	},
+	"env": {
+		"production": {
+			"name": "mykeebs-prod",
+			"workers_dev": false,
+			"preview_urls": false,
+			"routes": [{ "pattern": "mykeebs.info", "custom_domain": true }]
+		}
 	}
 }
