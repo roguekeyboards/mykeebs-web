@@ -15,6 +15,18 @@ export const switchFields: SearchField<Switch>[] = [
 	{ tag: 'brand', description: 'Who sells the switch', values: (sw) => [sw.brand] },
 	{ tag: 'manufacturer', description: 'Who makes the switch', values: (sw) => [sw.manufacturer] },
 	{ tag: 'type', description: 'Linear, tactile or clicky', values: (sw) => [sw.type] },
+	{
+		tag: 'material',
+		description: 'Any housing or stem material',
+		values: (sw) => [sw.material?.topHousing, sw.material?.bottomHousing, sw.material?.stem]
+	},
+	{ tag: 'top', description: 'Top housing material', values: (sw) => [sw.material?.topHousing] },
+	{
+		tag: 'bottom',
+		description: 'Bottom housing material',
+		values: (sw) => [sw.material?.bottomHousing]
+	},
+	{ tag: 'stem', description: 'Stem material', values: (sw) => [sw.material?.stem] },
 	{ tag: 'status', description: 'Order status', values: (sw) => [sw.purchase?.orderStatus] }
 ];
 

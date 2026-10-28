@@ -35,6 +35,7 @@ describe('collection fields', () => {
 			manufacturer: 'Gateron',
 			name: 'Oil King',
 			type: 'Linear',
+			material: { topHousing: 'PC', bottomHousing: 'Nylon', stem: 'POM' },
 			purchase: { orderStatus: 'Ordered' }
 		};
 
@@ -43,6 +44,10 @@ describe('collection fields', () => {
 			brand: ['Gateron'],
 			manufacturer: ['Gateron'],
 			type: ['Linear'],
+			material: ['PC', 'Nylon', 'POM'],
+			top: ['PC'],
+			bottom: ['Nylon'],
+			stem: ['POM'],
 			status: ['Ordered']
 		});
 	});
