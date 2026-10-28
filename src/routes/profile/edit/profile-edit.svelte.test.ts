@@ -331,7 +331,8 @@ describe('Profile edit page photo', () => {
 		await expect
 			.element(
 				page.getByRole('alert').filter({
-					hasText: "This browser can't read that image format. Try a JPEG, PNG or WebP."
+					hasText:
+						"That photo wasn't added. It's in a format this browser can't read. Add a different one."
 				})
 			)
 			.toBeInTheDocument();
@@ -347,7 +348,12 @@ describe('Profile edit page photo', () => {
 		await userEvent.upload(fileInput(), png);
 
 		await expect
-			.element(page.getByRole('alert').filter({ hasText: 'too detailed to fit under 1.5 MB' }))
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"That photo wasn't added. It's too detailed to fit under 1.5 MB. Add a different one."
+				})
+			)
 			.toBeInTheDocument();
 		expect(api.setProfileImage).not.toHaveBeenCalled();
 	});
@@ -363,7 +369,9 @@ describe('Profile edit page photo', () => {
 		await userEvent.upload(fileInput(), png);
 
 		await expect
-			.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+			.element(
+				page.getByRole('alert').filter({ hasText: "That photo wasn't added. Add it again." })
+			)
 			.toBeInTheDocument();
 		expect(refreshProfile).not.toHaveBeenCalled();
 	});

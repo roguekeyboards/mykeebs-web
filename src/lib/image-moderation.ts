@@ -1,6 +1,5 @@
 import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
 import { isProblemResponse } from '#lib/api/throttle.js';
-import { ImageTooLargeError, UnsupportedImageError } from '#lib/image-errors.js';
 
 export type ModeratedImage = { url?: string; status?: ImageStatus; rejectionReason?: string };
 
@@ -33,10 +32,4 @@ export function isUploadsUnavailable(err: unknown): boolean {
 	return (
 		err instanceof ResponseError && err.response.status === 429 && isProblemResponse(err.response)
 	);
-}
-
-export function uploadErrorMessage(err: unknown): string {
-	if (isUploadsUnavailable(err)) return UPLOADS_UNAVAILABLE;
-	if (err instanceof UnsupportedImageError || err instanceof ImageTooLargeError) return err.message;
-	return 'Could not upload that image.';
 }

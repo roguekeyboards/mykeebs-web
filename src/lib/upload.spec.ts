@@ -165,6 +165,24 @@ describe('uploadEach', () => {
 		});
 	});
 
+	it("counts API Gateway's throttle 429 as an ordinary failure, not the upload cap", async () => {
+		const upload = vi.fn(async (f: File) => {
+			if (f.name === 'a.png')
+				throw new ResponseError(
+					new Response(null, { status: 429, headers: { 'Content-Type': 'application/json' } })
+				);
+		});
+
+		expect(await uploadEach(files, upload)).toEqual({
+			failed: 1,
+			tooLarge: 0,
+			unsupported: 0,
+			total: 3,
+			unavailable: false
+		});
+		expect(upload).toHaveBeenCalledTimes(3);
+	});
+
 	it('stops at a 429 and counts the rest as failed', async () => {
 		const upload = vi.fn(async (f: File) => {
 			if (f.name === 'b.png') throw unavailable();

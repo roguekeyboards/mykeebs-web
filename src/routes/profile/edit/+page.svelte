@@ -10,8 +10,8 @@
 	import Avatar from '#lib/components/Avatar.svelte';
 	import { X } from '@lucide/svelte';
 	import { cleanLinks, USERNAME_RULES, usernameLooksValid } from '#lib/profile/profile-input.js';
-	import { uploadImage } from '#lib/upload.js';
-	import { isPending, rejectionText, uploadErrorMessage } from '#lib/image-moderation.js';
+	import { pickedUploadMessage, uploadEach, uploadImage } from '#lib/upload.js';
+	import { isPending, rejectionText } from '#lib/image-moderation.js';
 	import DeleteAccount from '#lib/account/DeleteAccount.svelte';
 	import { deleteAccount } from '#lib/account/delete-account.js';
 
@@ -139,12 +139,13 @@
 		avatarBusy = true;
 		try {
 			const identifier = auth.user.id;
-			await uploadImage(file, (imageUploadRequest) =>
-				profilesApi.setProfileImage({ identifier, imageUploadRequest })
+			const failure = await uploadEach([file], (photo) =>
+				uploadImage(photo, (imageUploadRequest) =>
+					profilesApi.setProfileImage({ identifier, imageUploadRequest })
+				)
 			);
-			await refreshProfile();
-		} catch (err) {
-			avatarError = uploadErrorMessage(err);
+			if (failure) avatarError = pickedUploadMessage(failure);
+			else await refreshProfile().catch(() => {});
 		} finally {
 			avatarBusy = false;
 			if (fileInput) fileInput.value = '';
