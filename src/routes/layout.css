@@ -259,7 +259,7 @@ select:focus-visible {
 	}
 
 	/* iOS zooms the page into any field under 16px when it's focused. */
-	@media (pointer: coarse) {
+	@media (any-pointer: coarse) {
 		.field-input,
 		.field-select {
 			font-size: 1rem;

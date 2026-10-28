@@ -43,7 +43,7 @@ describe('on a touch screen', () => {
 
 		await cdp().send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 
-		expect(matchMedia('(pointer: coarse)').matches).toBe(true);
+		expect(matchMedia('(any-pointer: coarse)').matches).toBe(true);
 		expect(getComputedStyle(field('field-input')).fontSize).toBe('16px');
 		const select = document.createElement('select');
 		select.className = 'field-select';
