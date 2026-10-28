@@ -2,6 +2,7 @@ import { cdp, page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ImageViewer from './ImageViewer.svelte';
+import GalleryHarness from './test-support/GalleryHarness.svelte';
 import '../../routes/layout.css';
 
 const base = { open: true, src: 'https://img.example/1.png', alt: 'Neo65 Cu', onClose: () => {} };
@@ -28,7 +29,7 @@ const offset = (img: HTMLImageElement) => {
 	return [Number(x), Number(y)];
 };
 const limit = (img: HTMLImageElement, scale: number) => {
-	const stage = img.parentElement!;
+	const stage = img.closest('[role=presentation]')!;
 	return [
 		(img.offsetWidth * scale - stage.clientWidth) / 2,
 		(img.offsetHeight * scale - stage.clientHeight) / 2
@@ -277,6 +278,147 @@ describe('ImageViewer.svelte touch', () => {
 		await expect.element(page.getByText('Pinch to zoom')).toBeInTheDocument();
 		await userEvent.keyboard('+');
 		await expect.element(page.getByText('Drag to move')).toBeInTheDocument();
+	});
+});
+
+describe('ImageViewer.svelte motion', () => {
+	beforeEach(async () => {
+		// Slowed down so the 120ms transitions are still running when we look.
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 0.01 });
+	});
+
+	afterEach(async () => {
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 1 });
+	});
+
+	const transition = (element: Element) =>
+		element.getAnimations().find((animation) => Number(animation.effect!.getTiming().duration) > 0);
+	const firstFrame = (element: Element) =>
+		(transition(element)?.effect as KeyframeEffect | undefined)?.getKeyframes()[0];
+	const photo = () => document.querySelector<HTMLImageElement>('img')!;
+	const slide = () => page.getByTestId('slide').element();
+	const frames = async (count: number) => {
+		for (let i = 0; i < count; i++) await new Promise(requestAnimationFrame);
+	};
+
+	it('fades in when opened', async () => {
+		const { rerender } = await render(ImageViewer, { ...base, open: false });
+
+		await rerender({ ...base, open: true });
+
+		const dialog = page.getByRole('dialog').element();
+		await vi.waitFor(() => expect(transition(dialog)).toBeDefined());
+		expect(Number(firstFrame(dialog)?.opacity)).toBeCloseTo(0);
+		expect(transition(dialog)?.effect!.getTiming().duration).toBe(120);
+	});
+
+	async function renderGallery(props: { stepping?: boolean; stuck?: boolean } = {}) {
+		const photos = [await largeImage(), await largeImage()];
+		await render(GalleryHarness, { photos, ...props });
+		await vi.waitFor(() => expect(photo().complete && photo().naturalWidth > 0).toBe(true));
+	}
+
+	// The harness's own buttons sit under the viewer, so they're clicked directly.
+	const harnessButton = (name: string) =>
+		page.getByRole('button', { name }).element() as HTMLButtonElement;
+
+	it('slides the next photo in from the right and the previous from the left, once loaded', async () => {
+		await renderGallery();
+		// How the slide looked the moment the new photo finished loading, before the viewer's own
+		// load handler ran. Captured rather than polled, since a small photo can load at any time.
+		const atLoad: { opacity: string; animations: number }[] = [];
+		const onLoad = (event: Event) => {
+			if (event.target instanceof HTMLImageElement) {
+				const wrapper = event.target.parentElement!;
+				atLoad.push({ opacity: wrapper.style.opacity, animations: wrapper.getAnimations().length });
+			}
+		};
+		document.addEventListener('load', onLoad, true);
+		onTestFinished(() => document.removeEventListener('load', onLoad, true));
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		expect(atLoad).toEqual([{ opacity: '0', animations: 0 }]);
+		expect(firstFrame(slide())?.transform).toBe('translateX(80px)');
+		expect(slide().style.opacity).toBe('');
+
+		await page.getByRole('button', { name: 'Previous photo' }).click();
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		expect(firstFrame(slide())?.transform).toBe('translateX(-80px)');
+	});
+
+	it('updates a refreshed url in place, keeping the zoom, with no slide', async () => {
+		await renderGallery();
+		await userEvent.keyboard('+');
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
+		const before = photo();
+
+		harnessButton('Refresh url').click();
+		await vi.waitFor(() => expect(photo().getAttribute('src')).toContain('#refreshed'));
+		await frames(3);
+
+		expect(photo()).toBe(before);
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
+		expect(transition(slide())).toBeUndefined();
+	});
+
+	it('steps from a zoomed photo to the next one at 100%, without fighting the zoom', async () => {
+		await renderGallery();
+		await userEvent.keyboard('++');
+		await expect.element(zoomLevel()).toHaveTextContent('200%');
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+
+		expect(photo().style.transform).toBe('translate(0px, 0px) scale(1)');
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		await expect.element(zoomLevel()).toHaveTextContent('100%');
+		expect(photo().getAnimations()).toEqual([]);
+	});
+
+	it("doesn't slide or hide a photo that changes without a step", async () => {
+		await renderGallery({ stepping: false });
+		await userEvent.keyboard('{ArrowRight}');
+
+		harnessButton('Change photo').click();
+		await frames(3);
+
+		expect(slide().style.opacity).toBe('');
+		expect(transition(slide())).toBeUndefined();
+	});
+
+	it("doesn't hide the photo, or slide a later refresh, when a step goes nowhere", async () => {
+		await renderGallery({ stuck: true });
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		expect(slide().style.opacity).toBe('');
+		harnessButton('Refresh url').click();
+		await vi.waitFor(() => expect(photo().getAttribute('src')).toContain('#refreshed'));
+		await vi.waitFor(() => expect(photo().complete).toBe(true));
+		await frames(3);
+
+		expect(transition(slide())).toBeUndefined();
+	});
+
+	it('appears and steps without motion when reduced motion is preferred', async () => {
+		await cdp().send('Emulation.setEmulatedMedia', {
+			features: [{ name: 'prefers-reduced-motion', value: 'reduce' }]
+		});
+		onTestFinished(async () => {
+			await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+		});
+		const { rerender } = await render(ImageViewer, { ...base, open: false });
+		await rerender({ ...base, open: true });
+		await frames(3);
+		expect(transition(page.getByRole('dialog').element())).toBeUndefined();
+		document.body.replaceChildren();
+
+		await renderGallery();
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await frames(3);
+
+		expect(slide().style.opacity).toBe('');
+		expect(transition(slide())).toBeUndefined();
+		expect(photo().style.transition).toBe('none');
 	});
 });
 

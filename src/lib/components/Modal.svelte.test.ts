@@ -1,5 +1,5 @@
-import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { cdp, page, userEvent } from 'vitest/browser';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ModalHarness from './test-support/ModalHarness.svelte';
 import '../../routes/layout.css';
@@ -165,5 +165,41 @@ describe('Modal.svelte', () => {
 			await userEvent.keyboard('{Tab}');
 			await expect.element(headerClose()).toHaveFocus();
 		});
+	});
+});
+
+describe('Modal.svelte opening', () => {
+	afterEach(async () => {
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 1 });
+		await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+	});
+
+	const transition = (element: Element) =>
+		element.getAnimations().find((animation) => Number(animation.effect!.getTiming().duration) > 0);
+	const firstFrame = (element: Element) =>
+		(transition(element)?.effect as KeyframeEffect | undefined)?.getKeyframes()[0];
+
+	it('fades the backdrop in and scales the panel up, quickly', async () => {
+		// Slowed down so the 120ms transition is still running when we look.
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 0.01 });
+		await openModal();
+
+		const panel = page.getByRole('dialog').element();
+		expect(firstFrame(panel)?.transform).toBe('scale(0.97)');
+		expect(transition(panel)?.effect!.getTiming().duration).toBe(120);
+		expect(Number(firstFrame(backdrop().element())?.opacity)).toBeCloseTo(0);
+	});
+
+	it('appears without motion when reduced motion is preferred', async () => {
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 0.01 });
+		await cdp().send('Emulation.setEmulatedMedia', {
+			features: [{ name: 'prefers-reduced-motion', value: 'reduce' }]
+		});
+		await openModal();
+
+		const running = (element: Element) =>
+			element.getAnimations().filter((animation) => animation.playState === 'running');
+		expect(running(page.getByRole('dialog').element())).toEqual([]);
+		expect(running(backdrop().element())).toEqual([]);
 	});
 });

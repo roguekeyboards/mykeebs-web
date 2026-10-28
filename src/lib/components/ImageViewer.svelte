@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight, X } from '@lucide/svelte';
 	import { SvelteMap } from 'svelte/reactivity';
+	import { fade } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import { clampOffset } from '#lib/pan.js';
 	let {
 		open,
@@ -38,14 +40,42 @@
 	let dragOriginX = 0;
 	let dragOriginY = 0;
 
+	// The side a stepped-to photo slides in from: 1 for the right (Next), -1 for the left. It stays
+	// hidden until it has loaded, so the slide moves the photo rather than an empty box.
+	let pendingSlide = $state<1 | -1 | 0>(0);
+	let steppedFrom = $state(-1);
+	let slide = $state<HTMLDivElement | null>(null);
+	const waitingToSlide = $derived(pendingSlide !== 0 && index !== steppedFrom);
+
+	function step(delta: 1 | -1) {
+		const go = delta === 1 ? onNext : onPrev;
+		if (!go) return;
+		pendingSlide = prefersReducedMotion.current ? 0 : delta;
+		steppedFrom = index;
+		go();
+	}
+
+	function slideIn() {
+		if (!waitingToSlide || !slide) return;
+		slide.animate(
+			[
+				{ transform: `translateX(${pendingSlide * 80}px)`, opacity: 0 },
+				{ transform: 'none', opacity: 1 }
+			],
+			{ duration: 180, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }
+		);
+		pendingSlide = 0;
+	}
+
 	const SWIPE_DISTANCE = 50;
 	const pointers = new SvelteMap<number, { x: number; y: number }>();
 	let swipeStart: { x: number; y: number } | null = null;
 	let pinchStart: { distance: number; scale: number } | null = null;
 
-	$effect(() => {
-		// Switching images resets zoom.
-		void src;
+	// Before render, so a new photo never shows the last one's zoom. A refreshed url for the same
+	// photo keeps it.
+	$effect.pre(() => {
+		void index;
 		if (open) {
 			scale = 1;
 			offsetX = 0;
@@ -54,6 +84,8 @@
 			swipeStart = null;
 			pinchStart = null;
 			dragging = false;
+		} else {
+			pendingSlide = 0;
 		}
 	});
 
@@ -138,8 +170,7 @@
 			const dx = event.clientX - swipeStart.x;
 			const dy = event.clientY - swipeStart.y;
 			if (Math.abs(dx) >= SWIPE_DISTANCE && Math.abs(dx) > Math.abs(dy)) {
-				if (dx < 0) onNext?.();
-				else onPrev?.();
+				step(dx < 0 ? 1 : -1);
 			}
 		}
 		swipeStart = null;
@@ -199,15 +230,15 @@
 	};
 
 	function handleKeydown(event: KeyboardEvent) {
-		const direction = arrowDirections[event.key];
+		const panVector = arrowDirections[event.key];
 		if (event.key === 'Escape') onClose();
 		else if (event.key === 'Tab') trapTab(event);
-		else if (direction && scale > MIN_SCALE) {
+		else if (panVector && scale > MIN_SCALE) {
 			event.preventDefault();
-			const step = event.shiftKey ? PAN_STEP_LARGE : PAN_STEP;
-			pan(direction[0] * step, direction[1] * step);
-		} else if (event.key === 'ArrowLeft') onPrev?.();
-		else if (event.key === 'ArrowRight') onNext?.();
+			const panStep = event.shiftKey ? PAN_STEP_LARGE : PAN_STEP;
+			pan(panVector[0] * panStep, panVector[1] * panStep);
+		} else if (event.key === 'ArrowLeft') step(-1);
+		else if (event.key === 'ArrowRight') step(1);
 		else if (event.key === '+' || event.key === '=') zoomIn();
 		else if (event.key === '-' || event.key === '_') zoomOut();
 		else if (event.key === '0') resetZoom();
@@ -224,6 +255,7 @@
 		aria-label="{alt}, full size"
 		aria-describedby={count > 1 ? `${uid}-position` : undefined}
 		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
+		in:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
 	>
 		<button
 			bind:this={closeButton}
@@ -276,7 +308,7 @@
 				type="button"
 				aria-label="Previous {itemLabel}"
 				class="btn-icon absolute top-1/2 left-4 z-10 -translate-y-1/2 bg-black/70 text-white hover:bg-black/90"
-				onclick={onPrev}
+				onclick={() => step(-1)}
 			>
 				<ArrowLeft class="h-5 w-5" />
 			</button>
@@ -286,7 +318,7 @@
 				type="button"
 				aria-label="Next {itemLabel}"
 				class="btn-icon absolute top-1/2 right-4 z-10 -translate-y-1/2 bg-black/70 text-white hover:bg-black/90"
-				onclick={onNext}
+				onclick={() => step(1)}
 			>
 				<ArrowRight class="h-5 w-5" />
 			</button>
@@ -307,18 +339,29 @@
 			onpointercancel={handlePointerUp}
 			role="presentation"
 		>
-			<img
-				bind:this={imageEl}
-				{src}
-				{alt}
-				class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
-				style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
-				0
-					? 'none'
-					: 'transform 0.15s ease-out'};"
-				draggable="false"
-				decoding="async"
-			/>
+			{#key index}
+				<div
+					bind:this={slide}
+					class="flex touch-none"
+					style:opacity={waitingToSlide ? 0 : undefined}
+					data-testid="slide"
+				>
+					<img
+						bind:this={imageEl}
+						{src}
+						{alt}
+						class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
+						style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
+							0 || prefersReducedMotion.current
+							? 'none'
+							: 'transform 0.15s ease-out'};"
+						draggable="false"
+						decoding="async"
+						onload={slideIn}
+						onerror={slideIn}
+					/>
+				</div>
+			{/key}
 		</div>
 
 		{#if count > 1}
