@@ -344,7 +344,7 @@ describe('keycap sets page', () => {
 				.toBeInTheDocument();
 		});
 
-		it("names the full-size viewer's arrows for kits", async () => {
+		it("names the full-size viewer's arrows and position for kits", async () => {
 			const withPhotos: KeycapSet = {
 				...olivia,
 				kits: olivia.kits!.map((kit) => ({
@@ -362,9 +362,42 @@ describe('keycap sets page', () => {
 			await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
 
 			await expect.element(page.getByRole('button', { name: 'Next kit' })).toHaveLength(2);
+			await expect.element(page.getByText('Kit 1 of 3')).toBeInTheDocument();
 			await expect
 				.element(page.getByRole('button', { name: 'Next photo' }))
 				.not.toBeInTheDocument();
+		});
+
+		it('steps the full-size viewer only through kits with a photo', async () => {
+			const somePhotos: KeycapSet = {
+				...olivia,
+				kits: olivia.kits!.map((kit) =>
+					kit.kitId === 'novs'
+						? kit
+						: {
+								...kit,
+								image: {
+									url: `data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==#${kit.kitId}`
+								}
+							}
+				)
+			};
+			api.listKeycapSets.mockResolvedValue({ items: [somePhotos] });
+			await renderPage();
+			await openOlivia();
+			await openKit('Base');
+			await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
+			await expect.element(page.getByText('Kit 1 of 2')).toBeInTheDocument();
+
+			await page
+				.getByRole('dialog', { name: 'Base, full size' })
+				.getByRole('button', { name: 'Next kit' })
+				.click();
+
+			await expect
+				.element(page.getByRole('dialog', { name: 'Alphas, full size' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByText('Kit 2 of 2')).toBeInTheDocument();
 		});
 
 		async function addKitWithPhoto() {

@@ -430,6 +430,8 @@
 		open={galleryViewerOpen}
 		src={images[Math.min(galleryIndex, images.length - 1)].url}
 		alt={modal.keyboard.name}
+		index={Math.min(galleryIndex, images.length - 1)}
+		count={images.length}
 		onClose={() => (galleryViewerOpen = false)}
 		onPrev={images.length > 1
 			? () => (galleryIndex = stepIndex(galleryIndex, -1, images.length))

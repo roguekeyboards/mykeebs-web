@@ -200,7 +200,7 @@ describe('keyboard builds page', () => {
 			await expect.element(page.getByRole('dialog', { name: 'Build' })).toBeInTheDocument();
 		});
 
-		it('opens a photo full size', async () => {
+		it('opens a photo full size, showing where it is', async () => {
 			await renderPage();
 			await openCurrent();
 
@@ -210,6 +210,7 @@ describe('keyboard builds page', () => {
 				.click();
 
 			await expect.element(page.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+			await expect.element(page.getByText('Photo 2 of 2')).toBeInTheDocument();
 		});
 	});
 

@@ -511,6 +511,8 @@
 		open={galleryViewerOpen}
 		src={images[Math.min(galleryIndex, images.length - 1)].url}
 		alt="Build"
+		index={Math.min(galleryIndex, images.length - 1)}
+		count={images.length}
 		onClose={() => (galleryViewerOpen = false)}
 		onPrev={images.length > 1
 			? () => (galleryIndex = stepIndex(galleryIndex, -1, images.length))
@@ -551,6 +553,8 @@
 		open={keyboardGalleryViewerOpen}
 		src={images[Math.min(keyboardGalleryIndex, images.length - 1)].url}
 		alt={keyboardDetail.name}
+		index={Math.min(keyboardGalleryIndex, images.length - 1)}
+		count={images.length}
 		onClose={() => (keyboardGalleryViewerOpen = false)}
 		onPrev={images.length > 1
 			? () => (keyboardGalleryIndex = stepIndex(keyboardGalleryIndex, -1, images.length))

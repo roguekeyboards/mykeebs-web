@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight, X } from '@lucide/svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 	import { clampOffset } from '#lib/pan.js';
 	let {
 		open,
@@ -8,7 +9,9 @@
 		onClose,
 		onPrev,
 		onNext,
-		itemLabel = 'photo'
+		itemLabel = 'photo',
+		index = 0,
+		count = 1
 	}: {
 		open: boolean;
 		src: string;
@@ -17,7 +20,11 @@
 		onPrev?: () => void;
 		onNext?: () => void;
 		itemLabel?: string;
+		index?: number;
+		count?: number;
 	} = $props();
+
+	const uid = $props.id();
 
 	const MIN_SCALE = 1;
 	const MAX_SCALE = 6;
@@ -31,6 +38,11 @@
 	let dragOriginX = 0;
 	let dragOriginY = 0;
 
+	const SWIPE_DISTANCE = 50;
+	const pointers = new SvelteMap<number, { x: number; y: number }>();
+	let swipeStart: { x: number; y: number } | null = null;
+	let pinchStart: { distance: number; scale: number } | null = null;
+
 	$effect(() => {
 		// Switching images resets zoom.
 		void src;
@@ -38,6 +50,10 @@
 			scale = 1;
 			offsetX = 0;
 			offsetY = 0;
+			pointers.clear();
+			swipeStart = null;
+			pinchStart = null;
+			dragging = false;
 		}
 	});
 
@@ -45,20 +61,23 @@
 		return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
 	}
 
+	function moveTo(x: number, y: number) {
+		if (!imageEl || !stage) return;
+		offsetX = clampOffset(x, imageEl.offsetWidth, scale, stage.clientWidth);
+		offsetY = clampOffset(y, imageEl.offsetHeight, scale, stage.clientHeight);
+	}
+
+	function zoomTo(value: number) {
+		scale = clampScale(value);
+		moveTo(offsetX, offsetY);
+	}
+
 	function zoomIn() {
-		scale = clampScale(scale + 0.5);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale + 0.5);
 	}
 
 	function zoomOut() {
-		scale = clampScale(scale - 0.5);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale - 0.5);
 	}
 
 	function resetZoom() {
@@ -69,32 +88,70 @@
 
 	function handleWheel(event: WheelEvent) {
 		event.preventDefault();
-		scale = clampScale(scale - event.deltaY * 0.01);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale - event.deltaY * 0.01);
+	}
+
+	function pointerDistance() {
+		const [a, b] = [...pointers.values()];
+		return Math.hypot(a.x - b.x, a.y - b.y);
+	}
+
+	function startDrag(x: number, y: number) {
+		dragging = true;
+		dragStartX = x;
+		dragStartY = y;
+		dragOriginX = offsetX;
+		dragOriginY = offsetY;
 	}
 
 	function handlePointerDown(event: PointerEvent) {
-		if (scale === MIN_SCALE) return;
-		dragging = true;
-		dragStartX = event.clientX;
-		dragStartY = event.clientY;
-		dragOriginX = offsetX;
-		dragOriginY = offsetY;
-		(event.target as HTMLElement).setPointerCapture(event.pointerId);
+		pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		if (pointers.size === 2) {
+			swipeStart = null;
+			dragging = false;
+			pinchStart = { distance: pointerDistance(), scale };
+		} else if (pointers.size === 1) {
+			if (scale > MIN_SCALE) startDrag(event.clientX, event.clientY);
+			else if (event.pointerType !== 'mouse') swipeStart = { x: event.clientX, y: event.clientY };
+		}
 	}
 
 	function handlePointerMove(event: PointerEvent) {
-		if (!dragging) return;
-		offsetX = dragOriginX + (event.clientX - dragStartX);
-		offsetY = dragOriginY + (event.clientY - dragStartY);
+		if (!pointers.has(event.pointerId)) return;
+		pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+		if (pinchStart && pointers.size === 2) {
+			const distance = pointerDistance();
+			if (pinchStart.distance === 0) pinchStart = { distance, scale };
+			else zoomTo((pinchStart.scale * distance) / pinchStart.distance);
+		} else if (dragging) {
+			moveTo(
+				dragOriginX + (event.clientX - dragStartX),
+				dragOriginY + (event.clientY - dragStartY)
+			);
+		}
 	}
 
-	function handlePointerUp() {
+	function handlePointerUp(event: PointerEvent) {
+		if (!pointers.delete(event.pointerId)) return;
+		if (swipeStart && event.type === 'pointerup') {
+			const dx = event.clientX - swipeStart.x;
+			const dy = event.clientY - swipeStart.y;
+			if (Math.abs(dx) >= SWIPE_DISTANCE && Math.abs(dx) > Math.abs(dy)) {
+				if (dx < 0) onNext?.();
+				else onPrev?.();
+			}
+		}
+		swipeStart = null;
 		dragging = false;
+		if (pointers.size < 2) pinchStart = null;
+		// Lifting one finger of a pinch leaves the other to move a zoomed photo.
+		const [rest] = pointers.values();
+		if (rest && scale > MIN_SCALE) startDrag(rest.x, rest.y);
 	}
+
+	const touchFirst = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	const label = $derived(itemLabel.charAt(0).toUpperCase() + itemLabel.slice(1));
 
 	let viewer = $state<HTMLDivElement | null>(null);
 	let closeButton = $state<HTMLButtonElement | null>(null);
@@ -131,9 +188,7 @@
 	let stage = $state<HTMLDivElement | null>(null);
 
 	function pan(dx: number, dy: number) {
-		if (!imageEl || !stage) return;
-		offsetX = clampOffset(offsetX + dx, imageEl.offsetWidth, scale, stage.clientWidth);
-		offsetY = clampOffset(offsetY + dy, imageEl.offsetHeight, scale, stage.clientHeight);
+		moveTo(offsetX + dx, offsetY + dy);
 	}
 
 	const arrowDirections: Record<string, [number, number]> = {
@@ -167,6 +222,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-label="{alt}, full size"
+		aria-describedby={count > 1 ? `${uid}-position` : undefined}
 		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
 	>
 		<button
@@ -207,7 +263,11 @@
 				</button>
 			</div>
 			<span class="rounded bg-black/70 px-3 py-1 text-center text-sm text-white/80">
-				{scale > MIN_SCALE ? 'Arrow keys or drag to move' : 'Scroll to zoom'}
+				{#if touchFirst}
+					{scale > MIN_SCALE ? 'Drag to move' : 'Pinch to zoom'}
+				{:else}
+					{scale > MIN_SCALE ? 'Arrow keys or drag to move' : 'Scroll to zoom'}
+				{/if}
 			</span>
 		</div>
 
@@ -234,7 +294,8 @@
 
 		<div
 			bind:this={stage}
-			class="flex h-full w-full items-center justify-center overflow-hidden {scale > MIN_SCALE
+			class="flex h-full w-full touch-none items-center justify-center overflow-hidden {scale >
+			MIN_SCALE
 				? dragging
 					? 'cursor-grabbing'
 					: 'cursor-grab'
@@ -250,13 +311,27 @@
 				bind:this={imageEl}
 				{src}
 				{alt}
-				class="max-h-[90vh] max-w-[90vw] rounded select-none"
-				style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {dragging
+				class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
+				style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
+				0
 					? 'none'
 					: 'transform 0.15s ease-out'};"
 				draggable="false"
 				decoding="async"
 			/>
 		</div>
+
+		{#if count > 1}
+			<div
+				aria-hidden="true"
+				data-testid="pips"
+				class="pointer-events-none absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/70 px-3 py-2"
+			>
+				{#each { length: count }, pip}
+					<span class="h-2 w-2 rounded-full {pip === index ? 'bg-white' : 'bg-white/40'}"></span>
+				{/each}
+			</div>
+			<p id="{uid}-position" class="sr-only" aria-live="polite">{label} {index + 1} of {count}</p>
+		{/if}
 	</div>
 {/if}

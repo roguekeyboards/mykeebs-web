@@ -11,7 +11,13 @@
 	import { ResponseError } from '@rogueserenity/kbdb-api-client';
 	import { keycapSetsApi, buildsApi } from '#lib/api/client.js';
 	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '#lib/stale-images.js';
-	import { adjacentKitId, earliestKitDate, primaryKitImageUrl } from '#lib/keycap-set.js';
+	import {
+		adjacentKitId,
+		earliestKitDate,
+		kitsWithPhotos,
+		primaryKitImageUrl
+	} from '#lib/keycap-set.js';
+	import { stepIndex } from '#lib/step-index.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
 	import Modal from '#lib/components/Modal.svelte';
@@ -89,6 +95,12 @@
 	function handleKitNavKeydown(event: KeyboardEvent) {
 		if (event.key === 'ArrowLeft') stepKit(-1);
 		else if (event.key === 'ArrowRight') stepKit(1);
+	}
+
+	let photoKits = $derived(modal.mode === 'view' ? kitsWithPhotos(modal.set) : []);
+
+	function stepPhotoKit(index: number, delta: 1 | -1) {
+		kitModal = { mode: 'view', kitId: photoKits[stepIndex(index, delta, photoKits.length)].kitId };
 	}
 
 	let hasMultipleKits = $derived(modal.mode === 'view' ? (modal.set.kits?.length ?? 0) > 1 : false);
@@ -638,13 +650,16 @@
 
 {#if kitModal.mode === 'view' && activeKit?.image?.url}
 	{@const kit = activeKit}
+	{@const index = photoKits.findIndex((photoKit) => photoKit.kitId === kit.kitId)}
 	<ImageViewer
 		open={kitImageViewerOpen}
 		src={kit.image?.url ?? ''}
 		alt={kit.name}
 		onClose={() => (kitImageViewerOpen = false)}
 		itemLabel="kit"
-		onPrev={hasMultipleKits ? () => stepKit(-1) : undefined}
-		onNext={hasMultipleKits ? () => stepKit(1) : undefined}
+		{index}
+		count={photoKits.length}
+		onPrev={photoKits.length > 1 ? () => stepPhotoKit(index, -1) : undefined}
+		onNext={photoKits.length > 1 ? () => stepPhotoKit(index, 1) : undefined}
 	/>
 {/if}

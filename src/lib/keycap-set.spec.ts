@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
-import { adjacentKitId, earliestKitDate, primaryKitImageUrl } from './keycap-set';
+import { adjacentKitId, earliestKitDate, kitsWithPhotos, primaryKitImageUrl } from './keycap-set';
 
 function kit(kitId: string, url?: string): KeycapKit {
 	return { kitId, name: kitId, image: url ? { url } : undefined };
@@ -101,5 +101,17 @@ describe('earliestKitDate', () => {
 			earliestKitDate(set(undefined, [kit('base'), dated('novs')]), 'orderDate')
 		).toBeUndefined();
 		expect(earliestKitDate(set(undefined), 'deliveryDate')).toBeUndefined();
+	});
+});
+
+describe('kitsWithPhotos', () => {
+	it('keeps only the kits with a viewable photo, in order', () => {
+		const kits = [kit('base', 'b.png'), kit('novelties'), kit('alphas', 'a.png')];
+
+		expect(kitsWithPhotos(set('base', kits)).map((k) => k.kitId)).toEqual(['base', 'alphas']);
+	});
+
+	it('is empty for a set without kits', () => {
+		expect(kitsWithPhotos(set(undefined))).toEqual([]);
 	});
 });
