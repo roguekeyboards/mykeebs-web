@@ -118,12 +118,8 @@ describe('keyboards page', () => {
 			.element(page.getByRole('button', { name: /Manta/ }))
 			.toMatchTextContent('65% · WK');
 		await expect.element(page.getByRole('button', { name: 'Add keyboard' })).toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
-			.toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Visibility' }))
-			.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Total cost' })).toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Visibility' })).toBeInTheDocument();
 	});
 
 	it("shows each keyboard's total cost, parts included, rather than its base price", async () => {
@@ -154,9 +150,7 @@ describe('keyboards page', () => {
 			.not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
-			.not.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Total cost' })).not.toBeInTheDocument();
 	});
 
 	it('lets visitors sort by order and delivery dates', async () => {
@@ -178,10 +172,10 @@ describe('keyboards page', () => {
 		const cards = () => page.getByRole('button', { name: /Manta|Zoom65/ });
 		await expect.element(cards().first()).toMatchTextContent('Manta');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Order date');
 		await expect.element(cards().first()).toMatchTextContent('Zoom65');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Delivery date');
 		await expect.element(cards().first()).toMatchTextContent('Manta');
 	});
 

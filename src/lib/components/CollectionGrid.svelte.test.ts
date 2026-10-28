@@ -1,8 +1,9 @@
-import { page, userEvent } from 'vitest/browser';
+import { cdp, page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
 import CollectionGrid from './CollectionGrid.svelte';
+import '../../routes/layout.css';
 
 type Item = { id: string; name: string; brand: string; price?: number; status?: string };
 
@@ -142,11 +143,42 @@ describe('CollectionGrid.svelte', () => {
 	});
 
 	describe('sorting', () => {
+		it("fits the longest option beside the owner's buttons on a 360px touch screen", async () => {
+			await page.viewport(360, 800);
+			// The profile layout's px-4.
+			document.body.style.paddingInline = '1rem';
+			await cdp().send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+			try {
+				await renderGrid({
+					onAdd: () => {},
+					sortOptions: [{ label: 'Delivery date', getValue: (item: Item) => item.name }]
+				});
+				await shown();
+				await document.fonts.ready;
+
+				const select = page
+					.getByRole('combobox', { name: 'Sort by' })
+					.element() as HTMLSelectElement;
+				const style = getComputedStyle(select);
+				const context = document.createElement('canvas').getContext('2d')!;
+				context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+				const room =
+					select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+
+				expect(style.fontSize).toBe('16px');
+				expect(context.measureText(select.selectedOptions[0].text).width).toBeLessThanOrEqual(room);
+			} finally {
+				await cdp().send('Emulation.setTouchEmulationEnabled', { enabled: false });
+				await page.viewport(414, 896);
+				document.body.style.paddingInline = '';
+			}
+		});
+
 		it('sorts by the chosen option, with missing values last', async () => {
 			await renderGrid();
 			await shown();
 
-			await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Price');
+			await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Price');
 
 			await vi.waitFor(async () => expect(await shown()).toEqual(['Agar', 'Manta', 'Kafka']));
 		});

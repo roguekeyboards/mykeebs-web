@@ -29,6 +29,14 @@ main {
 	flex: 1;
 }
 
+/* On every element, not just the root: touch-action isn't inherited, and WebKit only applies an
+   ancestor's up to the nearest scroll container (e.g. a modal). Pinch-zoom still works. */
+@layer base {
+	* {
+		touch-action: manipulation;
+	}
+}
+
 ::selection {
 	background: var(--accent);
 	color: var(--accent-ink);
@@ -244,6 +252,14 @@ select:focus-visible {
 
 	.field-input {
 		width: 100%;
+	}
+
+	/* iOS zooms the page into any field under 16px when it's focused. */
+	@media (any-pointer: coarse) {
+		.field-input,
+		.field-select {
+			font-size: 1rem;
+		}
 	}
 
 	/* Safari renders <select> with its own intrinsic chrome that ignores the

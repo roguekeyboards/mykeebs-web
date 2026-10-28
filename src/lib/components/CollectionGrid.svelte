@@ -151,7 +151,7 @@
 				bind:value={sortIndex}
 			>
 				{#each sortOptions as option, index (option.label)}
-					<option value={index}>Sort: {option.label}</option>
+					<option value={index}>{option.label}</option>
 				{/each}
 			</select>
 			<button
