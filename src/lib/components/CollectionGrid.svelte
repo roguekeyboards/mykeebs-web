@@ -1,9 +1,16 @@
 <script lang="ts" generics="T">
 	import { updateWhere } from '#lib/stale-images.js';
 	import { fetchAllPages, type PageRequest } from '#lib/pagination.js';
-	import { filterByStatus, searchItems, sortItems } from '#lib/collection-filter.js';
+	import {
+		filterByStatus,
+		searchCollection,
+		sortItems,
+		type FieldFilter,
+		type SearchField
+	} from '#lib/collection-filter.js';
+	import CollectionSearch from './CollectionSearch.svelte';
 	import type { Snippet } from 'svelte';
-	import { ArrowDown, ArrowUp, Plus, Search } from '@lucide/svelte';
+	import { ArrowDown, ArrowUp, Plus } from '@lucide/svelte';
 	import {
 		STATUS_FILTERS,
 		statusFilterIcon,
@@ -20,6 +27,7 @@
 		itemKey,
 		emptyMessage,
 		sortOptions,
+		searchFields = [],
 		getName,
 		getOrderStatus,
 		onAdd,
@@ -31,6 +39,7 @@
 		itemKey: (item: T) => string;
 		emptyMessage: string;
 		sortOptions: SortOption[];
+		searchFields?: SearchField<T>[];
 		getName: (item: T) => string | undefined;
 		getOrderStatus?: (item: T) => string | undefined;
 		onAdd?: () => void;
@@ -44,28 +53,16 @@
 	let loading = $state(true);
 	let loadError = $state<string | null>(null);
 	let filterText = $state('');
+	let fieldFilters = $state<FieldFilter[]>([]);
 	let filterExpanded = $state(false);
-	let filterInput = $state<HTMLInputElement | null>(null);
-
-	function expandFilter() {
-		filterExpanded = true;
-		requestAnimationFrame(() => filterInput?.focus());
-	}
-
-	function collapseFilterIfEmpty() {
-		if (!filterText) filterExpanded = false;
-	}
-
-	function handleFilterKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			filterText = '';
-			filterExpanded = false;
-			filterInput?.blur();
-		}
-	}
 
 	let filteredItems = $derived(
-		searchItems(filterByStatus(items, statusFilter, getOrderStatus), filterText)
+		searchCollection(
+			filterByStatus(items, statusFilter, getOrderStatus),
+			searchFields,
+			filterText,
+			fieldFilters
+		)
 	);
 
 	let sortIndex = $state(0);
@@ -167,23 +164,13 @@
 				{/if}
 			</button>
 		{/if}
-		{#if filterExpanded}
-			<input
-				name="filter"
-				bind:this={filterInput}
-				type="search"
-				class="field-input w-full min-w-0 sm:w-64 sm:flex-none"
-				placeholder="Filter…"
-				aria-label="Filter"
-				bind:value={filterText}
-				onblur={collapseFilterIfEmpty}
-				onkeydown={handleFilterKeydown}
-			/>
-		{:else}
-			<button type="button" class="btn-icon shrink-0" aria-label="Filter" onclick={expandFilter}>
-				<Search class="mx-auto h-5 w-5" />
-			</button>
-		{/if}
+		<CollectionSearch
+			{items}
+			fields={searchFields}
+			bind:text={filterText}
+			bind:filters={fieldFilters}
+			bind:expanded={filterExpanded}
+		/>
 		{#if onAdd}
 			<button
 				type="button"

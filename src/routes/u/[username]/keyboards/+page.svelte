@@ -9,6 +9,7 @@
 	import { formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import { keyboardFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
@@ -262,6 +263,7 @@
 	itemKey={(keyboard) => keyboard.id ?? ''}
 	emptyMessage="No keyboards yet."
 	getName={(keyboard) => keyboard.name}
+	searchFields={keyboardFields}
 	getOrderStatus={(keyboard) => keyboard.purchase?.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add keyboard"

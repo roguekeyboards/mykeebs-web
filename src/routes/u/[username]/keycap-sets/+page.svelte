@@ -20,6 +20,7 @@
 	import { stepIndex } from '#lib/step-index.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import { keycapSetFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
@@ -388,6 +389,7 @@
 	itemKey={(set) => set.id ?? ''}
 	emptyMessage="No keycap sets yet."
 	getName={(set) => set.name}
+	searchFields={keycapSetFields}
 	getOrderStatus={(set) => set.orderStatus ?? undefined}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add keycap set"

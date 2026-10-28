@@ -9,6 +9,7 @@
 	import { formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import { switchFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
@@ -210,6 +211,7 @@
 	itemKey={(sw) => sw.id ?? ''}
 	emptyMessage="No switches yet."
 	getName={(sw) => sw.name}
+	searchFields={switchFields}
 	getOrderStatus={(sw) => sw.purchase?.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add switch"
