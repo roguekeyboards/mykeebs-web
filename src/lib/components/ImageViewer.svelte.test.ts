@@ -280,6 +280,50 @@ describe('ImageViewer.svelte touch', () => {
 	});
 });
 
+describe('ImageViewer.svelte motion', () => {
+	beforeEach(async () => {
+		// Slowed down so the 120ms transitions are still running when we look.
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 0.01 });
+	});
+
+	afterEach(async () => {
+		await cdp().send('Animation.setPlaybackRate', { playbackRate: 1 });
+	});
+
+	const transition = (element: Element) =>
+		element.getAnimations().find((animation) => Number(animation.effect!.getTiming().duration) > 0);
+	const firstFrame = (element: Element) =>
+		(transition(element)?.effect as KeyframeEffect | undefined)?.getKeyframes()[0];
+	const photo = () => document.querySelector<HTMLImageElement>('img')!;
+
+	it('fades in when opened', async () => {
+		const { rerender } = await render(ImageViewer, { ...base, open: false });
+
+		await rerender({ ...base, open: true });
+
+		const dialog = page.getByRole('dialog').element();
+		await vi.waitFor(() => expect(transition(dialog)).toBeDefined());
+		expect(Number(firstFrame(dialog)?.opacity)).toBeCloseTo(0);
+		expect(transition(dialog)?.effect!.getTiming().duration).toBe(120);
+	});
+
+	it('slides the next photo in from the right and the previous from the left', async () => {
+		const props = { ...base, onPrev: () => {}, onNext: () => {} };
+		const { rerender } = await render(ImageViewer, props);
+		expect(photo().getAnimations()).toEqual([]);
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await rerender({ ...props, src: 'https://img.example/2.png' });
+		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
+		expect(firstFrame(photo())?.transform).toContain('translate(24px, 0px)');
+
+		await page.getByRole('button', { name: 'Previous photo' }).click();
+		await rerender({ ...props, src: 'https://img.example/1.png' });
+		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
+		expect(firstFrame(photo())?.transform).toContain('translate(-24px, 0px)');
+	});
+});
+
 describe('ImageViewer.svelte as a dialog', () => {
 	it('is a dialog named after the photo, with focus on Close', async () => {
 		await render(ImageViewer, base);
