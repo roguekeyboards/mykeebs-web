@@ -29,15 +29,9 @@ main {
 	flex: 1;
 }
 
-/* Tapping controls quickly would otherwise double-tap-zoom; pinch-zoom still works. */
+/* Stops double-tap zoom everywhere, since elements inherit the limit; pinch-zoom still works. */
 @layer base {
-	a,
-	button,
-	input,
-	select,
-	textarea,
-	label,
-	summary {
+	html {
 		touch-action: manipulation;
 	}
 }

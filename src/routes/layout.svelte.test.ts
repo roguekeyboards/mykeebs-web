@@ -53,25 +53,19 @@ describe('on a touch screen', () => {
 });
 
 describe('touch-action', () => {
-	it.each(['a', 'button', 'input', 'select', 'textarea', 'label', 'summary'])(
-		'stops double-tap zoom on %s',
-		(tag) => {
-			const element = document.createElement(tag);
-			document.body.append(element);
+	const root = document.documentElement;
 
-			expect(getComputedStyle(element).touchAction).toBe('manipulation');
-		}
-	);
-
-	it('gives way to a touch utility', () => {
-		const button = document.createElement('button');
-		button.className = 'touch-none';
-		document.body.append(button);
-
-		expect(getComputedStyle(button).touchAction).toBe('none');
+	afterEach(() => {
+		root.classList.remove('touch-pan-y');
 	});
 
-	it('leaves pinch-zoom on the page', () => {
-		expect(getComputedStyle(document.body).touchAction).toBe('auto');
+	it('stops double-tap zoom across the page and keeps pinch-zoom', () => {
+		expect(getComputedStyle(root).touchAction).toBe('manipulation');
+	});
+
+	it('gives way to a touch utility', () => {
+		root.classList.add('touch-pan-y');
+
+		expect(getComputedStyle(root).touchAction).toBe('pan-y');
 	});
 });
