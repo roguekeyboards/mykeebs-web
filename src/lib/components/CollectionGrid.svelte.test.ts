@@ -293,6 +293,89 @@ describe('CollectionGrid.svelte', () => {
 			await expect.element(filterBox()).not.toBeInTheDocument();
 		});
 
+		it("doesn't add a value on a second Tab after a bare `tag:`", async () => {
+			await openSearch();
+
+			await userEvent.keyboard('b{Tab}{Tab}');
+
+			await expect
+				.element(page.getByRole('button', { name: /^Remove filter/ }))
+				.not.toBeInTheDocument();
+			await expect.element(page.getByRole('article')).toHaveLength(3);
+		});
+
+		it('clears typed text on Escape before it clears the chips', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:deliv{Enter}');
+			await userEvent.keyboard('kaf');
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+
+			await userEvent.keyboard('{Escape}');
+
+			await expect.element(filterBox()).toHaveValue('');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+		});
+
+		it('matches a picked value exactly, but a typed one as a substring', async () => {
+			const bowlLabs: Item = { id: 'kb-4', name: 'Pluto', brand: 'Bowl Labs' };
+			await renderGrid({
+				searchFields,
+				fetchPage: vi.fn(async () => ({ items: [manta, agar, bowlLabs] }))
+			});
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+
+			await userEvent.keyboard('brand:');
+			await option('Bowl').click();
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+			expect(await shown()).toEqual(['Manta']);
+
+			await userEvent.keyboard('{Backspace}brand:bowl{Enter}');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+		});
+
+		it('suggests only values the other filters still leave, and none already chipped', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:');
+			await option('Ordered').click();
+
+			await userEvent.keyboard('brand:');
+			await expect.element(option('KBDFans')).toBeInTheDocument();
+			await expect.element(option('Bowl')).not.toBeInTheDocument();
+			await expect.element(option('Typeface')).not.toBeInTheDocument();
+		});
+
+		it("doesn't suggest a value that's already a chip", async () => {
+			const anyField = {
+				tag: 'any',
+				description: 'Brand or status',
+				values: (item: Item) => [item.brand, item.status]
+			};
+			await renderGrid({ searchFields: [anyField] });
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+			await userEvent.keyboard('any:');
+			await option('Delivered').click();
+
+			await userEvent.keyboard('any:');
+
+			await expect.element(option('Bowl')).toBeInTheDocument();
+			await expect.element(option('Delivered')).not.toBeInTheDocument();
+		});
+
+		it('keeps a long chip inside the box', async () => {
+			await openSearch();
+
+			await userEvent.keyboard(`brand:${'very long brand name '.repeat(6)}{Enter}`);
+
+			const box = filterBox().element().parentElement!.getBoundingClientRect();
+			const value = page
+				.getByRole('button', { name: /^Remove filter brand:/ })
+				.element()
+				.previousElementSibling!.getBoundingClientRect();
+			expect(value.right).toBeLessThanOrEqual(box.right);
+		});
+
 		it("doesn't pick a field when Enter is pressed on plain text", async () => {
 			await openSearch();
 

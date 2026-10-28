@@ -2,6 +2,7 @@
 	import { updateWhere } from '#lib/stale-images.js';
 	import { fetchAllPages, type PageRequest } from '#lib/pagination.js';
 	import {
+		filterByFields,
 		filterByStatus,
 		searchCollection,
 		sortItems,
@@ -165,7 +166,11 @@
 			</button>
 		{/if}
 		<CollectionSearch
-			{items}
+			items={filterByFields(
+				filterByStatus(items, statusFilter, getOrderStatus),
+				searchFields,
+				fieldFilters
+			)}
 			fields={searchFields}
 			bind:text={filterText}
 			bind:filters={fieldFilters}

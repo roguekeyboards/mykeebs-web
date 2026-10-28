@@ -17,7 +17,8 @@ export type SearchField<T> = {
 	values: (item: T) => (string | null | undefined)[];
 };
 
-export type FieldFilter = { tag: string; value: string };
+// A value picked from the suggestions matches exactly; a typed one matches as a substring.
+export type FieldFilter = { tag: string; value: string; exact?: boolean };
 
 // Ids, image urls and moderation fields, which nobody means to search.
 function skippedKey(key: string): boolean {
@@ -51,7 +52,9 @@ export function filterByFields<T>(
 		filters.every((filter) => {
 			const field = fields.find((candidate) => candidate.tag === filter.tag);
 			const needle = filter.value.trim().toLowerCase();
-			return !field || field.values(item).some((value) => value?.toLowerCase().includes(needle));
+			const matches = (value: string) =>
+				filter.exact ? value.trim().toLowerCase() === needle : value.toLowerCase().includes(needle);
+			return !field || field.values(item).some((value) => value != null && matches(value));
 		})
 	);
 }

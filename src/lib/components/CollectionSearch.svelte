@@ -14,6 +14,7 @@
 		filters = $bindable([]),
 		expanded = $bindable(false)
 	}: {
+		// The items value suggestions come from: whatever the other filters still leave showing.
 		items: T[];
 		fields: SearchField<T>[];
 		text?: string;
@@ -40,12 +41,17 @@
 	const options = $derived.by((): Option[] => {
 		if (typing) {
 			const tag = typing.field.tag;
-			return fieldSuggestions(items, typing.field, typing.query).map((value, index) => ({
-				id: `${uid}-value-${index}`,
-				kind: 'value',
-				tag,
-				value
-			}));
+			const chipped = new Set(
+				filters.filter((filter) => filter.tag === tag).map((filter) => filter.value.toLowerCase())
+			);
+			return fieldSuggestions(items, typing.field, typing.query)
+				.filter((value) => !chipped.has(value.toLowerCase()))
+				.map((value, index) => ({
+					id: `${uid}-value-${index}`,
+					kind: 'value',
+					tag,
+					value
+				}));
 		}
 		if (text.includes(':')) return [];
 		const typed = text.trim().toLowerCase();
@@ -82,7 +88,7 @@
 
 	function pick(option: Option) {
 		if (option.kind === 'field') text = `${option.field.tag}:`;
-		else addFilter({ tag: option.tag, value: option.value });
+		else addFilter({ tag: option.tag, value: option.value, exact: true });
 		dismissed = false;
 		input?.focus();
 	}
@@ -117,9 +123,10 @@
 			}
 			case 'Tab': {
 				// Completes what's typed with the highlighted suggestion, or the first one. With
-				// nothing typed, Tab moves focus as usual.
+				// nothing typed (a bare `tag:` included), Tab moves focus as usual.
 				const option = options[Math.max(activeIndex, 0)];
-				if (panelOpen && option && !event.shiftKey && (activeIndex >= 0 || text.trim())) {
+				const typed = typing ? typing.query.trim() : text.trim();
+				if (panelOpen && option && !event.shiftKey && (activeIndex >= 0 || typed)) {
 					event.preventDefault();
 					pick(option);
 				}
@@ -129,6 +136,9 @@
 				event.preventDefault();
 				if (panelOpen) {
 					dismissed = true;
+				} else if (text && filters.length > 0) {
+					// Typed text goes first, so one Escape doesn't also throw away the chips.
+					text = '';
 				} else {
 					text = '';
 					filters = [];
@@ -162,7 +172,7 @@
 			{#each filters as filter, index (`${index}:${filter.tag}:${filter.value}`)}
 				<span class="search-chip">
 					<span class="font-mono">{filter.tag}:</span>
-					{filter.value}
+					<span class="search-chip-value">{filter.value}</span>
 					<button
 						type="button"
 						class="search-chip-remove"

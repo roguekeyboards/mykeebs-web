@@ -229,6 +229,19 @@ describe('filterByFields', () => {
 		]);
 	});
 
+	it('matches a picked value exactly, ignoring case', () => {
+		expect(
+			setNames(
+				filterByFields([olivia, modern, nord], setFields, [
+					{ tag: 'material', value: 'pbt', exact: true }
+				])
+			)
+		).toEqual(['Nord']);
+		expect(
+			filterByFields([olivia], setFields, [{ tag: 'material', value: 'ABS', exact: true }])
+		).toEqual([]);
+	});
+
 	it('ignores a filter on a field the page no longer offers', () => {
 		expect(filterByFields([olivia], setFields, [{ tag: 'profile', value: 'cherry' }])).toEqual([
 			olivia

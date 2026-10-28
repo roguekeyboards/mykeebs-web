@@ -512,6 +512,7 @@ select:focus-visible {
 	align-items: center;
 	gap: 0.25rem;
 	max-width: 100%;
+	min-width: 0;
 	padding: 0.0625rem 0.125rem 0.0625rem 0.5rem;
 	border: 1px solid var(--border-strong);
 	border-radius: 999px;
@@ -521,7 +522,14 @@ select:focus-visible {
 	white-space: nowrap;
 }
 
+.search-chip-value {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .search-chip-remove {
+	flex-shrink: 0;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
