@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.2.0...v0.3.0) (2026-10-28)
+
+
+### Features
+
+* field filters with suggestions in the collection search ([#130](https://github.com/rogueserenity/mykeebs-web/issues/130)) ([af15b38](https://github.com/rogueserenity/mykeebs-web/commit/af15b381084b73d5e617279d1b7ca060d995a8b2))
+* **images:** show position and swipe between photos in the image viewer ([#128](https://github.com/rogueserenity/mykeebs-web/issues/128)) ([a3503d0](https://github.com/rogueserenity/mykeebs-web/commit/a3503d05d02e26febecf7d0d3f9f60c738085339))
+* short entrance and slide transitions for modals and the image viewer ([#129](https://github.com/rogueserenity/mykeebs-web/issues/129)) ([cad4faa](https://github.com/rogueserenity/mykeebs-web/commit/cad4faaf9f8c4cfd8dcd52b864124c54c61808ae))
+
+
+### Bug Fixes
+
+* stop iOS zooming in on fast button taps and form focus ([#123](https://github.com/rogueserenity/mykeebs-web/issues/123)) ([d2c3811](https://github.com/rogueserenity/mykeebs-web/commit/d2c381148dda7dcf019b040095baac93e9f8aed9))
+
 ## [0.2.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.2...v0.2.0) (2026-10-28)
 
 
