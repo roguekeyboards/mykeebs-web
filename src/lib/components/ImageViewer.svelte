@@ -3,7 +3,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { motionDuration } from '#lib/motion.js';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import { clampOffset } from '#lib/pan.js';
 	let {
 		open,
@@ -41,13 +41,22 @@
 	let dragOriginX = 0;
 	let dragOriginY = 0;
 
-	// Which side the next photo slides in from: 1 for the right (Next), -1 for the left.
-	let direction = $state<1 | -1>(1);
+	// Which side the next photo slides in from: 1 for the right (Next), -1 for the left, 0 for a
+	// src change that isn't a step (e.g. a refreshed url), which appears without motion.
+	let slideFrom: 1 | -1 | 0 = 0;
 
 	function step(delta: 1 | -1) {
-		direction = delta;
+		resetZoom();
+		slideFrom = delta;
 		if (delta === 1) onNext?.();
 		else onPrev?.();
+	}
+
+	function slideIn(node: Element) {
+		const from = slideFrom;
+		slideFrom = 0;
+		const duration = from === 0 || prefersReducedMotion.current ? 0 : 180;
+		return fly(node, { x: from * 80, duration, easing: cubicOut });
 	}
 
 	const SWIPE_DISTANCE = 50;
@@ -210,13 +219,13 @@
 	};
 
 	function handleKeydown(event: KeyboardEvent) {
-		const direction = arrowDirections[event.key];
+		const panVector = arrowDirections[event.key];
 		if (event.key === 'Escape') onClose();
 		else if (event.key === 'Tab') trapTab(event);
-		else if (direction && scale > MIN_SCALE) {
+		else if (panVector && scale > MIN_SCALE) {
 			event.preventDefault();
-			const step = event.shiftKey ? PAN_STEP_LARGE : PAN_STEP;
-			pan(direction[0] * step, direction[1] * step);
+			const panStep = event.shiftKey ? PAN_STEP_LARGE : PAN_STEP;
+			pan(panVector[0] * panStep, panVector[1] * panStep);
 		} else if (event.key === 'ArrowLeft' && onPrev) step(-1);
 		else if (event.key === 'ArrowRight' && onNext) step(1);
 		else if (event.key === '+' || event.key === '=') zoomIn();
@@ -235,7 +244,7 @@
 		aria-label="{alt}, full size"
 		aria-describedby={count > 1 ? `${uid}-position` : undefined}
 		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
-		in:fade={{ duration: motionDuration(120) }}
+		in:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
 	>
 		<button
 			bind:this={closeButton}
@@ -320,19 +329,20 @@
 			role="presentation"
 		>
 			{#key src}
-				<img
-					bind:this={imageEl}
-					{src}
-					{alt}
-					class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
-					style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
-					0
-						? 'none'
-						: 'transform 0.15s ease-out'};"
-					draggable="false"
-					decoding="async"
-					in:fly={{ x: direction * 80, duration: motionDuration(180), easing: cubicOut }}
-				/>
+				<div class="flex touch-none" data-testid="slide" in:slideIn>
+					<img
+						bind:this={imageEl}
+						{src}
+						{alt}
+						class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
+						style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
+							0 || prefersReducedMotion.current
+							? 'none'
+							: 'transform 0.15s ease-out'};"
+						draggable="false"
+						decoding="async"
+					/>
+				</div>
 			{/key}
 		</div>
 

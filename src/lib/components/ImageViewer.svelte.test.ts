@@ -28,7 +28,7 @@ const offset = (img: HTMLImageElement) => {
 	return [Number(x), Number(y)];
 };
 const limit = (img: HTMLImageElement, scale: number) => {
-	const stage = img.parentElement!;
+	const stage = img.closest('[role=presentation]')!;
 	return [
 		(img.offsetWidth * scale - stage.clientWidth) / 2,
 		(img.offsetHeight * scale - stage.clientHeight) / 2
@@ -295,6 +295,10 @@ describe('ImageViewer.svelte motion', () => {
 	const firstFrame = (element: Element) =>
 		(transition(element)?.effect as KeyframeEffect | undefined)?.getKeyframes()[0];
 	const photo = () => document.querySelector<HTMLImageElement>('img')!;
+	const slide = () => page.getByTestId('slide').element();
+	const frames = async (count: number) => {
+		for (let i = 0; i < count; i++) await new Promise(requestAnimationFrame);
+	};
 
 	it('fades in when opened', async () => {
 		const { rerender } = await render(ImageViewer, { ...base, open: false });
@@ -310,17 +314,65 @@ describe('ImageViewer.svelte motion', () => {
 	it('slides the next photo in from the right and the previous from the left', async () => {
 		const props = { ...base, onPrev: () => {}, onNext: () => {} };
 		const { rerender } = await render(ImageViewer, props);
-		expect(photo().getAnimations()).toEqual([]);
+		expect(slide().getAnimations()).toEqual([]);
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
 		await rerender({ ...props, src: 'https://img.example/2.png' });
-		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
-		expect(firstFrame(photo())?.transform).toContain('translate(80px, 0px)');
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		expect(firstFrame(slide())?.transform).toContain('translate(80px, 0px)');
 
 		await page.getByRole('button', { name: 'Previous photo' }).click();
 		await rerender({ ...props, src: 'https://img.example/1.png' });
-		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
-		expect(firstFrame(photo())?.transform).toContain('translate(-80px, 0px)');
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		expect(firstFrame(slide())?.transform).toContain('translate(-80px, 0px)');
+	});
+
+	it("doesn't slide when the photo changes without a step, e.g. a refreshed url", async () => {
+		const props = { ...base, onPrev: () => {}, onNext: () => {} };
+		const { rerender } = await render(ImageViewer, props);
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await rerender({ ...props, src: 'https://img.example/2.png' });
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+
+		await rerender({ ...props, src: 'https://img.example/2.png?refreshed' });
+		await frames(3);
+
+		expect(transition(slide())).toBeUndefined();
+	});
+
+	it('steps from a zoomed photo to the next one at 100%, without fighting the zoom', async () => {
+		const props = { ...base, onPrev: () => {}, onNext: () => {} };
+		const { rerender } = await render(ImageViewer, props);
+		await userEvent.keyboard('++');
+		await expect.element(zoomLevel()).toHaveTextContent('200%');
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await rerender({ ...props, src: 'https://img.example/2.png' });
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+
+		await expect.element(zoomLevel()).toHaveTextContent('100%');
+		expect(photo().style.transform).toBe('translate(0px, 0px) scale(1)');
+		expect(photo().getAnimations()).toEqual([]);
+	});
+
+	it('appears and steps without motion when reduced motion is preferred', async () => {
+		await cdp().send('Emulation.setEmulatedMedia', {
+			features: [{ name: 'prefers-reduced-motion', value: 'reduce' }]
+		});
+		onTestFinished(async () => {
+			await cdp().send('Emulation.setEmulatedMedia', { features: [] });
+		});
+		const props = { ...base, onPrev: () => {}, onNext: () => {} };
+		const { rerender } = await render(ImageViewer, { ...props, open: false });
+
+		await rerender({ ...props, open: true });
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		await rerender({ ...props, src: 'https://img.example/2.png' });
+		await frames(3);
+
+		expect(transition(page.getByRole('dialog').element())).toBeUndefined();
+		expect(transition(slide())).toBeUndefined();
+		expect(photo().style.transition).toBe('none');
 	});
 });
 

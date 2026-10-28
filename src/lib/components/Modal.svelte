@@ -3,7 +3,7 @@
 	import { X } from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { backOut } from 'svelte/easing';
-	import { motionDuration } from '#lib/motion.js';
+	import { prefersReducedMotion } from 'svelte/motion';
 
 	let {
 		open,
@@ -130,7 +130,7 @@
 			aria-label="Close"
 			class="kc-modal-backdrop absolute inset-0"
 			onclick={requestClose}
-			in:fade={{ duration: motionDuration(120) }}
+			in:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
 		></button>
 		<div
 			bind:this={panel}
@@ -138,7 +138,7 @@
 			aria-modal="true"
 			aria-labelledby={labelledBy}
 			aria-label={labelledBy ? undefined : label}
-			in:scale={{ start: 0.97, duration: motionDuration(120), easing: backOut }}
+			in:scale={{ start: 0.97, duration: prefersReducedMotion.current ? 0 : 120, easing: backOut }}
 			class="kc-modal-panel max-h-[90vh] w-full {wide
 				? 'max-w-5xl'
 				: 'max-w-3xl'} overflow-y-auto p-6"
