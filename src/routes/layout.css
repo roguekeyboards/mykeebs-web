@@ -29,9 +29,10 @@ main {
 	flex: 1;
 }
 
-/* Stops double-tap zoom everywhere, since elements inherit the limit; pinch-zoom still works. */
+/* On every element, not just the root: touch-action isn't inherited, and WebKit only applies an
+   ancestor's up to the nearest scroll container (e.g. a modal). Pinch-zoom still works. */
 @layer base {
-	html {
+	* {
 		touch-action: manipulation;
 	}
 }

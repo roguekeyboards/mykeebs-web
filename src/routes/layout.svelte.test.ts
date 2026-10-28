@@ -53,19 +53,21 @@ describe('on a touch screen', () => {
 });
 
 describe('touch-action', () => {
-	const root = document.documentElement;
+	function buttonInScrollContainer(buttonClass = '') {
+		const scroller = document.createElement('div');
+		scroller.style.overflowY = 'auto';
+		const button = document.createElement('button');
+		button.className = buttonClass;
+		scroller.append(button);
+		document.body.append(scroller);
+		return button;
+	}
 
-	afterEach(() => {
-		root.classList.remove('touch-pan-y');
-	});
-
-	it('stops double-tap zoom across the page and keeps pinch-zoom', () => {
-		expect(getComputedStyle(root).touchAction).toBe('manipulation');
+	it('stops double-tap zoom inside a scroll container and keeps pinch-zoom', () => {
+		expect(getComputedStyle(buttonInScrollContainer()).touchAction).toBe('manipulation');
 	});
 
 	it('gives way to a touch utility', () => {
-		root.classList.add('touch-pan-y');
-
-		expect(getComputedStyle(root).touchAction).toBe('pan-y');
+		expect(getComputedStyle(buttonInScrollContainer('touch-pan-y')).touchAction).toBe('pan-y');
 	});
 });
