@@ -24,6 +24,8 @@
 		count?: number;
 	} = $props();
 
+	const uid = $props.id();
+
 	const MIN_SCALE = 1;
 	const MAX_SCALE = 6;
 
@@ -220,6 +222,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-label="{alt}, full size"
+		aria-describedby={count > 1 ? `${uid}-position` : undefined}
 		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
 	>
 		<button
@@ -322,13 +325,13 @@
 			<div
 				aria-hidden="true"
 				data-testid="pips"
-				class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/70 px-3 py-2"
+				class="pointer-events-none absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/70 px-3 py-2"
 			>
 				{#each { length: count }, pip}
 					<span class="h-2 w-2 rounded-full {pip === index ? 'bg-white' : 'bg-white/40'}"></span>
 				{/each}
 			</div>
-			<p class="sr-only" aria-live="polite">{label} {index + 1} of {count}</p>
+			<p id="{uid}-position" class="sr-only" aria-live="polite">{label} {index + 1} of {count}</p>
 		{/if}
 	</div>
 {/if}

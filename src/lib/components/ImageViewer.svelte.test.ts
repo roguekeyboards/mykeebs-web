@@ -78,6 +78,7 @@ describe('ImageViewer.svelte position', () => {
 		]);
 		expect(page.getByTestId('pips').element().getAttribute('aria-hidden')).toBe('true');
 		await expect.element(page.getByText('Photo 3 of 4')).toBeInTheDocument();
+		await expect.element(page.getByRole('dialog')).toHaveAccessibleDescription('Photo 3 of 4');
 	});
 
 	it('names the position after what is being browsed', async () => {
@@ -91,6 +92,7 @@ describe('ImageViewer.svelte position', () => {
 
 		await expect.element(page.getByRole('button', { name: 'Close' })).toBeInTheDocument();
 		await expect.element(page.getByTestId('pips')).not.toBeInTheDocument();
+		await expect.element(page.getByRole('dialog')).not.toHaveAccessibleDescription();
 		await expect.element(page.getByText(/of 1$/)).not.toBeInTheDocument();
 	});
 });
@@ -141,6 +143,18 @@ describe('ImageViewer.svelte touch', () => {
 		await gesture([[-60, 0]], [[60, -5]]);
 		await vi.waitFor(() => expect(onPrev).toHaveBeenCalledOnce());
 		expect(onNext).toHaveBeenCalledOnce();
+	});
+
+	it('swipes from on top of the pips too', async () => {
+		const onNext = vi.fn();
+		await render(ImageViewer, { ...base, index: 0, count: 3, onPrev: () => {}, onNext });
+		const pips = page.getByTestId('pips').element().getBoundingClientRect();
+		const dx = pips.x + pips.width / 2 - window.innerWidth / 2;
+		const dy = pips.y + pips.height / 2 - window.innerHeight / 2;
+
+		await gesture([[dx, dy]], [[dx - 120, dy]]);
+
+		await vi.waitFor(() => expect(onNext).toHaveBeenCalledOnce());
 	});
 
 	it('ignores a short or mostly vertical swipe', async () => {
