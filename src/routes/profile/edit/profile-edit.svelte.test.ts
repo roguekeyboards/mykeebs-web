@@ -43,7 +43,7 @@ const profileState = vi.hoisted(() => ({ status: 'ready', data: undefined as unk
 vi.mock('#lib/profile/profile.svelte.js', () => ({
 	profile: profileState,
 	saveProfile: vi.fn(),
-	refreshProfile: vi.fn()
+	refreshProfile: vi.fn(async () => {})
 }));
 vi.mock('#lib/api/client.js', () => ({
 	profilesApi: { setProfileImage: vi.fn(), deleteProfileImage: vi.fn() }
@@ -356,6 +356,21 @@ describe('Profile edit page photo', () => {
 			)
 			.toBeInTheDocument();
 		expect(api.setProfileImage).not.toHaveBeenCalled();
+	});
+
+	it("doesn't call an uploaded photo failed when refreshing the profile fails", async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response(null, { status: 200 }))
+		);
+		api.setProfileImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/me' } as never);
+		vi.mocked(refreshProfile).mockRejectedValueOnce(new Error('network'));
+		await render(ProfileEditPage);
+
+		await userEvent.upload(fileInput(), png);
+
+		await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalled());
+		await expect.element(page.getByText("wasn't added", { exact: false })).not.toBeInTheDocument();
 	});
 
 	it('says so when the upload fails', async () => {
