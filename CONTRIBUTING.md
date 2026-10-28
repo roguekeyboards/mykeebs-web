@@ -12,7 +12,9 @@
 4. Squash-merge. The PR title becomes the commit message on `main`, and the branch is deleted.
 
 Every merge to `main` deploys to https://jay.mykeebs.dev. Prod (https://mykeebs.info) deploys only
-when the release-please release PR is merged, so check a change on dev first.
+when the release-please release PR is merged, so check a change on dev first. To try a branch on
+dev before merging it, run `mise run deploy-dev` (needs `npx wrangler login`); the next merge to
+`main` replaces it.
 
 Renovate opens dependency PRs and automerges non-major updates once CI passes. Major updates wait
 on the Dependency Dashboard issue for a manual merge.

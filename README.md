@@ -46,6 +46,7 @@ file. Preview it with `npm run preview`.
 
 Every merge to `main` deploys to https://jay.mykeebs.dev: Cloudflare Workers Builds runs the build
 and `wrangler deploy`, serving `build/` as the static-assets Worker `mykeebs-dev` (`wrangler.jsonc`).
+`mise run deploy-dev` deploys the current branch there by hand, until the next merge replaces it.
 
 Prod at https://mykeebs.info deploys on a release. release-please keeps a release PR open; merging
 it publishes a GitHub Release, and the `Deploy prod` workflow builds that tag with `.env.prod` and
