@@ -392,7 +392,9 @@ describe('SwitchForm.svelte', () => {
 			await userEvent.upload(fileInput(), png('a.png'));
 
 			await expect
-				.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+				.element(
+					page.getByRole('alert').filter({ hasText: "That photo wasn't added. Add it again." })
+				)
 				.toBeInTheDocument();
 		});
 

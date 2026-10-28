@@ -349,6 +349,63 @@ describe('keyboards page', () => {
 				.toBeInTheDocument();
 		});
 
+		it("drops the create's photo message once another photo is picked", async () => {
+			const fetchMock = vi.fn(async () => new Response(null, { status: 403 }));
+			vi.stubGlobal('fetch', fetchMock);
+			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
+			api.createKeyboardImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/a' } as never);
+			await renderPage();
+			const fileInput = () => page.elementLocator(document.querySelector('input[type="file"]')!);
+
+			await fillNewKeyboard();
+			await userEvent.upload(fileInput(), new File(['a'], 'a.png', { type: 'image/png' }));
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+			const created = dialog()
+				.getByRole('alert')
+				.filter({ hasText: "The keyboard was added, but its photo wasn't." });
+			await expect.element(created).toBeInTheDocument();
+
+			fetchMock.mockImplementation(async () => new Response(null, { status: 200 }));
+			await userEvent.upload(fileInput(), new File(['b'], 'b.png', { type: 'image/png' }));
+
+			await vi.waitFor(() => expect(api.createKeyboardImage).toHaveBeenCalledTimes(2));
+			await expect.element(created).not.toBeInTheDocument();
+		});
+
+		it("doesn't call an uploaded photo failed when reloading the keyboard fails", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 200 }))
+			);
+			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
+			api.createKeyboardImage
+				.mockRejectedValueOnce(new Error('network'))
+				.mockResolvedValue({ uploadUrl: 'https://bucket.example/a' } as never);
+			await renderPage();
+			const fileInput = () => page.elementLocator(document.querySelector('input[type="file"]')!);
+			await fillNewKeyboard();
+			await userEvent.upload(fileInput(), new File(['a'], 'a.png', { type: 'image/png' }));
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit keyboard' }))
+				.toBeInTheDocument();
+
+			api.getKeyboard.mockRejectedValue(new Error('network'));
+			const [b, c] = [
+				new File(['b'], 'b.png', { type: 'image/png' }),
+				new File(['c'], 'c.png', { type: 'image/png' })
+			];
+			await userEvent.upload(fileInput(), [b, c]);
+
+			await vi.waitFor(() => expect(api.createKeyboardImage).toHaveBeenCalledTimes(3));
+			await expect
+				.element(dialog().getByText('photos wasn', { exact: false }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(dialog().getByText("photos weren't added", { exact: false }))
+				.not.toBeInTheDocument();
+		});
+
 		it('closes and says so when uploads are unavailable, without trying the rest', async () => {
 			api.createKeyboard.mockResolvedValue({ id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' });
 			api.createKeyboardImage.mockRejectedValue(
@@ -459,6 +516,40 @@ describe('keyboards page', () => {
 					})
 				)
 				.toBeInTheDocument();
+		});
+
+		it('keeps the parts message but drops the photo one once another photo is picked', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 200 }))
+			);
+			plateMaterials(['POM']);
+			const created = { id: 'kb-2', brand: 'Bowl', name: 'Deacon TKL' };
+			api.createKeyboard.mockResolvedValue(created);
+			api.createKeyboardPlate.mockRejectedValue(new Error('network'));
+			api.createKeyboardImage
+				.mockRejectedValueOnce(new Error('network'))
+				.mockResolvedValue({ uploadUrl: 'https://bucket.example/a' } as never);
+			api.getKeyboard.mockResolvedValue(created);
+			await renderPage();
+			const fileInput = () => page.elementLocator(document.querySelector('input[type="file"]')!);
+
+			await fillNewKeyboard();
+			await addPlate('POM');
+			await userEvent.upload(fileInput(), new File(['a'], 'a.png', { type: 'image/png' }));
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+			const parts = dialog()
+				.getByRole('alert')
+				.filter({ hasText: "some of its plates or PCBs weren't. Add them again and save." });
+			const photo = dialog().getByText("Its photo wasn't added either.", { exact: false });
+			await expect.element(parts).toBeInTheDocument();
+			await expect.element(photo).toBeInTheDocument();
+
+			await userEvent.upload(fileInput(), new File(['b'], 'b.png', { type: 'image/png' }));
+
+			await vi.waitFor(() => expect(api.createKeyboardImage).toHaveBeenCalledTimes(2));
+			await expect.element(photo).not.toBeInTheDocument();
+			await expect.element(parts).toBeInTheDocument();
 		});
 
 		it("doesn't call a created keyboard a failed create when reloading it fails", async () => {

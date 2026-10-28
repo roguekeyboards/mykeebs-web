@@ -12,7 +12,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
-	import { stagedUploadOutcome, uploadImage, uploadStaged } from '#lib/upload.js';
+	import { stagedUploadOutcome, uploadImage, uploadEach } from '#lib/upload.js';
 	import PageNotice from '#lib/components/PageNotice.svelte';
 	import { isPending } from '#lib/image-moderation.js';
 	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
@@ -38,6 +38,7 @@
 	let grid = $state<ReturnType<typeof CollectionGrid<SwitchModel>> | null>(null);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let photoNotice = $state<string | null>(null);
 	let notice = $state<string | null>(null);
 	let deleting = $state(false);
 	let deleteError = $state<string | null>(null);
@@ -64,11 +65,13 @@
 	function openCreate() {
 		notice = null;
 		saveError = null;
+		photoNotice = null;
 		modal = { mode: 'create' };
 	}
 
 	function openEdit(sw: SwitchModel) {
 		saveError = null;
+		photoNotice = null;
 		modal = { mode: 'edit', sw };
 	}
 
@@ -76,6 +79,7 @@
 		modal = { mode: 'closed' };
 		viewerOpen = false;
 		saveError = null;
+		photoNotice = null;
 		deleteError = null;
 		blockingBuilds = null;
 		confirmingDelete = false;
@@ -87,16 +91,17 @@
 
 		saving = true;
 		saveError = null;
+		photoNotice = null;
 		try {
 			const sw = await switchesApi.createSwitch({ userId, switchInput: input });
-			const photoFailure = await uploadStaged(stagedImage ? [stagedImage] : [], (file) =>
+			const photoFailure = await uploadEach(stagedImage ? [stagedImage] : [], (file) =>
 				uploadSwitchImage(sw.id, file)
 			);
 			await grid?.refresh().catch(() => {});
 			const photos = stagedUploadOutcome('switch', photoFailure, true);
 			if (photos.reopen) {
 				modal = { mode: 'edit', sw };
-				saveError = photos.message;
+				photoNotice = photos.message;
 			} else {
 				closeModal();
 				notice = photos.message;
@@ -114,6 +119,7 @@
 
 		saving = true;
 		saveError = null;
+		photoNotice = null;
 		try {
 			const sw = await switchesApi.updateSwitch({ userId, switchId, switchInput: input });
 			await grid?.refresh();
@@ -149,14 +155,16 @@
 	}
 
 	async function handleImageUpload(switchId: string, file: File) {
+		photoNotice = null;
 		staleImages.cancel();
 		await uploadSwitchImage(switchId, file);
-		await refreshEditingSwitch(switchId);
+		await refreshEditingSwitch(switchId).catch(() => {});
 	}
 
 	async function handleImageRemove(switchId: string) {
 		const userId = userContext.userId;
 		if (!userId) return;
+		photoNotice = null;
 		await switchesApi.deleteSwitchImage({ userId, switchId });
 		await refreshEditingSwitch(switchId);
 	}
@@ -340,7 +348,7 @@
 		<SwitchForm
 			initial={sw}
 			{saving}
-			error={saveError}
+			error={saveError ?? photoNotice}
 			onSubmit={(input) => handleUpdate(sw.id ?? '', input)}
 			onCancel={() => {
 				modal = { mode: 'view', sw };

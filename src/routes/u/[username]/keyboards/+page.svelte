@@ -19,7 +19,7 @@
 		stagedUploadFollowUp,
 		stagedUploadOutcome,
 		uploadImage,
-		uploadStaged
+		uploadEach
 	} from '#lib/upload.js';
 	import PageNotice from '#lib/components/PageNotice.svelte';
 	import { anyPending, primaryImageUrl, viewableImages } from '#lib/image-moderation.js';
@@ -50,6 +50,7 @@
 	let grid = $state<ReturnType<typeof CollectionGrid<Keyboard>> | null>(null);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let photoNotice = $state<string | null>(null);
 	let notice = $state<string | null>(null);
 	let deleting = $state(false);
 	let deleteError = $state<string | null>(null);
@@ -82,11 +83,13 @@
 	function openCreate() {
 		notice = null;
 		saveError = null;
+		photoNotice = null;
 		modal = { mode: 'create' };
 	}
 
 	function openEdit(keyboard: Keyboard) {
 		saveError = null;
+		photoNotice = null;
 		modal = { mode: 'edit', keyboard };
 	}
 
@@ -95,6 +98,7 @@
 		galleryViewerOpen = false;
 		galleryIndex = 0;
 		saveError = null;
+		photoNotice = null;
 		deleteError = null;
 		blockingBuilds = null;
 		confirmingDelete = false;
@@ -110,6 +114,7 @@
 
 		saving = true;
 		saveError = null;
+		photoNotice = null;
 		let keyboard: Keyboard;
 		try {
 			keyboard = await keyboardsApi.createKeyboard({ userId, keyboardInput: input });
@@ -123,7 +128,7 @@
 				() => true,
 				() => false
 			);
-			const photoFailure = await uploadStaged(stagedImages ?? [], (file) =>
+			const photoFailure = await uploadEach(stagedImages ?? [], (file) =>
 				uploadKeyboardImage(keyboard.id, file)
 			);
 			await grid?.refresh().catch(() => {});
@@ -136,14 +141,13 @@
 					.getKeyboard({ userId, keyboardId: keyboard.id })
 					.catch(() => keyboard);
 				modal = { mode: 'edit', keyboard: fresh };
-				saveError = partsSaved
-					? photos.message
-					: [
-							"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.",
-							photoFailure && stagedUploadFollowUp('keyboard', photoFailure)
-						]
-							.filter(Boolean)
-							.join(' ');
+				if (partsSaved) {
+					photoNotice = photos.message;
+				} else {
+					saveError =
+						"The keyboard was added, but some of its plates or PCBs weren't. Add them again and save.";
+					photoNotice = photoFailure && stagedUploadFollowUp(photoFailure);
+				}
 			}
 		} finally {
 			saving = false;
@@ -156,6 +160,7 @@
 
 		saving = true;
 		saveError = null;
+		photoNotice = null;
 		try {
 			const blocked = await removeParts(keyboardsApi, userId, saved, parts);
 			if (blocked.length > 0) {
@@ -202,13 +207,15 @@
 	}
 
 	async function handleImageUpload(keyboardId: string, file: File) {
+		photoNotice = null;
 		await uploadKeyboardImage(keyboardId, file);
-		await refreshEditingKeyboard(keyboardId);
+		await refreshEditingKeyboard(keyboardId).catch(() => {});
 	}
 
 	async function handleImageRemove(keyboardId: string, imageId: string) {
 		const userId = userContext.userId;
 		if (!userId) return;
+		photoNotice = null;
 		await keyboardsApi.deleteKeyboardImage({ userId, keyboardId, imageId });
 		galleryIndex = 0;
 		await refreshEditingKeyboard(keyboardId);
@@ -405,7 +412,7 @@
 		<KeyboardForm
 			initial={keyboard}
 			{saving}
-			error={saveError}
+			error={[saveError, photoNotice].filter(Boolean).join(' ') || null}
 			onSubmit={(input, _images, parts) => handleUpdate(keyboard, input, parts)}
 			onCancel={() => {
 				modal = { mode: 'view', keyboard };

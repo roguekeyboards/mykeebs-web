@@ -17,7 +17,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
-	import { stagedUploadOutcome, uploadImage, uploadStaged } from '#lib/upload.js';
+	import { stagedUploadOutcome, uploadImage, uploadEach } from '#lib/upload.js';
 	import PageNotice from '#lib/components/PageNotice.svelte';
 	import { anyPending } from '#lib/image-moderation.js';
 	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
@@ -62,6 +62,7 @@
 	let confirmingDelete = $state(false);
 	let kitSaving = $state(false);
 	let kitSaveError = $state<string | null>(null);
+	let kitPhotoNotice = $state<string | null>(null);
 	let kitNotice = $state<string | null>(null);
 	let kitDeleting = $state(false);
 	let kitDeleteError = $state<string | null>(null);
@@ -138,6 +139,7 @@
 
 	function resetKitState() {
 		kitSaveError = null;
+		kitPhotoNotice = null;
 		kitDeleteError = null;
 		kitBlockingBuilds = null;
 		confirmingKitDelete = null;
@@ -255,13 +257,14 @@
 
 		kitSaving = true;
 		kitSaveError = null;
+		kitPhotoNotice = null;
 		try {
 			const kit = await keycapSetsApi.createKeycapKit({
 				userId,
 				keycapSetId,
 				keycapKitInput: input
 			});
-			const photoFailure = await uploadStaged(stagedImage ? [stagedImage] : [], (file) =>
+			const photoFailure = await uploadEach(stagedImage ? [stagedImage] : [], (file) =>
 				uploadKitImage(keycapSetId, kit.kitId, file)
 			);
 			await refreshViewedSet(keycapSetId).catch(() => {});
@@ -270,7 +273,7 @@
 			const photos = stagedUploadOutcome('kit', photoFailure, shown !== undefined);
 			if (photos.reopen) {
 				kitModal = { mode: 'edit', kitId: kit.kitId };
-				kitSaveError = photos.message;
+				kitPhotoNotice = photos.message;
 			} else {
 				closeKitModal();
 				kitNotice = photos.message;
@@ -289,6 +292,7 @@
 
 		kitSaving = true;
 		kitSaveError = null;
+		kitPhotoNotice = null;
 		try {
 			await keycapSetsApi.updateKeycapKit({ userId, keycapSetId, kitId, keycapKitInput: input });
 			await refreshViewedSet(keycapSetId);
@@ -318,15 +322,17 @@
 	async function handleKitImageUpload(kitId: string, file: File) {
 		if (modal.mode !== 'view') return;
 		const keycapSetId = modal.set.id;
+		kitPhotoNotice = null;
 		staleImages.cancel();
 		await uploadKitImage(keycapSetId, kitId, file);
-		await refreshViewedSet(keycapSetId);
+		await refreshViewedSet(keycapSetId).catch(() => {});
 	}
 
 	async function handleKitImageRemove(kitId: string) {
 		const userId = userContext.userId;
 		if (modal.mode !== 'view' || !userId) return;
 		const keycapSetId = modal.set.id;
+		kitPhotoNotice = null;
 		await keycapSetsApi.deleteKeycapKitImage({ userId, keycapSetId, kitId });
 		await refreshViewedSet(keycapSetId);
 	}
@@ -618,7 +624,7 @@
 			initial={kit}
 			isPrimary={modal.mode === 'view' && modal.set.primaryKitId === kit.kitId}
 			saving={kitSaving}
-			error={kitSaveError}
+			error={kitSaveError ?? kitPhotoNotice}
 			onSubmit={(input) => handleUpdateKit(kit.kitId, input)}
 			onCancel={() => {
 				kitModal = { mode: 'view', kitId: kit.kitId };

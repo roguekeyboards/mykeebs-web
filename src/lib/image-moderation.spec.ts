@@ -4,9 +4,8 @@ import {
 	anyPending,
 	isPending,
 	primaryImageUrl,
+	isUploadsUnavailable,
 	rejectionText,
-	UPLOADS_UNAVAILABLE,
-	uploadErrorMessage,
 	viewableImages
 } from './image-moderation';
 
@@ -82,24 +81,20 @@ describe('rejectionText', () => {
 	});
 });
 
-describe('uploadErrorMessage', () => {
+describe('isUploadsUnavailable', () => {
 	const responseError = (status: number, contentType = 'application/json') =>
 		new ResponseError(new Response(null, { status, headers: { 'Content-Type': contentType } }));
 
-	it("says uploads are unavailable on kbdb's upload-cap 429", () => {
-		expect(uploadErrorMessage(responseError(429, 'application/problem+json'))).toBe(
-			UPLOADS_UNAVAILABLE
-		);
+	it("recognizes kbdb's upload-cap 429", () => {
+		expect(isUploadsUnavailable(responseError(429, 'application/problem+json'))).toBe(true);
 	});
 
 	it("doesn't mistake API Gateway's throttle 429 for the upload cap", () => {
-		expect(uploadErrorMessage(responseError(429))).toBe('Could not upload that image.');
+		expect(isUploadsUnavailable(responseError(429))).toBe(false);
 	});
 
-	it('is generic for anything else', () => {
-		expect(uploadErrorMessage(responseError(500))).toBe('Could not upload that image.');
-		expect(uploadErrorMessage(new Error('upload failed: 403'))).toBe(
-			'Could not upload that image.'
-		);
+	it('is false for anything else', () => {
+		expect(isUploadsUnavailable(responseError(500, 'application/problem+json'))).toBe(false);
+		expect(isUploadsUnavailable(new Error('upload failed: 403'))).toBe(false);
 	});
 });

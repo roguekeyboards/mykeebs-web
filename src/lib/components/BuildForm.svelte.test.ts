@@ -1,5 +1,6 @@
 import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
+import { UnsupportedImageError } from '#lib/image-errors.js';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
 import { keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
@@ -327,6 +328,26 @@ describe('BuildForm.svelte photo limit', () => {
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' }))
 			.toBeInTheDocument();
+	});
+
+	it('uploads the rest of a pick past a photo in an unsupported format', async () => {
+		const onImageUpload = vi.fn(async (file: File) => {
+			if (file.name === 'a.heic') throw new UnsupportedImageError();
+		});
+		await renderWith({ initial: withImages(1), onImageUpload });
+		const [a, b] = [new File(['heic'], 'a.heic', { type: 'image/heic' }), jpg('b.jpg')];
+
+		await userEvent.upload(fileInput(), [a, b]);
+
+		await expect
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"1 of 2 photos wasn't added. It's in a format this browser can't read. Add a different one."
+				})
+			)
+			.toBeInTheDocument();
+		expect(onImageUpload.mock.calls).toEqual([[a], [b]]);
 	});
 
 	it('shows pending and rejected photos, and counts the rejected one toward the limit', async () => {

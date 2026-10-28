@@ -1,5 +1,6 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ImageTooLargeError } from '#lib/image-errors.js';
 import { render } from 'vitest-browser-svelte';
 import {
 	ImageStatus,
@@ -717,8 +718,30 @@ describe('KeyboardForm.svelte', () => {
 			await userEvent.upload(fileInput(), [png('a.png')]);
 
 			await expect
-				.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+				.element(
+					page.getByRole('alert').filter({ hasText: "That photo wasn't added. Add it again." })
+				)
 				.toBeInTheDocument();
+		});
+
+		it('uploads the rest of a pick past a photo that fails, and says which failed', async () => {
+			const onImageUpload = vi.fn(async (file: File) => {
+				if (file.name === 'b.png') throw new ImageTooLargeError();
+			});
+			await renderForm({ initial: keyboard, onImageUpload });
+			const [a, b, c] = [png('a.png'), png('b.png'), png('c.png')];
+
+			await userEvent.upload(fileInput(), [a, b, c]);
+
+			await expect
+				.element(
+					page.getByRole('alert').filter({
+						hasText:
+							"1 of 3 photos wasn't added. It's too detailed to fit under 1.5 MB. Add a different one."
+					})
+				)
+				.toBeInTheDocument();
+			expect(onImageUpload.mock.calls).toEqual([[a], [b], [c]]);
 		});
 
 		it('says uploads are unavailable when kbdb refuses with a 429', async () => {

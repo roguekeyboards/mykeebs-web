@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { MAX_EDGE, prepareImage, UnsupportedImageError } from './image-resize';
+import { describe, expect, it, vi } from 'vitest';
+import { MAX_IMAGE_BYTES, UnsupportedImageError } from './image-errors';
+import { MAX_EDGE, prepareImage } from './image-resize';
 
 async function canvasFile(
 	width: number,
@@ -84,6 +85,43 @@ describe('prepareImage', () => {
 		expect(alphaAt(2, 5)).toBe(255);
 		expect(alphaAt(17, 5)).toBe(0);
 	});
+
+	const detail = (ctx: OffscreenCanvasRenderingContext2D) => {
+		const image = ctx.createImageData(ctx.canvas.width, ctx.canvas.height);
+		for (let i = 0; i < image.data.length; i += 8) {
+			const shade = (i * 2654435761) >>> 24;
+			const pixel = [shade, 255 - shade, (shade * 7) & 255, 255];
+			image.data.set([...pixel, ...pixel], i);
+		}
+		ctx.putImageData(image, 0, 0);
+	};
+
+	it('shrinks a photo too detailed to fit under the size cap at full size', async () => {
+		const prepared = await prepareImage(await canvasFile(MAX_EDGE, 1920, 'image/png', detail));
+
+		expect(prepared.size).toBeLessThanOrEqual(MAX_IMAGE_BYTES);
+		const { width } = await pixels(prepared);
+		expect(width).toBeLessThan(MAX_EDGE);
+	}, 30_000);
+
+	it('fails rather than shrinking a blank canvas when the browser refuses one', async () => {
+		const file = await canvasFile(MAX_EDGE, 1920, 'image/png', detail);
+		const getContext = OffscreenCanvas.prototype.getContext;
+		const real = function (this: OffscreenCanvas, ...args: unknown[]) {
+			return getContext.apply(this, args as Parameters<typeof getContext>);
+		} as typeof getContext;
+		const spy = vi
+			.spyOn(OffscreenCanvas.prototype, 'getContext')
+			.mockImplementation(real)
+			.mockImplementationOnce(real)
+			.mockReturnValueOnce(null);
+
+		try {
+			await expect(prepareImage(file)).rejects.toThrow('2d canvas unavailable');
+		} finally {
+			spy.mockRestore();
+		}
+	}, 30_000);
 
 	it('rejects a file the browser cannot decode', async () => {
 		const heic = new File(['not really an image'], 'IMG_0001.HEIC', { type: 'image/heic' });

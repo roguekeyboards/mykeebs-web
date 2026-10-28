@@ -7,6 +7,7 @@ import {
 	type KeycapKit,
 	type KeycapKitInput
 } from '@rogueserenity/kbdb-api-client';
+import { ImageTooLargeError } from '#lib/image-errors.js';
 import KeycapKitForm from './KeycapKitForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';
 
@@ -160,6 +161,24 @@ describe('KeycapKitForm.svelte image moderation', () => {
 
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Uploads unavailable, try again later.' }))
+			.toBeInTheDocument();
+	});
+
+	it('asks for a different photo when one is too large to upload', async () => {
+		await renderKit(kit, { onImageUpload: vi.fn().mockRejectedValue(new ImageTooLargeError()) });
+
+		await userEvent.upload(
+			page.elementLocator(document.querySelector('input[type="file"]')!),
+			new File(['png'], 'a.png', { type: 'image/png' })
+		);
+
+		await expect
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"That photo wasn't added. It's too detailed to fit under 1.5 MB. Add a different one."
+				})
+			)
 			.toBeInTheDocument();
 	});
 });

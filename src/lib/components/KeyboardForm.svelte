@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { isPending, uploadErrorMessage } from '#lib/image-moderation.js';
+	import { isPending } from '#lib/image-moderation.js';
+	import { pickedUploadMessage, uploadEach } from '#lib/upload.js';
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
@@ -192,10 +193,9 @@
 		imageError = null;
 		imageBusy = true;
 		try {
-			for (const file of files) await onImageUpload(file);
-			imageError = notice;
-		} catch (err) {
-			imageError = uploadErrorMessage(err);
+			const failure = await uploadEach(files, onImageUpload);
+			imageError =
+				[notice, failure && pickedUploadMessage(failure)].filter(Boolean).join(' ') || null;
 		} finally {
 			imageBusy = false;
 			if (fileInput) fileInput.value = '';

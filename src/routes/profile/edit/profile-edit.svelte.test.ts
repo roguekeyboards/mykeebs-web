@@ -6,7 +6,8 @@ import { goto } from '$app/navigation';
 import { profilesApi } from '#lib/api/client.js';
 import { refreshProfile, saveProfile } from '#lib/profile/profile.svelte.js';
 import ProfileEditPage from './+page.svelte';
-import { prepareImage, UnsupportedImageError } from '#lib/image-resize.js';
+import { MAX_IMAGE_BYTES, UnsupportedImageError } from '#lib/image-errors.js';
+import { prepareImage } from '#lib/image-resize.js';
 import { deleteAccount } from '#lib/account/delete-account.js';
 
 vi.mock('#lib/image-resize.js', async (importOriginal) => ({
@@ -42,7 +43,7 @@ const profileState = vi.hoisted(() => ({ status: 'ready', data: undefined as unk
 vi.mock('#lib/profile/profile.svelte.js', () => ({
 	profile: profileState,
 	saveProfile: vi.fn(),
-	refreshProfile: vi.fn()
+	refreshProfile: vi.fn(async () => {})
 }));
 vi.mock('#lib/api/client.js', () => ({
 	profilesApi: { setProfileImage: vi.fn(), deleteProfileImage: vi.fn() }
@@ -328,9 +329,48 @@ describe('Profile edit page photo', () => {
 		await userEvent.upload(fileInput(), new File(['heic'], 'me.heic', { type: 'image/heic' }));
 
 		await expect
-			.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"That photo wasn't added. It's in a format this browser can't read. Add a different one."
+				})
+			)
 			.toBeInTheDocument();
 		expect(api.setProfileImage).not.toHaveBeenCalled();
+	});
+
+	it('says so, without asking for an upload URL, when the image is too large', async () => {
+		vi.mocked(prepareImage).mockResolvedValueOnce(
+			new File([new Uint8Array(MAX_IMAGE_BYTES + 1)], 'me.webp', { type: 'image/webp' })
+		);
+		await render(ProfileEditPage);
+
+		await userEvent.upload(fileInput(), png);
+
+		await expect
+			.element(
+				page.getByRole('alert').filter({
+					hasText:
+						"That photo wasn't added. It's too detailed to fit under 1.5 MB. Add a different one."
+				})
+			)
+			.toBeInTheDocument();
+		expect(api.setProfileImage).not.toHaveBeenCalled();
+	});
+
+	it("doesn't call an uploaded photo failed when refreshing the profile fails", async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response(null, { status: 200 }))
+		);
+		api.setProfileImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/me' } as never);
+		vi.mocked(refreshProfile).mockRejectedValueOnce(new Error('network'));
+		await render(ProfileEditPage);
+
+		await userEvent.upload(fileInput(), png);
+
+		await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalled());
+		await expect.element(page.getByText("wasn't added", { exact: false })).not.toBeInTheDocument();
 	});
 
 	it('says so when the upload fails', async () => {
@@ -344,7 +384,9 @@ describe('Profile edit page photo', () => {
 		await userEvent.upload(fileInput(), png);
 
 		await expect
-			.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+			.element(
+				page.getByRole('alert').filter({ hasText: "That photo wasn't added. Add it again." })
+			)
 			.toBeInTheDocument();
 		expect(refreshProfile).not.toHaveBeenCalled();
 	});

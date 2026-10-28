@@ -33,7 +33,3 @@ export function isUploadsUnavailable(err: unknown): boolean {
 		err instanceof ResponseError && err.response.status === 429 && isProblemResponse(err.response)
 	);
 }
-
-export function uploadErrorMessage(err: unknown): string {
-	return isUploadsUnavailable(err) ? UPLOADS_UNAVAILABLE : 'Could not upload that image.';
-}

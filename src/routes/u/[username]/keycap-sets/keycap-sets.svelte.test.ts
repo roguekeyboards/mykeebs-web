@@ -410,6 +410,34 @@ describe('keycap sets page', () => {
 			vi.unstubAllGlobals();
 		});
 
+		it("drops the create's photo message once another photo is picked", async () => {
+			const fetchMock = vi.fn(async () => new Response(null, { status: 403 }));
+			vi.stubGlobal('fetch', fetchMock);
+			api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+			api.getKeycapSet.mockResolvedValue({
+				...olivia,
+				kits: [...olivia.kits!, { kitId: 'spacebars', name: 'Spacebars' }]
+			});
+
+			await addKitWithPhoto();
+			const created = dialog()
+				.getByRole('alert')
+				.filter({ hasText: "The kit was added, but its photo wasn't." });
+			await expect.element(created).toBeInTheDocument();
+
+			fetchMock.mockImplementation(async () => new Response(null, { status: 200 }));
+			await userEvent.upload(
+				page.elementLocator(
+					document.querySelector('[role="dialog"]:last-of-type input[type="file"]')!
+				),
+				new File(['png'], 'kit-2.png', { type: 'image/png' })
+			);
+
+			await vi.waitFor(() => expect(api.setKeycapKitImage).toHaveBeenCalledTimes(2));
+			await expect.element(created).not.toBeInTheDocument();
+			vi.unstubAllGlobals();
+		});
+
 		it("closes the kit with a notice when its photo fails and the set can't be reloaded", async () => {
 			vi.stubGlobal(
 				'fetch',
@@ -471,6 +499,33 @@ describe('keycap sets page', () => {
 			await page.getByRole('button', { name: 'Close' }).last().click();
 
 			await expect.element(notice).not.toBeInTheDocument();
+		});
+
+		it("doesn't call an uploaded kit photo failed when reloading the set fails", async () => {
+			const fetchMock = vi.fn(async () => new Response(null, { status: 403 }));
+			vi.stubGlobal('fetch', fetchMock);
+			api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+			api.getKeycapSet.mockResolvedValue({
+				...olivia,
+				kits: [...olivia.kits!, { kitId: 'spacebars', name: 'Spacebars' }]
+			});
+			await addKitWithPhoto();
+			await expect.element(dialog().getByRole('heading', { name: 'Edit kit' })).toBeInTheDocument();
+
+			fetchMock.mockImplementation(async () => new Response(null, { status: 200 }));
+			api.getKeycapSet.mockRejectedValue(new Error('network'));
+			await userEvent.upload(
+				page.elementLocator(
+					document.querySelector('[role="dialog"]:last-of-type input[type="file"]')!
+				),
+				new File(['png'], 'kit-2.png', { type: 'image/png' })
+			);
+
+			await vi.waitFor(() => expect(api.setKeycapKitImage).toHaveBeenCalledTimes(2));
+			await expect
+				.element(dialog().getByText("wasn't added", { exact: false }))
+				.not.toBeInTheDocument();
+			vi.unstubAllGlobals();
 		});
 
 		it('adds a kit with a staged photo and uploads it', async () => {
