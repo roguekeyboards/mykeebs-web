@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import type { Build, Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
 import type { KeyboardBuildGroup } from './build-groups';
 import { buildFields, keyboardFields, keycapSetFields, switchFields } from './collection-fields';
 import type { SearchField } from './collection-filter';
@@ -76,27 +76,33 @@ describe('collection fields', () => {
 		});
 	});
 
-	it("reads a build's keyboard, switches and keycap sets", () => {
+	it("reads a build's keyboard, and the switches and keycap sets of all its builds", () => {
+		const current: Build = {
+			id: 'b-2',
+			keyboard: { id: 'kb-1', brand: 'NyxKeys', name: 'Athena' },
+			switches: [
+				{ _switch: { id: 'sw-1', brand: 'Gateron', name: 'Oil King', type: 'Linear' }, count: 70 }
+			],
+			keycapSets: [{ id: 'set-1', brand: 'GMK', name: 'Olivia', kits: [] }]
+		};
+		const past: Build = {
+			id: 'b-1',
+			keyboard: current.keyboard,
+			switches: [
+				{ _switch: { id: 'sw-2', brand: 'HMX', name: 'Yogurt S', type: 'Linear' }, count: 68 }
+			]
+		};
 		const group: KeyboardBuildGroup = {
 			keyboardId: 'kb-1',
-			buildCount: 1,
-			mixedVisibility: false,
-			current: {
-				id: 'b-1',
-				keyboard: { id: 'kb-1', brand: 'NyxKeys', name: 'Athena' },
-				switches: [
-					{
-						_switch: { id: 'sw-1', brand: 'Gateron', name: 'Oil King', type: 'Linear' },
-						count: 70
-					}
-				],
-				keycapSets: [{ id: 'set-1', brand: 'GMK', name: 'Olivia', kits: [] }]
-			}
+			current,
+			builds: [current, past],
+			buildCount: 2,
+			mixedVisibility: false
 		};
 
 		expect(valuesByTag(buildFields, group)).toEqual({
 			keyboard: ['Athena'],
-			switches: ['Oil King'],
+			switches: ['Oil King', 'Yogurt S'],
 			keycaps: ['Olivia']
 		});
 	});

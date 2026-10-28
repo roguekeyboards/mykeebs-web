@@ -28,6 +28,7 @@ describe('groupByKeyboard', () => {
 			['kb-1', 'newer', 2],
 			['kb-2', 'other', 1]
 		]);
+		expect(groups[0].builds.map((b) => b.id)).toEqual(['newer', 'older']);
 	});
 
 	it('treats an undated build as older than any dated one', () => {

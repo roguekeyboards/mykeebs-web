@@ -3,6 +3,8 @@ import type { Build } from '@rogueserenity/kbdb-api-client';
 export type KeyboardBuildGroup = {
 	keyboardId: string;
 	current: Build;
+	// Every build of the keyboard, newest first, current included.
+	builds: Build[];
 	buildCount: number;
 	mixedVisibility: boolean;
 };
@@ -25,6 +27,7 @@ export function groupByKeyboard(builds: Build[]): KeyboardBuildGroup[] {
 		return {
 			keyboardId,
 			current,
+			builds: sorted,
 			buildCount: sorted.length,
 			mixedVisibility: sorted.some((build) => build.visibility !== current.visibility)
 		};

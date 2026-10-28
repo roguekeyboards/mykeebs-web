@@ -51,12 +51,14 @@ export const buildFields: SearchField<KeyboardBuildGroup>[] = [
 	},
 	{
 		tag: 'switches',
-		description: 'Switches in the build',
-		values: (group) => group.current.switches?.map((entry) => entry._switch.name) ?? []
+		description: 'Switches in any build of the keyboard',
+		values: (group) =>
+			group.builds.flatMap((build) => build.switches?.map((entry) => entry._switch.name) ?? [])
 	},
 	{
 		tag: 'keycaps',
-		description: 'Keycap sets on the build',
-		values: (group) => group.current.keycapSets?.map((set) => set.name) ?? []
+		description: 'Keycap sets on any build of the keyboard',
+		values: (group) =>
+			group.builds.flatMap((build) => build.keycapSets?.map((set) => set.name) ?? [])
 	}
 ];
