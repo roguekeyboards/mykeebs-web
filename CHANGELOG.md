@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.2...v0.2.0) (2026-10-28)
+
+
+### Features
+
+* **images:** fit uploads under kbdb's 1.5 MB cap and report failed photos per pick ([#117](https://github.com/rogueserenity/mykeebs-web/issues/117)) ([9dbd6be](https://github.com/rogueserenity/mykeebs-web/commit/9dbd6bec4bdd0e462499af73522608ac1a81ecfb))
+
 ## [0.1.2](https://github.com/rogueserenity/mykeebs-web/compare/v0.1.1...v0.1.2) (2026-10-26)
 
 
