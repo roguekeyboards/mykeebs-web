@@ -315,12 +315,12 @@ describe('ImageViewer.svelte motion', () => {
 		await page.getByRole('button', { name: 'Next photo' }).click();
 		await rerender({ ...props, src: 'https://img.example/2.png' });
 		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
-		expect(firstFrame(photo())?.transform).toContain('translate(24px, 0px)');
+		expect(firstFrame(photo())?.transform).toContain('translate(80px, 0px)');
 
 		await page.getByRole('button', { name: 'Previous photo' }).click();
 		await rerender({ ...props, src: 'https://img.example/1.png' });
 		await vi.waitFor(() => expect(transition(photo())).toBeDefined());
-		expect(firstFrame(photo())?.transform).toContain('translate(-24px, 0px)');
+		expect(firstFrame(photo())?.transform).toContain('translate(-80px, 0px)');
 	});
 });
 

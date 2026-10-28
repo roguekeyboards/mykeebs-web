@@ -331,7 +331,7 @@
 						: 'transform 0.15s ease-out'};"
 					draggable="false"
 					decoding="async"
-					in:fly={{ x: direction * 24, duration: motionDuration(120), easing: cubicOut }}
+					in:fly={{ x: direction * 80, duration: motionDuration(180), easing: cubicOut }}
 				/>
 			{/key}
 		</div>
