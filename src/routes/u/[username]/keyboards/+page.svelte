@@ -209,7 +209,7 @@
 	async function handleImageUpload(keyboardId: string, file: File) {
 		photoNotice = null;
 		await uploadKeyboardImage(keyboardId, file);
-		await refreshEditingKeyboard(keyboardId);
+		await refreshEditingKeyboard(keyboardId).catch(() => {});
 	}
 
 	async function handleImageRemove(keyboardId: string, imageId: string) {

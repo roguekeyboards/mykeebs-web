@@ -325,6 +325,29 @@ describe('keyboard builds page', () => {
 			);
 		});
 
+		it("doesn't call an uploaded photo failed when reloading the build fails", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 200 }))
+			);
+			builds.createBuildImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/b' } as never);
+			await renderPage();
+			await openCurrent();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			builds.getBuild.mockRejectedValue(new Error('network'));
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['photo'], 'build.jpg', { type: 'image/jpeg' })
+			);
+
+			await vi.waitFor(() => expect(builds.getBuild).toHaveBeenCalled());
+			await expect
+				.element(dialog().getByText("wasn't added", { exact: false }))
+				.not.toBeInTheDocument();
+			await expect.element(dialog().getByRole('button', { name: '+ Add photo' })).toBeEnabled();
+		});
+
 		it('says so when the save fails for another reason', async () => {
 			builds.updateBuild.mockRejectedValue(new Error('network'));
 			await renderPage();

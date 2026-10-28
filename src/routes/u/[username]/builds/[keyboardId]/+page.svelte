@@ -208,7 +208,7 @@
 
 	async function handleImageUpload(buildId: string, file: File) {
 		await uploadBuildImage(buildId, file);
-		await refreshEditingBuild(buildId);
+		await refreshEditingBuild(buildId).catch(() => {});
 	}
 
 	async function handleImageRemove(buildId: string, imageId: string) {
