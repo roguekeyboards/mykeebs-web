@@ -2,6 +2,7 @@ import { cdp, page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ImageViewer from './ImageViewer.svelte';
+import GalleryHarness from './test-support/GalleryHarness.svelte';
 import '../../routes/layout.css';
 
 const base = { open: true, src: 'https://img.example/1.png', alt: 'Neo65 Cu', onClose: () => {} };
@@ -311,48 +312,81 @@ describe('ImageViewer.svelte motion', () => {
 		expect(transition(dialog)?.effect!.getTiming().duration).toBe(120);
 	});
 
-	it('slides the next photo in from the right and the previous from the left', async () => {
-		const props = { ...base, onPrev: () => {}, onNext: () => {} };
-		const { rerender } = await render(ImageViewer, props);
-		expect(slide().getAnimations()).toEqual([]);
+	async function renderGallery(props: { stepping?: boolean; stuck?: boolean } = {}) {
+		const photos = [await largeImage(), await largeImage()];
+		await render(GalleryHarness, { photos, ...props });
+		await vi.waitFor(() => expect(photo().complete && photo().naturalWidth > 0).toBe(true));
+	}
+
+	// The harness's own buttons sit under the viewer, so they're clicked directly.
+	const harnessButton = (name: string) =>
+		page.getByRole('button', { name }).element() as HTMLButtonElement;
+
+	it('slides the next photo in from the right and the previous from the left, once loaded', async () => {
+		await renderGallery();
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
-		await rerender({ ...props, src: 'https://img.example/2.png' });
+		expect(slide().style.opacity).toBe('0');
+		expect(slide().getAnimations()).toEqual([]);
 		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
-		expect(firstFrame(slide())?.transform).toContain('translate(80px, 0px)');
+		expect(firstFrame(slide())?.transform).toBe('translateX(80px)');
+		expect(slide().style.opacity).toBe('');
 
 		await page.getByRole('button', { name: 'Previous photo' }).click();
-		await rerender({ ...props, src: 'https://img.example/1.png' });
 		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
-		expect(firstFrame(slide())?.transform).toContain('translate(-80px, 0px)');
+		expect(firstFrame(slide())?.transform).toBe('translateX(-80px)');
 	});
 
-	it("doesn't slide when the photo changes without a step, e.g. a refreshed url", async () => {
-		const props = { ...base, onPrev: () => {}, onNext: () => {} };
-		const { rerender } = await render(ImageViewer, props);
-		await page.getByRole('button', { name: 'Next photo' }).click();
-		await rerender({ ...props, src: 'https://img.example/2.png' });
-		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+	it('updates a refreshed url in place, keeping the zoom, with no slide', async () => {
+		await renderGallery();
+		await userEvent.keyboard('+');
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
+		const before = photo();
 
-		await rerender({ ...props, src: 'https://img.example/2.png?refreshed' });
+		harnessButton('Refresh url').click();
+		await vi.waitFor(() => expect(photo().getAttribute('src')).toContain('#refreshed'));
 		await frames(3);
 
+		expect(photo()).toBe(before);
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
 		expect(transition(slide())).toBeUndefined();
 	});
 
 	it('steps from a zoomed photo to the next one at 100%, without fighting the zoom', async () => {
-		const props = { ...base, onPrev: () => {}, onNext: () => {} };
-		const { rerender } = await render(ImageViewer, props);
+		await renderGallery();
 		await userEvent.keyboard('++');
 		await expect.element(zoomLevel()).toHaveTextContent('200%');
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
-		await rerender({ ...props, src: 'https://img.example/2.png' });
-		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
 
-		await expect.element(zoomLevel()).toHaveTextContent('100%');
 		expect(photo().style.transform).toBe('translate(0px, 0px) scale(1)');
+		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		await expect.element(zoomLevel()).toHaveTextContent('100%');
 		expect(photo().getAnimations()).toEqual([]);
+	});
+
+	it("doesn't slide or hide a photo that changes without a step", async () => {
+		await renderGallery({ stepping: false });
+		await userEvent.keyboard('{ArrowRight}');
+
+		harnessButton('Change photo').click();
+		await frames(3);
+
+		expect(slide().style.opacity).toBe('');
+		expect(transition(slide())).toBeUndefined();
+	});
+
+	it("doesn't hide the photo, or slide a later refresh, when a step goes nowhere", async () => {
+		await renderGallery({ stuck: true });
+
+		await page.getByRole('button', { name: 'Next photo' }).click();
+		expect(slide().style.opacity).toBe('');
+		harnessButton('Refresh url').click();
+		await vi.waitFor(() => expect(photo().getAttribute('src')).toContain('#refreshed'));
+		await vi.waitFor(() => expect(photo().complete).toBe(true));
+		await frames(3);
+
+		expect(transition(slide())).toBeUndefined();
 	});
 
 	it('appears and steps without motion when reduced motion is preferred', async () => {
@@ -362,15 +396,17 @@ describe('ImageViewer.svelte motion', () => {
 		onTestFinished(async () => {
 			await cdp().send('Emulation.setEmulatedMedia', { features: [] });
 		});
-		const props = { ...base, onPrev: () => {}, onNext: () => {} };
-		const { rerender } = await render(ImageViewer, { ...props, open: false });
+		const { rerender } = await render(ImageViewer, { ...base, open: false });
+		await rerender({ ...base, open: true });
+		await frames(3);
+		expect(transition(page.getByRole('dialog').element())).toBeUndefined();
+		document.body.replaceChildren();
 
-		await rerender({ ...props, open: true });
+		await renderGallery();
 		await page.getByRole('button', { name: 'Next photo' }).click();
-		await rerender({ ...props, src: 'https://img.example/2.png' });
 		await frames(3);
 
-		expect(transition(page.getByRole('dialog').element())).toBeUndefined();
+		expect(slide().style.opacity).toBe('');
 		expect(transition(slide())).toBeUndefined();
 		expect(photo().style.transition).toBe('none');
 	});

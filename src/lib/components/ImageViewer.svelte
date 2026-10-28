@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight, X } from '@lucide/svelte';
 	import { SvelteMap } from 'svelte/reactivity';
-	import { fade, fly } from 'svelte/transition';
-	import { cubicOut } from 'svelte/easing';
+	import { fade } from 'svelte/transition';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { clampOffset } from '#lib/pan.js';
 	let {
@@ -41,22 +40,31 @@
 	let dragOriginX = 0;
 	let dragOriginY = 0;
 
-	// Which side the next photo slides in from: 1 for the right (Next), -1 for the left, 0 for a
-	// src change that isn't a step (e.g. a refreshed url), which appears without motion.
-	let slideFrom: 1 | -1 | 0 = 0;
+	// The side a stepped-to photo slides in from: 1 for the right (Next), -1 for the left. It stays
+	// hidden until it has loaded, so the slide moves the photo rather than an empty box.
+	let pendingSlide = $state<1 | -1 | 0>(0);
+	let steppedFrom = $state(-1);
+	let slide = $state<HTMLDivElement | null>(null);
+	const waitingToSlide = $derived(pendingSlide !== 0 && index !== steppedFrom);
 
 	function step(delta: 1 | -1) {
-		resetZoom();
-		slideFrom = delta;
-		if (delta === 1) onNext?.();
-		else onPrev?.();
+		const go = delta === 1 ? onNext : onPrev;
+		if (!go) return;
+		pendingSlide = prefersReducedMotion.current ? 0 : delta;
+		steppedFrom = index;
+		go();
 	}
 
-	function slideIn(node: Element) {
-		const from = slideFrom;
-		slideFrom = 0;
-		const duration = from === 0 || prefersReducedMotion.current ? 0 : 180;
-		return fly(node, { x: from * 80, duration, easing: cubicOut });
+	function slideIn() {
+		if (!waitingToSlide || !slide) return;
+		slide.animate(
+			[
+				{ transform: `translateX(${pendingSlide * 80}px)`, opacity: 0 },
+				{ transform: 'none', opacity: 1 }
+			],
+			{ duration: 180, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }
+		);
+		pendingSlide = 0;
 	}
 
 	const SWIPE_DISTANCE = 50;
@@ -64,9 +72,10 @@
 	let swipeStart: { x: number; y: number } | null = null;
 	let pinchStart: { distance: number; scale: number } | null = null;
 
-	$effect(() => {
-		// Switching images resets zoom.
-		void src;
+	// Before render, so a new photo never shows the last one's zoom. A refreshed url for the same
+	// photo keeps it.
+	$effect.pre(() => {
+		void index;
 		if (open) {
 			scale = 1;
 			offsetX = 0;
@@ -75,6 +84,8 @@
 			swipeStart = null;
 			pinchStart = null;
 			dragging = false;
+		} else {
+			pendingSlide = 0;
 		}
 	});
 
@@ -226,8 +237,8 @@
 			event.preventDefault();
 			const panStep = event.shiftKey ? PAN_STEP_LARGE : PAN_STEP;
 			pan(panVector[0] * panStep, panVector[1] * panStep);
-		} else if (event.key === 'ArrowLeft' && onPrev) step(-1);
-		else if (event.key === 'ArrowRight' && onNext) step(1);
+		} else if (event.key === 'ArrowLeft') step(-1);
+		else if (event.key === 'ArrowRight') step(1);
 		else if (event.key === '+' || event.key === '=') zoomIn();
 		else if (event.key === '-' || event.key === '_') zoomOut();
 		else if (event.key === '0') resetZoom();
@@ -328,8 +339,13 @@
 			onpointercancel={handlePointerUp}
 			role="presentation"
 		>
-			{#key src}
-				<div class="flex touch-none" data-testid="slide" in:slideIn>
+			{#key index}
+				<div
+					bind:this={slide}
+					class="flex touch-none"
+					style:opacity={waitingToSlide ? 0 : undefined}
+					data-testid="slide"
+				>
 					<img
 						bind:this={imageEl}
 						{src}
@@ -341,6 +357,8 @@
 							: 'transform 0.15s ease-out'};"
 						draggable="false"
 						decoding="async"
+						onload={slideIn}
+						onerror={slideIn}
 					/>
 				</div>
 			{/key}
