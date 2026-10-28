@@ -10,10 +10,15 @@ import {
 import { buildsApi, switchesApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import SwitchesPage from './+page.svelte';
+import { MAX_IMAGE_BYTES } from '#lib/image-errors.js';
 
 vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
-		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
+		new File(
+			[file.name === 'huge.png' ? new Uint8Array(MAX_IMAGE_BYTES + 1) : file],
+			file.name.replace(/\.\w+$/, '.webp'),
+			{ type: 'image/webp' }
+		)
 }));
 
 vi.mock('#lib/api/client.js', () => ({
@@ -212,6 +217,55 @@ describe('switches page', () => {
 						.filter({ hasText: "The switch was added, but its photo wasn't. Add it again." })
 				)
 				.toBeInTheDocument();
+		});
+
+		it('asks for a smaller photo, without requesting an upload, when it is over 1.5 MB', async () => {
+			api.createSwitch.mockResolvedValue({
+				id: 'sw-2',
+				brand: 'Gateron',
+				name: 'Oil King'
+			} as never);
+			await renderPage();
+
+			await fillNewSwitch();
+			await userEvent.upload(fileInput(), png('huge.png'));
+			await dialog().getByRole('button', { name: 'Add switch' }).click();
+
+			await expect
+				.element(
+					dialog().getByRole('alert').filter({
+						hasText:
+							"The switch was added, but its photo wasn't. It's too detailed to fit under 1.5 MB. Add a different one."
+					})
+				)
+				.toBeInTheDocument();
+			expect(api.setSwitchImage).not.toHaveBeenCalled();
+		});
+
+		it("drops the create's photo message once another photo is picked", async () => {
+			const fetchMock = vi.fn(async () => new Response(null, { status: 403 }));
+			vi.stubGlobal('fetch', fetchMock);
+			api.createSwitch.mockResolvedValue({
+				id: 'sw-2',
+				brand: 'Gateron',
+				name: 'Oil King'
+			} as never);
+			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/s' } as never);
+			await renderPage();
+
+			await fillNewSwitch();
+			await userEvent.upload(fileInput(), png('oil-king.png'));
+			await dialog().getByRole('button', { name: 'Add switch' }).click();
+			const created = dialog()
+				.getByRole('alert')
+				.filter({ hasText: "The switch was added, but its photo wasn't." });
+			await expect.element(created).toBeInTheDocument();
+
+			fetchMock.mockImplementation(async () => new Response(null, { status: 200 }));
+			await userEvent.upload(fileInput(), png('oil-king-2.png'));
+
+			await vi.waitFor(() => expect(api.setSwitchImage).toHaveBeenCalledTimes(2));
+			await expect.element(created).not.toBeInTheDocument();
 		});
 
 		it('closes and says so when uploads are unavailable', async () => {

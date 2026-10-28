@@ -6,7 +6,8 @@ import { goto } from '$app/navigation';
 import { profilesApi } from '#lib/api/client.js';
 import { refreshProfile, saveProfile } from '#lib/profile/profile.svelte.js';
 import ProfileEditPage from './+page.svelte';
-import { prepareImage, UnsupportedImageError } from '#lib/image-resize.js';
+import { MAX_IMAGE_BYTES, UnsupportedImageError } from '#lib/image-errors.js';
+import { prepareImage } from '#lib/image-resize.js';
 import { deleteAccount } from '#lib/account/delete-account.js';
 
 vi.mock('#lib/image-resize.js', async (importOriginal) => ({
@@ -328,7 +329,25 @@ describe('Profile edit page photo', () => {
 		await userEvent.upload(fileInput(), new File(['heic'], 'me.heic', { type: 'image/heic' }));
 
 		await expect
-			.element(page.getByRole('alert').filter({ hasText: 'Could not upload that image.' }))
+			.element(
+				page.getByRole('alert').filter({
+					hasText: "This browser can't read that image format. Try a JPEG, PNG or WebP."
+				})
+			)
+			.toBeInTheDocument();
+		expect(api.setProfileImage).not.toHaveBeenCalled();
+	});
+
+	it('says so, without asking for an upload URL, when the image is too large', async () => {
+		vi.mocked(prepareImage).mockResolvedValueOnce(
+			new File([new Uint8Array(MAX_IMAGE_BYTES + 1)], 'me.webp', { type: 'image/webp' })
+		);
+		await render(ProfileEditPage);
+
+		await userEvent.upload(fileInput(), png);
+
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: 'too detailed to fit under 1.5 MB' }))
 			.toBeInTheDocument();
 		expect(api.setProfileImage).not.toHaveBeenCalled();
 	});

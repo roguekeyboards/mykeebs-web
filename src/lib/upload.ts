@@ -1,4 +1,10 @@
 import type { ImageUploadRequest } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageTooLargeError,
+	MAX_IMAGE_BYTES,
+	MAX_IMAGE_SIZE,
+	UnsupportedImageError
+} from './image-errors';
 import { isUploadsUnavailable, UPLOADS_UNAVAILABLE } from './image-moderation';
 import { prepareImage } from './image-resize';
 
@@ -17,64 +23,99 @@ export async function uploadImage(
 	prepare: (file: File) => Promise<File> = prepareImage
 ): Promise<void> {
 	const image = await prepare(file);
+	if (image.size > MAX_IMAGE_BYTES) throw new ImageTooLargeError();
 	const { uploadUrl } = await requestUpload({ contentType: image.type, sizeBytes: image.size });
 	await uploadToSignedUrl(uploadUrl, image);
 }
 
-export type StagedUploadFailure = { failed: number; total: number; unavailable: boolean };
+export type PhotoUploadFailure = {
+	failed: number;
+	tooLarge: number;
+	unsupported: number;
+	total: number;
+	unavailable: boolean;
+};
 
-// For photos picked before their item existed: the item is already saved, so a
-// failure here is reported, not thrown. After a 429 every remaining upload
-// would be refused too, so they aren't attempted.
-export async function uploadStaged(
+// Each photo is uploaded on its own, so one failure doesn't stop the rest.
+// After a 429 every remaining upload would be refused too, so they aren't attempted.
+export async function uploadEach(
 	files: File[],
 	upload: (file: File) => Promise<void>
-): Promise<StagedUploadFailure | null> {
-	let failed = 0;
+): Promise<PhotoUploadFailure | null> {
+	const failure = { failed: 0, tooLarge: 0, unsupported: 0, total: files.length };
 	for (const [index, file] of files.entries()) {
 		try {
 			await upload(file);
 		} catch (err) {
 			if (isUploadsUnavailable(err)) {
-				return { failed: failed + files.length - index, total: files.length, unavailable: true };
+				return { ...failure, failed: failure.failed + files.length - index, unavailable: true };
 			}
-			failed++;
+			failure.failed++;
+			if (err instanceof ImageTooLargeError) failure.tooLarge++;
+			if (err instanceof UnsupportedImageError) failure.unsupported++;
 		}
 	}
-	return failed > 0 ? { failed, total: files.length, unavailable: false } : null;
+	return failure.failed > 0 ? { ...failure, unavailable: false } : null;
 }
 
-function missingPhotos({ failed, total }: StagedUploadFailure): string {
+function missingPhotos({ failed, total }: PhotoUploadFailure): string {
 	if (failed < total)
 		return `${failed} of its ${total} photos ${failed === 1 ? "wasn't" : "weren't"}`;
 	return total === 1 ? "its photo wasn't" : "its photos weren't";
 }
 
-function nextStep(noun: string, { failed, unavailable }: StagedUploadFailure, canReopen: boolean) {
-	if (unavailable) return UPLOADS_UNAVAILABLE;
+function nextStep(failure: PhotoUploadFailure, where = ''): string {
+	const { failed, tooLarge, unsupported, unavailable } = failure;
+	const subject = (count: number) => {
+		if (count === failed) return failed === 1 ? "It's" : "They're";
+		return count === 1 ? '1 was' : `${count} were`;
+	};
+	const reasons = [
+		tooLarge > 0 && `${subject(tooLarge)} too detailed to fit under ${MAX_IMAGE_SIZE}.`,
+		unsupported > 0 && `${subject(unsupported)} in a format this browser can't read.`
+	].filter(Boolean);
+	if (unavailable) return [...reasons, UPLOADS_UNAVAILABLE].join(' ');
+	const unusable = tooLarge + unsupported;
 	const them = failed === 1 ? 'it' : 'them';
-	return canReopen ? `Add ${them} again.` : `Add ${them} again by editing the ${noun}.`;
+	let action: string;
+	if (unusable === 0) action = `Add ${them} again${where}.`;
+	else if (unusable === failed)
+		action = `Add ${failed === 1 ? 'a different one' : 'different ones'}${where}.`;
+	else
+		action = `Add ${them} again${where}, with a different photo for ${unusable === 1 ? 'that one' : 'those'}.`;
+	return [...reasons, action].join(' ');
+}
+
+// For photos picked on an item being edited, which upload straight away.
+export function pickedUploadMessage(failure: PhotoUploadFailure): string {
+	const { failed, total } = failure;
+	let missing: string;
+	if (total === 1) missing = "That photo wasn't added.";
+	else if (failed === total) missing = "Those photos weren't added.";
+	else missing = `${failed} of ${total} photos ${failed === 1 ? "wasn't" : "weren't"} added.`;
+	return `${missing} ${nextStep(failure)}`;
 }
 
 export function stagedUploadMessage(
 	noun: string,
-	failure: StagedUploadFailure,
+	failure: PhotoUploadFailure,
 	canReopen = true
 ): string {
-	return `The ${noun} was added, but ${missingPhotos(failure)}. ${nextStep(noun, failure, canReopen)}`;
+	const where = canReopen ? '' : ` by editing the ${noun}`;
+	return `The ${noun} was added, but ${missingPhotos(failure)}. ${nextStep(failure, where)}`;
 }
 
 // For a create that already reports another failure, so the photos follow on from it.
-export function stagedUploadFollowUp(noun: string, failure: StagedUploadFailure): string {
+export function stagedUploadFollowUp(failure: PhotoUploadFailure): string {
 	const missing = missingPhotos(failure);
-	return `${missing.charAt(0).toUpperCase()}${missing.slice(1)} added either. ${nextStep(noun, failure, true)}`;
+	return `${missing.charAt(0).toUpperCase()}${missing.slice(1)} added either. ${nextStep(failure)}`;
 }
 
 // After an ordinary failure the new item reopens for editing so the photos can
 // be added again; after a 429 retrying won't help, so the page closes with a notice.
 export function stagedUploadOutcome(
 	noun: string,
-	failure: StagedUploadFailure | null,
+	failure: PhotoUploadFailure | null,
 	canReopen: boolean
 ): { reopen: boolean; message: string | null } {
 	if (!failure) return { reopen: false, message: null };

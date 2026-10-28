@@ -9,6 +9,7 @@ import {
 	uploadErrorMessage,
 	viewableImages
 } from './image-moderation';
+import { ImageTooLargeError, UnsupportedImageError } from './image-errors';
 
 describe('viewableImages', () => {
 	it('drops rejected images, which have no url, and keeps order', () => {
@@ -94,6 +95,15 @@ describe('uploadErrorMessage', () => {
 
 	it("doesn't mistake API Gateway's throttle 429 for the upload cap", () => {
 		expect(uploadErrorMessage(responseError(429))).toBe('Could not upload that image.');
+	});
+
+	it("explains an image that can't be uploaded at all", () => {
+		expect(uploadErrorMessage(new UnsupportedImageError())).toBe(
+			"This browser can't read that image format. Try a JPEG, PNG or WebP."
+		);
+		expect(uploadErrorMessage(new ImageTooLargeError())).toBe(
+			'This photo is too detailed to fit under 1.5 MB, even shrunk. Try a different one.'
+		);
 	});
 
 	it('is generic for anything else', () => {

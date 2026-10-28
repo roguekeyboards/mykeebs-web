@@ -5,7 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { buildsApi } from '#lib/api/client.js';
 	import { fetchAllPages } from '#lib/pagination.js';
-	import { stagedUploadMessage, uploadImage, uploadStaged } from '#lib/upload.js';
+	import { stagedUploadMessage, uploadImage, uploadEach } from '#lib/upload.js';
 	import { primaryImageUrl } from '#lib/image-moderation.js';
 	import PageNotice from '#lib/components/PageNotice.svelte';
 	import { groupByKeyboard, type KeyboardBuildGroup } from '#lib/build-groups.js';
@@ -76,7 +76,7 @@
 		saveError = null;
 		try {
 			const build = await buildsApi.createBuild({ userId, buildInput: input });
-			const photoFailure = await uploadStaged(stagedImages ?? [], (file) =>
+			const photoFailure = await uploadEach(stagedImages ?? [], (file) =>
 				uploadBuildImage(build.id, file)
 			);
 			await grid?.refresh().catch(() => {});
