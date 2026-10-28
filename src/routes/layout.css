@@ -30,15 +30,17 @@ main {
 }
 
 /* Tapping controls quickly would otherwise double-tap-zoom; pinch-zoom still works. */
-a,
-button,
-input,
-select,
-textarea,
-label,
-summary,
-[role='button'] {
-	touch-action: manipulation;
+@layer base {
+	a,
+	button,
+	input,
+	select,
+	textarea,
+	label,
+	summary,
+	[role='button'] {
+		touch-action: manipulation;
+	}
 }
 
 ::selection {

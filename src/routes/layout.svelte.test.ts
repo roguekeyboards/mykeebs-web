@@ -63,6 +63,14 @@ describe('touch-action', () => {
 		}
 	);
 
+	it('gives way to a touch utility', () => {
+		const button = document.createElement('button');
+		button.className = 'touch-none';
+		document.body.append(button);
+
+		expect(getComputedStyle(button).touchAction).toBe('none');
+	});
+
 	it('leaves pinch-zoom on the page', () => {
 		expect(getComputedStyle(document.body).touchAction).toBe('auto');
 	});
