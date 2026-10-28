@@ -1,7 +1,8 @@
-import { page, userEvent } from 'vitest/browser';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { cdp, page, userEvent } from 'vitest/browser';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ImageViewer from './ImageViewer.svelte';
+import '../../routes/layout.css';
 
 const base = { open: true, src: 'https://img.example/1.png', alt: 'Neo65 Cu', onClose: () => {} };
 
@@ -32,6 +33,149 @@ describe('ImageViewer.svelte arrows', () => {
 		await expect
 			.element(page.getByRole('button', { name: /^(Previous|Next) / }))
 			.not.toBeInTheDocument();
+	});
+});
+
+describe('ImageViewer.svelte position', () => {
+	it('shows a pip per photo with the current one filled, and announces the position', async () => {
+		await render(ImageViewer, { ...base, index: 2, count: 4, onPrev: () => {}, onNext: () => {} });
+
+		const pips = [...page.getByTestId('pips').element().children];
+		expect(pips.map((pip) => pip.classList.contains('bg-white'))).toEqual([
+			false,
+			false,
+			true,
+			false
+		]);
+		expect(page.getByTestId('pips').element().getAttribute('aria-hidden')).toBe('true');
+		await expect.element(page.getByText('Photo 3 of 4')).toBeInTheDocument();
+	});
+
+	it('names the position after what is being browsed', async () => {
+		await render(ImageViewer, { ...base, itemLabel: 'kit', index: 1, count: 3 });
+
+		await expect.element(page.getByText('Kit 2 of 3')).toBeInTheDocument();
+	});
+
+	it('shows no pips for a single photo', async () => {
+		await render(ImageViewer, base);
+
+		await expect.element(page.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+		await expect.element(page.getByTestId('pips')).not.toBeInTheDocument();
+		await expect.element(page.getByText(/of 1$/)).not.toBeInTheDocument();
+	});
+});
+
+describe('ImageViewer.svelte touch', () => {
+	beforeEach(async () => {
+		await cdp().send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
+	});
+
+	afterEach(async () => {
+		await cdp().send('Emulation.setTouchEmulationEnabled', { enabled: false });
+	});
+
+	// Real touches through the browser, in the test iframe's (scaled) coordinates, as offsets
+	// from the middle of the viewer.
+	function touchPoints(points: [number, number][]) {
+		const frame = window.frameElement!.getBoundingClientRect();
+		const k = frame.width / window.innerWidth;
+		return points.map(([dx, dy], id) => ({
+			x: frame.x + (window.innerWidth / 2 + dx) * k,
+			y: frame.y + (window.innerHeight / 2 + dy) * k,
+			id
+		}));
+	}
+
+	async function gesture(...steps: [number, number][][]) {
+		const [first, ...rest] = steps;
+		await cdp().send('Input.dispatchTouchEvent', {
+			type: 'touchStart',
+			touchPoints: touchPoints(first)
+		});
+		for (const step of rest) {
+			await cdp().send('Input.dispatchTouchEvent', {
+				type: 'touchMove',
+				touchPoints: touchPoints(step)
+			});
+		}
+		await cdp().send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	}
+
+	const zoomLevel = () => page.getByRole('button', { name: 'Reset zoom' });
+
+	it('steps to the next photo on a swipe left and the previous on a swipe right', async () => {
+		const onPrev = vi.fn();
+		const onNext = vi.fn();
+		await render(ImageViewer, { ...base, onPrev, onNext });
+
+		await gesture([[60, 0]], [[-60, 5]]);
+		await vi.waitFor(() => expect(onNext).toHaveBeenCalledOnce());
+		await gesture([[-60, 0]], [[60, -5]]);
+		await vi.waitFor(() => expect(onPrev).toHaveBeenCalledOnce());
+		expect(onNext).toHaveBeenCalledOnce();
+	});
+
+	it('ignores a short or mostly vertical swipe', async () => {
+		const onPrev = vi.fn();
+		const onNext = vi.fn();
+		await render(ImageViewer, { ...base, onPrev, onNext });
+
+		await gesture([[20, 0]], [[-20, 0]]);
+		await gesture([[0, -80]], [[-60, 80]]);
+		await expect.element(page.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+
+		expect(onPrev).not.toHaveBeenCalled();
+		expect(onNext).not.toHaveBeenCalled();
+	});
+
+	it('zooms with a pinch, back to 100% when pinched closed', async () => {
+		await render(ImageViewer, base);
+
+		await gesture(
+			[
+				[-50, 0],
+				[50, 0]
+			],
+			[
+				[-100, 0],
+				[100, 0]
+			]
+		);
+		await expect.element(zoomLevel()).toHaveTextContent('200%');
+
+		await gesture(
+			[
+				[-100, 0],
+				[100, 0]
+			],
+			[
+				[-20, 0],
+				[20, 0]
+			]
+		);
+		await expect.element(zoomLevel()).toHaveTextContent('100%');
+	});
+
+	it('moves a zoomed photo with one finger instead of changing photo', async () => {
+		const onNext = vi.fn();
+		await render(ImageViewer, { ...base, onPrev: () => {}, onNext });
+		await userEvent.keyboard('+');
+		await expect.element(zoomLevel()).toHaveTextContent('150%');
+
+		await gesture([[60, 0]], [[-60, 0]]);
+
+		const img = page.getByRole('img').element() as HTMLImageElement;
+		await vi.waitFor(() => expect(img.style.transform).toContain('translate(-120px, 0px)'));
+		expect(onNext).not.toHaveBeenCalled();
+	});
+
+	it('gives touch hints on a touch screen', async () => {
+		await render(ImageViewer, base);
+
+		await expect.element(page.getByText('Pinch to zoom')).toBeInTheDocument();
+		await userEvent.keyboard('+');
+		await expect.element(page.getByText('Drag to move')).toBeInTheDocument();
 	});
 });
 
@@ -113,10 +257,10 @@ describe('ImageViewer.svelte keyboard zoom and pan', () => {
 		await userEvent.keyboard('{ArrowRight}');
 		expect(onNext).toHaveBeenCalledOnce();
 
-		await userEvent.keyboard('+{ArrowRight}{ArrowDown}');
+		await userEvent.keyboard('+{ArrowRight}');
 
 		expect(onNext).toHaveBeenCalledOnce();
-		await vi.waitFor(() => expect(offset(img)).toEqual([-50, -50]));
+		await vi.waitFor(() => expect(offset(img)).toEqual([-50, 0]));
 		await expect.element(page.getByText('Arrow keys or drag to move')).toBeInTheDocument();
 	});
 

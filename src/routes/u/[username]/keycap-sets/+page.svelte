@@ -644,6 +644,8 @@
 		alt={kit.name}
 		onClose={() => (kitImageViewerOpen = false)}
 		itemLabel="kit"
+		index={modal.mode === 'view' ? (modal.set.kits ?? []).indexOf(kit) : 0}
+		count={modal.mode === 'view' ? (modal.set.kits?.length ?? 1) : 1}
 		onPrev={hasMultipleKits ? () => stepKit(-1) : undefined}
 		onNext={hasMultipleKits ? () => stepKit(1) : undefined}
 	/>

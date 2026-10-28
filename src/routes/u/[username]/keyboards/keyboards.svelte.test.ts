@@ -179,7 +179,7 @@ describe('keyboards page', () => {
 		await expect.element(cards().first()).toMatchTextContent('Manta');
 	});
 
-	it("steps through a keyboard's photos full size, wrapping at the ends", async () => {
+	it("steps through a keyboard's photos full size, wrapping at the ends and showing where it is", async () => {
 		await renderPage();
 		await openManta();
 
@@ -190,9 +190,11 @@ describe('keyboards page', () => {
 			.nth(1)
 			.click();
 		await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));
+		await expect.element(page.getByText('Photo 2 of 2')).toBeInTheDocument();
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
 		await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#1`));
+		await expect.element(page.getByText('Photo 1 of 2')).toBeInTheDocument();
 
 		await page.getByRole('button', { name: 'Previous photo' }).click();
 		await vi.waitFor(() => expect(shown()).toBe(`${PIXEL}#2`));

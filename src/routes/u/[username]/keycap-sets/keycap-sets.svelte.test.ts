@@ -344,7 +344,7 @@ describe('keycap sets page', () => {
 				.toBeInTheDocument();
 		});
 
-		it("names the full-size viewer's arrows for kits", async () => {
+		it("names the full-size viewer's arrows and position for kits", async () => {
 			const withPhotos: KeycapSet = {
 				...olivia,
 				kits: olivia.kits!.map((kit) => ({
@@ -362,6 +362,7 @@ describe('keycap sets page', () => {
 			await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
 
 			await expect.element(page.getByRole('button', { name: 'Next kit' })).toHaveLength(2);
+			await expect.element(page.getByText('Kit 1 of 3')).toBeInTheDocument();
 			await expect
 				.element(page.getByRole('button', { name: 'Next photo' }))
 				.not.toBeInTheDocument();
