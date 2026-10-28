@@ -37,8 +37,7 @@ main {
 	select,
 	textarea,
 	label,
-	summary,
-	[role='button'] {
+	summary {
 		touch-action: manipulation;
 	}
 }
