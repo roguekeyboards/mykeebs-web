@@ -16,7 +16,7 @@ describe('collection fields', () => {
 			name: 'Athena',
 			size: '65%',
 			layout: 'WK',
-			purchase: { orderStatus: 'Delivered' }
+			purchase: { vendor: 'NyxKeys', orderStatus: 'Delivered' }
 		};
 
 		expect(valuesByTag(keyboardFields, keyboard)).toEqual({
@@ -24,6 +24,7 @@ describe('collection fields', () => {
 			brand: ['NyxKeys'],
 			size: ['65%'],
 			layout: ['WK'],
+			vendor: ['NyxKeys'],
 			status: ['Delivered']
 		});
 	});
@@ -36,7 +37,7 @@ describe('collection fields', () => {
 			name: 'Oil King',
 			type: 'Linear',
 			material: { topHousing: 'PC', bottomHousing: 'Nylon', stem: 'POM' },
-			purchase: { orderStatus: 'Ordered' }
+			purchase: { vendor: 'Divinikey', orderStatus: 'Ordered' }
 		};
 
 		expect(valuesByTag(switchFields, sw)).toEqual({
@@ -48,6 +49,7 @@ describe('collection fields', () => {
 			top: ['PC'],
 			bottom: ['Nylon'],
 			stem: ['POM'],
+			vendor: ['Divinikey'],
 			status: ['Ordered']
 		});
 	});
@@ -61,8 +63,8 @@ describe('collection fields', () => {
 			material: 'DualShot ABS',
 			orderStatus: 'Shipped',
 			kits: [
-				{ kitId: 'base', name: 'Base' },
-				{ kitId: 'novs', name: 'Novelties' }
+				{ kitId: 'base', name: 'Base', purchase: { vendor: 'NovelKeys' } },
+				{ kitId: 'novs', name: 'Novelties', purchase: { vendor: 'Dixie Mech' } }
 			]
 		};
 
@@ -72,6 +74,7 @@ describe('collection fields', () => {
 			profile: ['Cherry'],
 			material: ['DualShot ABS'],
 			kit: ['Base', 'Novelties'],
+			vendor: ['NovelKeys', 'Dixie Mech'],
 			status: ['Shipped']
 		});
 	});

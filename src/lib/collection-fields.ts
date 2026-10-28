@@ -7,6 +7,7 @@ export const keyboardFields: SearchField<Keyboard>[] = [
 	{ tag: 'brand', description: 'Who makes the keyboard', values: (kb) => [kb.brand] },
 	{ tag: 'size', description: 'Size, e.g. 65%', values: (kb) => [kb.size] },
 	{ tag: 'layout', description: 'Layout, e.g. WK', values: (kb) => [kb.layout] },
+	{ tag: 'vendor', description: 'Where it was bought', values: (kb) => [kb.purchase?.vendor] },
 	{ tag: 'status', description: 'Order status', values: (kb) => [kb.purchase?.orderStatus] }
 ];
 
@@ -27,6 +28,7 @@ export const switchFields: SearchField<Switch>[] = [
 		values: (sw) => [sw.material?.bottomHousing]
 	},
 	{ tag: 'stem', description: 'Stem material', values: (sw) => [sw.material?.stem] },
+	{ tag: 'vendor', description: 'Where they were bought', values: (sw) => [sw.purchase?.vendor] },
 	{ tag: 'status', description: 'Order status', values: (sw) => [sw.purchase?.orderStatus] }
 ];
 
@@ -39,6 +41,11 @@ export const keycapSetFields: SearchField<KeycapSet>[] = [
 		tag: 'kit',
 		description: 'A kit in the set',
 		values: (set) => set.kits?.map((kit) => kit.name) ?? []
+	},
+	{
+		tag: 'vendor',
+		description: 'Where any kit was bought',
+		values: (set) => set.kits?.map((kit) => kit.purchase?.vendor) ?? []
 	},
 	{ tag: 'status', description: 'Order status', values: (set) => [set.orderStatus] }
 ];
