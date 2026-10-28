@@ -97,10 +97,8 @@ describe('switches page', () => {
 
 		await expect.element(page.getByRole('button', { name: /Aperol/ })).toMatchTextContent('Linear');
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).toBeInTheDocument();
-		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Visibility' }))
-			.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Price' })).toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Visibility' })).toBeInTheDocument();
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
@@ -110,7 +108,7 @@ describe('switches page', () => {
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
 		await expect.element(dialog().getByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-		await expect.element(page.getByRole('option', { name: 'Sort: Price' })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Price' })).not.toBeInTheDocument();
 	});
 
 	it('lets visitors sort by order and delivery dates', async () => {
@@ -132,10 +130,10 @@ describe('switches page', () => {
 		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
 		await expect.element(cards().first()).toMatchTextContent('Aperol');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Order date');
 		await expect.element(cards().first()).toMatchTextContent('Banana');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Delivery date');
 		await expect.element(cards().first()).toMatchTextContent('Aperol');
 	});
 

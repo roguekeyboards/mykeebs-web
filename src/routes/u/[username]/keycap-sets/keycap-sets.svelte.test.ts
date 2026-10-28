@@ -90,12 +90,8 @@ describe('keycap sets page', () => {
 
 	it('offers the owner cost and visibility sorts that visitors do not get', async () => {
 		await renderPage();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Total cost' }))
-			.toBeInTheDocument();
-		await expect
-			.element(page.getByRole('option', { name: 'Sort: Visibility' }))
-			.toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Total cost' })).toBeInTheDocument();
+		await expect.element(page.getByRole('option', { name: 'Visibility' })).toBeInTheDocument();
 	});
 
 	describe('as a visitor', () => {
@@ -112,7 +108,7 @@ describe('keycap sets page', () => {
 				.not.toBeInTheDocument();
 			await expect.element(page.getByRole('button', { name: '+ Add kit' })).not.toBeInTheDocument();
 			await expect
-				.element(page.getByRole('option', { name: 'Sort: Total cost' }))
+				.element(page.getByRole('option', { name: 'Total cost' }))
 				.not.toBeInTheDocument();
 		});
 	});
@@ -141,10 +137,10 @@ describe('keycap sets page', () => {
 		const cards = () => page.getByRole('button', { name: /Olivia|Botanical/ });
 		await expect.element(cards().first()).toMatchTextContent('Botanical');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Order date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Order date');
 		await expect.element(cards().first()).toMatchTextContent('Olivia');
 
-		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Sort: Delivery date');
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Delivery date');
 		await expect.element(cards().first()).toMatchTextContent('Botanical');
 	});
 
