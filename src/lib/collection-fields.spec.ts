@@ -20,6 +20,7 @@ describe('collection fields', () => {
 		};
 
 		expect(valuesByTag(keyboardFields, keyboard)).toEqual({
+			name: ['Athena'],
 			brand: ['NyxKeys'],
 			size: ['65%'],
 			layout: ['WK'],
@@ -38,6 +39,7 @@ describe('collection fields', () => {
 		};
 
 		expect(valuesByTag(switchFields, sw)).toEqual({
+			name: ['Oil King'],
 			brand: ['Gateron'],
 			manufacturer: ['Gateron'],
 			type: ['Linear'],
@@ -60,6 +62,7 @@ describe('collection fields', () => {
 		};
 
 		expect(valuesByTag(keycapSetFields, set)).toEqual({
+			name: ['Olivia'],
 			brand: ['GMK'],
 			profile: ['Cherry'],
 			material: ['DualShot ABS'],

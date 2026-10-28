@@ -3,6 +3,7 @@ import type { SearchField } from '#lib/collection-filter.js';
 import type { KeyboardBuildGroup } from '#lib/build-groups.js';
 
 export const keyboardFields: SearchField<Keyboard>[] = [
+	{ tag: 'name', description: "The keyboard's name", values: (kb) => [kb.name] },
 	{ tag: 'brand', description: 'Who makes the keyboard', values: (kb) => [kb.brand] },
 	{ tag: 'size', description: 'Size, e.g. 65%', values: (kb) => [kb.size] },
 	{ tag: 'layout', description: 'Layout, e.g. WK', values: (kb) => [kb.layout] },
@@ -10,6 +11,7 @@ export const keyboardFields: SearchField<Keyboard>[] = [
 ];
 
 export const switchFields: SearchField<Switch>[] = [
+	{ tag: 'name', description: "The switch's name", values: (sw) => [sw.name] },
 	{ tag: 'brand', description: 'Who sells the switch', values: (sw) => [sw.brand] },
 	{ tag: 'manufacturer', description: 'Who makes the switch', values: (sw) => [sw.manufacturer] },
 	{ tag: 'type', description: 'Linear, tactile or clicky', values: (sw) => [sw.type] },
@@ -17,6 +19,7 @@ export const switchFields: SearchField<Switch>[] = [
 ];
 
 export const keycapSetFields: SearchField<KeycapSet>[] = [
+	{ tag: 'name', description: "The set's name", values: (set) => [set.name] },
 	{ tag: 'brand', description: 'Who makes the set', values: (set) => [set.brand] },
 	{ tag: 'profile', description: 'Profile, e.g. Cherry', values: (set) => [set.profile] },
 	{ tag: 'material', description: 'Material, e.g. PBT', values: (set) => [set.material] },
