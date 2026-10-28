@@ -59,7 +59,9 @@ function draw(source: ImageBitmap | OffscreenCanvas, maxEdge: number): ImageData
 
 function shrink(pixels: ImageData, maxEdge: number): ImageData {
 	const canvas = new OffscreenCanvas(pixels.width, pixels.height);
-	canvas.getContext('2d')?.putImageData(pixels, 0, 0);
+	const ctx = canvas.getContext('2d');
+	if (!ctx) throw new Error('2d canvas unavailable');
+	ctx.putImageData(pixels, 0, 0);
 	return draw(canvas, maxEdge);
 }
 
