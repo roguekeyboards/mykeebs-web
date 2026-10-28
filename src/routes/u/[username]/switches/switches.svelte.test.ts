@@ -357,6 +357,25 @@ describe('switches page', () => {
 			expect(api.deleteSwitchImage).toHaveBeenCalledWith({ userId: 'user-1', switchId: 'sw-1' });
 		});
 
+		it("doesn't call an uploaded photo failed when reloading the switch fails", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async () => new Response(null, { status: 200 }))
+			);
+			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/t' } as never);
+			await renderPage();
+			await openAperol();
+
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			api.getSwitch.mockRejectedValue(new Error('network'));
+			await userEvent.upload(fileInput(), png('aperol.png'));
+
+			await vi.waitFor(() => expect(api.getSwitch).toHaveBeenCalled());
+			await expect
+				.element(dialog().getByText("wasn't added", { exact: false }))
+				.not.toBeInTheDocument();
+		});
+
 		it('uploads a new photo straight away and refreshes the switch', async () => {
 			const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 			vi.stubGlobal('fetch', fetchMock);

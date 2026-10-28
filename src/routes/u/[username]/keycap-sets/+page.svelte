@@ -325,7 +325,7 @@
 		kitPhotoNotice = null;
 		staleImages.cancel();
 		await uploadKitImage(keycapSetId, kitId, file);
-		await refreshViewedSet(keycapSetId);
+		await refreshViewedSet(keycapSetId).catch(() => {});
 	}
 
 	async function handleKitImageRemove(kitId: string) {

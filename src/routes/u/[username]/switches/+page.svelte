@@ -158,7 +158,7 @@
 		photoNotice = null;
 		staleImages.cancel();
 		await uploadSwitchImage(switchId, file);
-		await refreshEditingSwitch(switchId);
+		await refreshEditingSwitch(switchId).catch(() => {});
 	}
 
 	async function handleImageRemove(switchId: string) {
