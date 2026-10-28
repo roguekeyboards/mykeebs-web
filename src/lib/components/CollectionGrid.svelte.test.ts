@@ -376,6 +376,19 @@ describe('CollectionGrid.svelte', () => {
 			expect(value.right).toBeLessThanOrEqual(box.right);
 		});
 
+		it('leaves Enter to what was typed while the pointer merely rests on a suggestion', async () => {
+			await openSearch();
+			await userEvent.keyboard('brand:bow');
+			await option('Bowl').hover();
+
+			await userEvent.keyboard('{Enter}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter brand: bow' }))
+				.toBeInTheDocument();
+			expect(await shown()).toEqual(['Manta']);
+		});
+
 		it("doesn't pick a field when Enter is pressed on plain text", async () => {
 			await openSearch();
 

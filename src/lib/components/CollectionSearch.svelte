@@ -225,7 +225,6 @@
 						class:kc-picker-row-active={index === activeIndex}
 						style="border-color: var(--border)"
 						onmousedown={(event) => event.preventDefault()}
-						onmouseenter={() => (activeIndex = index)}
 						onclick={() => pick(option)}
 					>
 						{#if option.kind === 'field'}
