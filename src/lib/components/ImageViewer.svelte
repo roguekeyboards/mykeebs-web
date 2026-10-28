@@ -59,20 +59,23 @@
 		return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
 	}
 
+	function moveTo(x: number, y: number) {
+		if (!imageEl || !stage) return;
+		offsetX = clampOffset(x, imageEl.offsetWidth, scale, stage.clientWidth);
+		offsetY = clampOffset(y, imageEl.offsetHeight, scale, stage.clientHeight);
+	}
+
+	function zoomTo(value: number) {
+		scale = clampScale(value);
+		moveTo(offsetX, offsetY);
+	}
+
 	function zoomIn() {
-		scale = clampScale(scale + 0.5);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale + 0.5);
 	}
 
 	function zoomOut() {
-		scale = clampScale(scale - 0.5);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale - 0.5);
 	}
 
 	function resetZoom() {
@@ -83,11 +86,7 @@
 
 	function handleWheel(event: WheelEvent) {
 		event.preventDefault();
-		scale = clampScale(scale - event.deltaY * 0.01);
-		if (scale === MIN_SCALE) {
-			offsetX = 0;
-			offsetY = 0;
-		}
+		zoomTo(scale - event.deltaY * 0.01);
 	}
 
 	function pointerDistance() {
@@ -120,11 +119,14 @@
 		if (!pointers.has(event.pointerId)) return;
 		pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 		if (pinchStart && pointers.size === 2) {
-			scale = clampScale((pinchStart.scale * pointerDistance()) / pinchStart.distance);
-			if (scale === MIN_SCALE) resetZoom();
+			const distance = pointerDistance();
+			if (pinchStart.distance === 0) pinchStart = { distance, scale };
+			else zoomTo((pinchStart.scale * distance) / pinchStart.distance);
 		} else if (dragging) {
-			offsetX = dragOriginX + (event.clientX - dragStartX);
-			offsetY = dragOriginY + (event.clientY - dragStartY);
+			moveTo(
+				dragOriginX + (event.clientX - dragStartX),
+				dragOriginY + (event.clientY - dragStartY)
+			);
 		}
 	}
 
@@ -184,9 +186,7 @@
 	let stage = $state<HTMLDivElement | null>(null);
 
 	function pan(dx: number, dy: number) {
-		if (!imageEl || !stage) return;
-		offsetX = clampOffset(offsetX + dx, imageEl.offsetWidth, scale, stage.clientWidth);
-		offsetY = clampOffset(offsetY + dy, imageEl.offsetHeight, scale, stage.clientHeight);
+		moveTo(offsetX + dx, offsetY + dy);
 	}
 
 	const arrowDirections: Record<string, [number, number]> = {
@@ -309,7 +309,8 @@
 				{src}
 				{alt}
 				class="max-h-[90vh] max-w-[90vw] touch-none rounded select-none"
-				style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {dragging
+				style="transform: translate({offsetX}px, {offsetY}px) scale({scale}); transition: {pointers.size >
+				0
 					? 'none'
 					: 'transform 0.15s ease-out'};"
 				draggable="false"

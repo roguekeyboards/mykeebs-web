@@ -1,7 +1,11 @@
-import type { KeycapSet } from '@rogueserenity/kbdb-api-client';
+import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
 
 export function primaryKitImageUrl(set: KeycapSet): string | undefined {
 	return set.kits?.find((kit) => kit.kitId === set.primaryKitId)?.image?.url;
+}
+
+export function kitsWithPhotos(set: KeycapSet): KeycapKit[] {
+	return (set.kits ?? []).filter((kit) => kit.image?.url);
 }
 
 export function adjacentKitId(set: KeycapSet, kitId: string, delta: 1 | -1): string | null {
