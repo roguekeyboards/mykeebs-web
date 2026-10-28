@@ -262,6 +262,37 @@ describe('CollectionGrid.svelte', () => {
 			await expect.element(page.getByRole('article')).toHaveLength(2);
 		});
 
+		it('completes the first suggestion with Tab, a field and then a value', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('st{Tab}');
+			await expect.element(filterBox()).toHaveValue('status:');
+			await userEvent.keyboard('ord{Tab}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter status: Ordered' }))
+				.toBeInTheDocument();
+			expect(await shown()).toEqual(['Agar']);
+			await expect.element(filterBox()).toHaveFocus();
+		});
+
+		it('completes the highlighted suggestion with Tab', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('{ArrowDown}{ArrowDown}{Tab}');
+
+			await expect.element(filterBox()).toHaveValue('status:');
+		});
+
+		it('leaves Tab to move focus when nothing is typed or highlighted', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('{Tab}');
+
+			// Focus left the empty box, so it closed.
+			await expect.element(filterBox()).not.toBeInTheDocument();
+		});
+
 		it("doesn't pick a field when Enter is pressed on plain text", async () => {
 			await openSearch();
 

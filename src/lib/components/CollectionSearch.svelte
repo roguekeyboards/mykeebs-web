@@ -115,6 +115,16 @@
 				}
 				break;
 			}
+			case 'Tab': {
+				// Completes what's typed with the highlighted suggestion, or the first one. With
+				// nothing typed, Tab moves focus as usual.
+				const option = options[Math.max(activeIndex, 0)];
+				if (panelOpen && option && !event.shiftKey && (activeIndex >= 0 || text.trim())) {
+					event.preventDefault();
+					pick(option);
+				}
+				break;
+			}
 			case 'Escape':
 				event.preventDefault();
 				if (panelOpen) {
