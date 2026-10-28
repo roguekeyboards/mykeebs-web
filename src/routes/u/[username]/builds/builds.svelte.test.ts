@@ -70,6 +70,34 @@ describe('builds page', () => {
 		await expect.element(page.getByRole('link', { name: /Manta/ })).toBeInTheDocument();
 	});
 
+	it("finds a keyboard by a past build's switches, with a filter or plain text", async () => {
+		const yogurt = { id: 'sw-y', brand: 'HMX', name: 'Yogurt S', type: 'Linear' };
+		const pastBuild: Build = {
+			...mantaBuild,
+			id: 'b-0',
+			buildDate: new Date('2025-01-01T12:00:00Z'),
+			switches: [{ _switch: yogurt, count: 68 }]
+		};
+		const agarBuild: Build = {
+			id: 'b-9',
+			visibility: Visibility.Public,
+			keyboard: { id: 'kb-2', brand: 'KBDFans', name: 'Agar' }
+		};
+		builds.listBuilds.mockResolvedValue({ items: [mantaBuild, pastBuild, agarBuild] });
+		await renderPage();
+		await expect.element(page.getByRole('link', { name: /Agar/ })).toBeInTheDocument();
+
+		await page.getByRole('button', { name: 'Filter' }).click();
+		await page.getByRole('option', { name: /switches:/ }).click();
+		await page.getByRole('option', { name: 'Yogurt S' }).click();
+		await expect.element(page.getByRole('link', { name: /Agar/ })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('link', { name: /Manta/ })).toBeInTheDocument();
+
+		await userEvent.keyboard('{Backspace}yogurt');
+		await expect.element(page.getByRole('link', { name: /Agar/ })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('link', { name: /Manta/ })).toBeInTheDocument();
+	});
+
 	it('creates a build and uploads its staged photos as WebP, in order', async () => {
 		const fetchMock = vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }));
 		vi.stubGlobal('fetch', fetchMock);

@@ -88,6 +88,25 @@ describe('keycap sets page', () => {
 		});
 	});
 
+	it('filters by kit, suggesting the kit names in use', async () => {
+		const nord: KeycapSet = {
+			id: 'set-2',
+			brand: 'SWG',
+			name: 'Nord',
+			kits: [{ kitId: 'base', name: 'Base' }]
+		};
+		api.listKeycapSets.mockResolvedValue({ items: [olivia, nord] });
+		await renderPage();
+		await expect.element(page.getByRole('button', { name: /Nord/ })).toBeInTheDocument();
+
+		await page.getByRole('button', { name: 'Filter' }).click();
+		await page.getByRole('option', { name: /kit:/ }).click();
+		await page.getByRole('option', { name: 'Novelties' }).click();
+
+		await expect.element(page.getByRole('button', { name: /Nord/ })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: /Olivia/ })).toBeInTheDocument();
+	});
+
 	it('offers the owner cost and visibility sorts that visitors do not get', async () => {
 		await renderPage();
 		await expect.element(page.getByRole('option', { name: 'Total cost' })).toBeInTheDocument();

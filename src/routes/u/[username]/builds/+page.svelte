@@ -18,6 +18,7 @@
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
+	import { buildFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
 	import BuildForm from '#lib/components/BuildForm.svelte';
 	import VisibilityBadge from '#lib/components/VisibilityBadge.svelte';
@@ -126,6 +127,7 @@
 	itemKey={(group) => group.keyboardId}
 	emptyMessage="No builds yet."
 	getName={(group) => group.current.keyboard.name}
+	searchFields={buildFields}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add build"
 	sortOptions={[

@@ -123,7 +123,7 @@ describe('CollectionGrid.svelte', () => {
 			await shown();
 
 			await page.getByRole('button', { name: 'Filter' }).click();
-			await expect.element(page.getByRole('searchbox', { name: 'Filter' })).toHaveFocus();
+			await expect.element(page.getByRole('combobox', { name: 'Filter' })).toHaveFocus();
 			await userEvent.keyboard('type');
 
 			await expect.element(page.getByRole('article')).toHaveLength(1);
@@ -137,8 +137,264 @@ describe('CollectionGrid.svelte', () => {
 			await page.getByRole('button', { name: 'Filter' }).click();
 			await userEvent.keyboard('type{Escape}');
 
-			await expect.element(page.getByRole('searchbox', { name: 'Filter' })).not.toBeInTheDocument();
+			await expect.element(page.getByRole('combobox', { name: 'Filter' })).not.toBeInTheDocument();
 			await expect.element(page.getByRole('article')).toHaveLength(3);
+		});
+	});
+
+	describe('field filters', () => {
+		const searchFields = [
+			{ tag: 'brand', description: 'Who makes it', values: (item: Item) => [item.brand] },
+			{ tag: 'status', description: 'Order status', values: (item: Item) => [item.status] }
+		];
+		const filterBox = () => page.getByRole('combobox', { name: 'Filter' });
+		const option = (name: string | RegExp) => page.getByRole('option', { name });
+
+		async function openSearch() {
+			await renderGrid({ searchFields });
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+			await expect.element(filterBox()).toHaveFocus();
+		}
+
+		it('lists the fields with their descriptions when the box opens', async () => {
+			await openSearch();
+
+			await expect.element(filterBox()).toHaveAttribute('aria-expanded', 'true');
+			await expect.element(option(/brand: Who makes it/)).toBeInTheDocument();
+			await expect.element(option(/status: Order status/)).toBeInTheDocument();
+		});
+
+		it('narrows the fields to the tag being typed', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('st');
+
+			await expect.element(option(/status:/)).toBeInTheDocument();
+			await expect.element(option(/brand:/)).not.toBeInTheDocument();
+		});
+
+		it('picks a field, then a value, from the keyboard, as a chip', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('{ArrowDown}{Enter}');
+			await expect.element(filterBox()).toHaveValue('brand:');
+			await expect.element(option('Bowl')).toBeInTheDocument();
+			await expect.element(option('KBDFans')).toBeInTheDocument();
+			await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter brand: KBDFans' }))
+				.toBeInTheDocument();
+			await expect.element(filterBox()).toHaveValue('');
+			expect(await shown()).toEqual(['Agar']);
+			await expect.element(page.getByText('Added filter brand: KBDFans')).toBeInTheDocument();
+		});
+
+		it('picks with the mouse too', async () => {
+			await openSearch();
+
+			await option(/status:/).click();
+			await option('Delivered').click();
+
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+			expect(await shown()).toEqual(['Kafka', 'Manta']);
+		});
+
+		it('filters on a typed `tag:value` as it is typed, and keeps it as a chip on Enter', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('brand:ow');
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+			await userEvent.keyboard('{Enter}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter brand: ow' }))
+				.toBeInTheDocument();
+			expect(await shown()).toEqual(['Manta']);
+		});
+
+		it('needs every chip and the plain text to match', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('status:deliv{Enter}');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+			await userEvent.keyboard('kaf');
+
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+			expect(await shown()).toEqual(['Kafka']);
+		});
+
+		it('removes the last chip with Backspace, or any chip with its button', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:deliv{Enter}brand:bowl{Enter}');
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+
+			await userEvent.keyboard('{Backspace}');
+			await expect.element(page.getByText('Removed filter brand: bowl')).toBeInTheDocument();
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+
+			await page.getByRole('button', { name: 'Remove filter status: deliv' }).click();
+			await expect.element(page.getByRole('article')).toHaveLength(3);
+			await expect.element(filterBox()).toHaveFocus();
+		});
+
+		it('closes the list on Escape, then clears everything on a second Escape', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:deliv{Enter}');
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(filterBox()).toHaveAttribute('aria-expanded', 'false');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(filterBox()).not.toBeInTheDocument();
+			await expect.element(page.getByRole('article')).toHaveLength(3);
+		});
+
+		it('stays open with chips in it when focus leaves', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:deliv{Enter}');
+
+			filterBox().element().blur();
+
+			await expect.element(filterBox()).toBeInTheDocument();
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+		});
+
+		it('completes the first suggestion with Tab, a field and then a value', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('st{Tab}');
+			await expect.element(filterBox()).toHaveValue('status:');
+			await userEvent.keyboard('ord{Tab}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter status: Ordered' }))
+				.toBeInTheDocument();
+			expect(await shown()).toEqual(['Agar']);
+			await expect.element(filterBox()).toHaveFocus();
+		});
+
+		it('completes the highlighted suggestion with Tab', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('{ArrowDown}{ArrowDown}{Tab}');
+
+			await expect.element(filterBox()).toHaveValue('status:');
+		});
+
+		it('leaves Tab to move focus when nothing is typed or highlighted', async () => {
+			await openSearch();
+
+			await userEvent.keyboard('{Tab}');
+
+			// Focus left the empty box, so it closed.
+			await expect.element(filterBox()).not.toBeInTheDocument();
+		});
+
+		it("doesn't add a value on a second Tab after a bare `tag:`", async () => {
+			await openSearch();
+
+			await userEvent.keyboard('b{Tab}{Tab}');
+
+			await expect
+				.element(page.getByRole('button', { name: /^Remove filter/ }))
+				.not.toBeInTheDocument();
+			await expect.element(page.getByRole('article')).toHaveLength(3);
+		});
+
+		it('clears typed text on Escape before it clears the chips', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:deliv{Enter}');
+			await userEvent.keyboard('kaf');
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+
+			await userEvent.keyboard('{Escape}');
+
+			await expect.element(filterBox()).toHaveValue('');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+		});
+
+		it('matches a picked value exactly, but a typed one as a substring', async () => {
+			const bowlLabs: Item = { id: 'kb-4', name: 'Pluto', brand: 'Bowl Labs' };
+			await renderGrid({
+				searchFields,
+				fetchPage: vi.fn(async () => ({ items: [manta, agar, bowlLabs] }))
+			});
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+
+			await userEvent.keyboard('brand:');
+			await option('Bowl').click();
+			await expect.element(page.getByRole('article')).toHaveLength(1);
+			expect(await shown()).toEqual(['Manta']);
+
+			await userEvent.keyboard('{Backspace}brand:bowl{Enter}');
+			await expect.element(page.getByRole('article')).toHaveLength(2);
+		});
+
+		it('suggests only values the other filters still leave, and none already chipped', async () => {
+			await openSearch();
+			await userEvent.keyboard('status:');
+			await option('Ordered').click();
+
+			await userEvent.keyboard('brand:');
+			await expect.element(option('KBDFans')).toBeInTheDocument();
+			await expect.element(option('Bowl')).not.toBeInTheDocument();
+			await expect.element(option('Typeface')).not.toBeInTheDocument();
+		});
+
+		it("doesn't suggest a value that's already a chip", async () => {
+			const anyField = {
+				tag: 'any',
+				description: 'Brand or status',
+				values: (item: Item) => [item.brand, item.status]
+			};
+			await renderGrid({ searchFields: [anyField] });
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+			await userEvent.keyboard('any:');
+			await option('Delivered').click();
+
+			await userEvent.keyboard('any:');
+
+			await expect.element(option('Bowl')).toBeInTheDocument();
+			await expect.element(option('Delivered')).not.toBeInTheDocument();
+		});
+
+		it('keeps a long chip inside the box', async () => {
+			await openSearch();
+
+			await userEvent.keyboard(`brand:${'very long brand name '.repeat(6)}{Enter}`);
+
+			const box = filterBox().element().parentElement!.getBoundingClientRect();
+			const value = page
+				.getByRole('button', { name: /^Remove filter brand:/ })
+				.element()
+				.previousElementSibling!.getBoundingClientRect();
+			expect(value.right).toBeLessThanOrEqual(box.right);
+		});
+
+		it('leaves Enter to what was typed while the pointer merely rests on a suggestion', async () => {
+			await openSearch();
+			await userEvent.keyboard('brand:bow');
+			await option('Bowl').hover();
+
+			await userEvent.keyboard('{Enter}');
+
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter brand: bow' }))
+				.toBeInTheDocument();
+			expect(await shown()).toEqual(['Manta']);
+		});
+
+		it("doesn't pick a field when Enter is pressed on plain text", async () => {
+			await openSearch();
+
+			await userEvent.keyboard('b{Enter}');
+
+			await expect.element(filterBox()).toHaveValue('b');
 		});
 	});
 

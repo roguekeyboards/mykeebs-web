@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { compareValues, filterByStatus, searchItems, sortItems } from './collection-filter';
+import {
+	compareValues,
+	fieldSuggestions,
+	filterByFields,
+	filterByStatus,
+	parseFieldQuery,
+	searchCollection,
+	searchItems,
+	sortItems,
+	type SearchField
+} from './collection-filter';
 
 type Item = {
 	id: string;
@@ -48,6 +58,38 @@ describe('searchItems', () => {
 
 	it('matches text one level down, such as a purchase vendor', () => {
 		expect(names(searchItems([manta, agar], 'novel'))).toEqual(['Manta']);
+	});
+
+	it('matches text at any depth, including inside lists, such as kit names', () => {
+		const set = {
+			id: 'olivia-id',
+			name: 'Olivia',
+			kits: [{ kitId: 'k1', name: 'Novelties', purchase: { vendor: 'CannonKeys' } }]
+		};
+
+		expect(searchItems([set], 'novelt')).toEqual([set]);
+		expect(searchItems([set], 'cannon')).toEqual([set]);
+	});
+
+	it('skips ids, image urls and moderation fields', () => {
+		const withImage = {
+			id: 'x',
+			name: 'Plain',
+			primaryKitId: 'kit-abc',
+			images: [
+				{
+					imageId: 'img-abc',
+					url: 'https://img.example/abc.png',
+					status: 'rejected',
+					rejectionReason: 'Explicit'
+				}
+			],
+			keyboard: { id: 'kb-abc', imageUrl: 'https://img.example/kb.png' }
+		};
+
+		for (const text of ['abc', 'img.example', 'rejected', 'explicit']) {
+			expect(searchItems([withImage], text)).toEqual([]);
+		}
 	});
 
 	it('does not match on ids, numbers or dates', () => {
@@ -130,5 +172,128 @@ describe('sortItems', () => {
 		sortItems(list, byName, byName, false);
 
 		expect(names(list)).toEqual(['Manta', 'Agar']);
+	});
+});
+
+type Set = { name: string; brand: string; material?: string; kits?: { name: string }[] };
+
+const olivia: Set = {
+	name: 'Olivia',
+	brand: 'GMK',
+	material: 'DualShot ABS',
+	kits: [{ name: 'Base' }, { name: 'Novelties' }]
+};
+const modern: Set = {
+	name: 'Modern Dolch',
+	brand: 'SWG',
+	material: 'dualshot abs',
+	kits: [{ name: 'Base' }]
+};
+const nord: Set = { name: 'Nord', brand: 'SWG', material: 'PBT' };
+
+const setFields: SearchField<Set>[] = [
+	{ tag: 'brand', description: 'Brand', values: (set) => [set.brand] },
+	{ tag: 'material', description: 'Material', values: (set) => [set.material] },
+	{ tag: 'kit', description: 'Kit name', values: (set) => set.kits?.map((kit) => kit.name) ?? [] }
+];
+const setNames = (sets: Set[]) => sets.map((set) => set.name);
+
+describe('filterByFields', () => {
+	it('keeps everything with no filters', () => {
+		expect(filterByFields([olivia, nord], setFields, [])).toHaveLength(2);
+	});
+
+	it("matches a filter as a substring of that field's values, ignoring case", () => {
+		expect(
+			setNames(
+				filterByFields([olivia, modern, nord], setFields, [{ tag: 'material', value: 'ABS' }])
+			)
+		).toEqual(['Olivia', 'Modern Dolch']);
+	});
+
+	it('needs every filter to match, a repeated field included', () => {
+		const swgAbs = [
+			{ tag: 'brand', value: 'swg' },
+			{ tag: 'material', value: 'abs' }
+		];
+		const baseAndNovelties = [
+			{ tag: 'kit', value: 'base' },
+			{ tag: 'kit', value: 'novelties' }
+		];
+
+		expect(setNames(filterByFields([olivia, modern, nord], setFields, swgAbs))).toEqual([
+			'Modern Dolch'
+		]);
+		expect(setNames(filterByFields([olivia, modern, nord], setFields, baseAndNovelties))).toEqual([
+			'Olivia'
+		]);
+	});
+
+	it('matches a picked value exactly, ignoring case', () => {
+		expect(
+			setNames(
+				filterByFields([olivia, modern, nord], setFields, [
+					{ tag: 'material', value: 'pbt', exact: true }
+				])
+			)
+		).toEqual(['Nord']);
+		expect(
+			filterByFields([olivia], setFields, [{ tag: 'material', value: 'ABS', exact: true }])
+		).toEqual([]);
+	});
+
+	it('ignores a filter on a field the page no longer offers', () => {
+		expect(filterByFields([olivia], setFields, [{ tag: 'profile', value: 'cherry' }])).toEqual([
+			olivia
+		]);
+	});
+});
+
+describe('fieldSuggestions', () => {
+	const material = setFields[1];
+	const kit = setFields[2];
+
+	it('lists the values in use once each, whatever their case, A to Z', () => {
+		expect(fieldSuggestions([olivia, modern, nord], material, '')).toEqual(['DualShot ABS', 'PBT']);
+		expect(fieldSuggestions([olivia, modern], kit, '')).toEqual(['Base', 'Novelties']);
+	});
+
+	it('keeps only values containing the query', () => {
+		expect(fieldSuggestions([olivia, modern, nord], material, ' pb')).toEqual(['PBT']);
+	});
+});
+
+describe('parseFieldQuery', () => {
+	it('splits a known tag from what follows it', () => {
+		expect(parseFieldQuery('Material:dual', setFields)).toEqual({
+			field: setFields[1],
+			query: 'dual'
+		});
+		expect(parseFieldQuery('kit:', setFields)?.query).toBe('');
+	});
+
+	it('is null for plain text or a tag the page does not offer', () => {
+		expect(parseFieldQuery('dual', setFields)).toBeNull();
+		expect(parseFieldQuery('profile:cherry', setFields)).toBeNull();
+	});
+});
+
+describe('searchCollection', () => {
+	it('applies plain text across every field, then the filters', () => {
+		expect(
+			setNames(
+				searchCollection([olivia, modern, nord], setFields, 'dol', [{ tag: 'brand', value: 'swg' }])
+			)
+		).toEqual(['Modern Dolch']);
+	});
+
+	it('treats a `tag:value` still being typed as a filter on that field', () => {
+		expect(
+			setNames(searchCollection([olivia, modern, nord], setFields, 'material:pb', []))
+		).toEqual(['Nord']);
+	});
+
+	it('ignores a tag with nothing typed after it yet', () => {
+		expect(searchCollection([olivia, nord], setFields, 'material:', [])).toHaveLength(2);
 	});
 });

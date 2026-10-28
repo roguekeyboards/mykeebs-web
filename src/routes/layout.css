@@ -479,6 +479,77 @@ select:focus-visible {
 	margin-bottom: 0.5rem;
 }
 
+/* Collection search: chips and a bare text field inside a box styled as one field. */
+
+.search-box:focus-within {
+	border-color: var(--accent);
+}
+
+.search-box-input {
+	flex: 1 1 6ch;
+	min-width: 6ch;
+	border: 0;
+	outline: none;
+	background: transparent;
+	padding: 0.125rem 0;
+}
+
+.search-box-input::placeholder {
+	color: var(--text-faint);
+}
+
+/* The box shows focus for the whole field, so the text field inside doesn't need its own. */
+.search-box-input:focus-visible {
+	outline: none;
+}
+
+.search-box-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.search-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	max-width: 100%;
+	min-width: 0;
+	padding: 0.0625rem 0.125rem 0.0625rem 0.5rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+	background: var(--surface);
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	white-space: nowrap;
+}
+
+.search-chip-value {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.search-chip-remove {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border-radius: 999px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.search-chip-remove:hover {
+	background: var(--surface-hover);
+	color: var(--text);
+}
+
+.search-panel {
+	background: var(--bg-raised);
+	border-color: var(--border-strong);
+}
+
 /* Status badges */
 
 .status-badge {
