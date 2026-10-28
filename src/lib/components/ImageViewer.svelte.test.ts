@@ -324,11 +324,21 @@ describe('ImageViewer.svelte motion', () => {
 
 	it('slides the next photo in from the right and the previous from the left, once loaded', async () => {
 		await renderGallery();
+		// How the slide looked the moment the new photo finished loading, before the viewer's own
+		// load handler ran. Captured rather than polled, since a small photo can load at any time.
+		const atLoad: { opacity: string; animations: number }[] = [];
+		const onLoad = (event: Event) => {
+			if (event.target instanceof HTMLImageElement) {
+				const wrapper = event.target.parentElement!;
+				atLoad.push({ opacity: wrapper.style.opacity, animations: wrapper.getAnimations().length });
+			}
+		};
+		document.addEventListener('load', onLoad, true);
+		onTestFinished(() => document.removeEventListener('load', onLoad, true));
 
 		await page.getByRole('button', { name: 'Next photo' }).click();
-		expect(slide().style.opacity).toBe('0');
-		expect(slide().getAnimations()).toEqual([]);
 		await vi.waitFor(() => expect(transition(slide())).toBeDefined());
+		expect(atLoad).toEqual([{ opacity: '0', animations: 0 }]);
 		expect(firstFrame(slide())?.transform).toBe('translateX(80px)');
 		expect(slide().style.opacity).toBe('');
 
