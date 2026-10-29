@@ -2,7 +2,6 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
-import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 import Layout from './+layout.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/discover') } }));
@@ -58,23 +57,20 @@ describe('root layout', () => {
 		}
 	});
 
-	it("links kbdb's MCP guide, privacy policy and terms, and the contact page, from the footer", async () => {
+	it("links mykeebs.com's landing page, MCP guide, AI statement, legal pages and contact page from the footer", async () => {
 		await renderLayout();
 		const footer = page.getByRole('contentinfo');
 
-		const kbdbOrigin = new URL(PUBLIC_KBDB_API_BASE_PATH).origin;
-		await expect
-			.element(footer.getByRole('link', { name: 'Use with AI Assistants' }))
-			.toHaveAttribute('href', `${kbdbOrigin}/help/mcp`);
-		await expect
-			.element(footer.getByRole('link', { name: 'Privacy Policy' }))
-			.toHaveAttribute('href', `${kbdbOrigin}/privacy`);
-		await expect
-			.element(footer.getByRole('link', { name: 'Terms of Service' }))
-			.toHaveAttribute('href', `${kbdbOrigin}/terms`);
-		await expect
-			.element(footer.getByRole('link', { name: 'Contact' }))
-			.toHaveAttribute('href', '/contact');
+		for (const [name, href] of [
+			['About mykeebs', 'https://mykeebs.com/'],
+			['Use with AI Assistants', 'https://mykeebs.com/help/mcp'],
+			['How We Use AI', 'https://mykeebs.com/about/ai'],
+			['Privacy Policy', 'https://mykeebs.com/privacy'],
+			['Terms of Service', 'https://mykeebs.com/terms'],
+			['Contact', 'https://mykeebs.com/contact']
+		]) {
+			await expect.element(footer.getByRole('link', { name })).toHaveAttribute('href', href);
+		}
 	});
 
 	it('shows the square brand mark on small screens and the wide logo from sm up', async () => {
