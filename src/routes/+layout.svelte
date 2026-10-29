@@ -23,6 +23,7 @@
 
 	const privacyUrl = new URL('/privacy', PUBLIC_KBDB_API_BASE_PATH).href;
 	const termsUrl = new URL('/terms', PUBLIC_KBDB_API_BASE_PATH).href;
+	const mcpHelpUrl = new URL('/help/mcp', PUBLIC_KBDB_API_BASE_PATH).href;
 
 	const profileSubNav: ProfileSubNavContext = $state({ items: [] });
 	setProfileSubNavContext(profileSubNav);
@@ -130,7 +131,8 @@
 	{@render children()}
 </main>
 <footer class="app-footer">
+	<a href={mcpHelpUrl} rel="external">Use with AI Assistants</a>
 	<a href={privacyUrl} rel="external">Privacy Policy</a>
 	<a href={termsUrl} rel="external">Terms of Service</a>
-	<a href="mailto:support@mykeebs.com">support@mykeebs.com</a>
+	<a href={resolve('/contact')}>Contact</a>
 </footer>

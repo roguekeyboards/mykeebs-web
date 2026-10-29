@@ -58,11 +58,14 @@ describe('root layout', () => {
 		}
 	});
 
-	it("links kbdb's privacy policy and terms, and the support address, from the footer", async () => {
+	it("links kbdb's MCP guide, privacy policy and terms, and the contact page, from the footer", async () => {
 		await renderLayout();
 		const footer = page.getByRole('contentinfo');
 
 		const kbdbOrigin = new URL(PUBLIC_KBDB_API_BASE_PATH).origin;
+		await expect
+			.element(footer.getByRole('link', { name: 'Use with AI Assistants' }))
+			.toHaveAttribute('href', `${kbdbOrigin}/help/mcp`);
 		await expect
 			.element(footer.getByRole('link', { name: 'Privacy Policy' }))
 			.toHaveAttribute('href', `${kbdbOrigin}/privacy`);
@@ -70,8 +73,8 @@ describe('root layout', () => {
 			.element(footer.getByRole('link', { name: 'Terms of Service' }))
 			.toHaveAttribute('href', `${kbdbOrigin}/terms`);
 		await expect
-			.element(footer.getByRole('link', { name: 'support@mykeebs.com' }))
-			.toHaveAttribute('href', 'mailto:support@mykeebs.com');
+			.element(footer.getByRole('link', { name: 'Contact' }))
+			.toHaveAttribute('href', '/contact');
 	});
 
 	it('shows the square brand mark on small screens and the wide logo from sm up', async () => {
