@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.3.0...v0.4.0) (2026-10-29)
+
+
+### Features
+
+* link the MCP guide and a contact page from the footer ([#131](https://github.com/rogueserenity/mykeebs-web/issues/131)) ([52c3afc](https://github.com/rogueserenity/mykeebs-web/commit/52c3afc144a63a265cedd3166f6169813d338f5e))
+
 ## [0.3.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.2.0...v0.3.0) (2026-10-28)
 
 
