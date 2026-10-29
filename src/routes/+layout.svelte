@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
-	import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 	import './layout.css';
 	import favicon from '@rogueserenity/mykeebs-brand/favicon.svg';
 	import faviconIco from '@rogueserenity/mykeebs-brand/favicon.ico';
@@ -20,10 +19,6 @@
 	} from '#lib/profile-subnav-context.js';
 
 	let { children } = $props();
-
-	const privacyUrl = new URL('/privacy', PUBLIC_KBDB_API_BASE_PATH).href;
-	const termsUrl = new URL('/terms', PUBLIC_KBDB_API_BASE_PATH).href;
-	const mcpHelpUrl = new URL('/help/mcp', PUBLIC_KBDB_API_BASE_PATH).href;
 
 	const profileSubNav: ProfileSubNavContext = $state({ items: [] });
 	setProfileSubNavContext(profileSubNav);
@@ -131,8 +126,10 @@
 	{@render children()}
 </main>
 <footer class="app-footer">
-	<a href={mcpHelpUrl} rel="external">Use with AI Assistants</a>
-	<a href={privacyUrl} rel="external">Privacy Policy</a>
-	<a href={termsUrl} rel="external">Terms of Service</a>
-	<a href={resolve('/contact')}>Contact</a>
+	<a href="https://mykeebs.com/" rel="external">About mykeebs</a>
+	<a href="https://mykeebs.com/help/mcp" rel="external">Use with AI Assistants</a>
+	<a href="https://mykeebs.com/about/ai" rel="external">How We Use AI</a>
+	<a href="https://mykeebs.com/privacy" rel="external">Privacy Policy</a>
+	<a href="https://mykeebs.com/terms" rel="external">Terms of Service</a>
+	<a href="https://mykeebs.com/contact" rel="external">Contact</a>
 </footer>
