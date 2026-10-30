@@ -30,7 +30,7 @@
 			"matchPackageNames": ["@sveltejs/kit", "@sveltejs/adapter-static"]
 		},
 		{
-			"description": "Our own packages, published by kbdb's releases, skip the release-age wait",
+			"description": "Our own packages, published by kbdb's and mykeebs-brand's releases, skip the release-age wait",
 			"matchPackageNames": ["@roguekeyboards/**"],
 			"minimumReleaseAge": null
 		}
