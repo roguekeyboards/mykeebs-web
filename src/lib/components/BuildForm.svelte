@@ -15,8 +15,8 @@
 		Keyboard,
 		KeycapSet,
 		Switch
-	} from '@rogueserenity/kbdb-api-client';
-	import { Visibility } from '@rogueserenity/kbdb-api-client';
+	} from '@roguekeyboards/kbdb-api-client';
+	import { Visibility } from '@roguekeyboards/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import { lookupsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
 	import { primaryKitImageUrl } from '#lib/keycap-set.js';

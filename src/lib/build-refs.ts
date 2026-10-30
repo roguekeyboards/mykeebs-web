@@ -1,4 +1,4 @@
-import { ResponseError, type BuildInput } from '@rogueserenity/kbdb-api-client';
+import { ResponseError, type BuildInput } from '@roguekeyboards/kbdb-api-client';
 
 // Keyed by id, not kbdb's index, so the flags survive edits to the form.
 export type StaleBuildRefs = {

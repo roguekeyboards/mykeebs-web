@@ -1,4 +1,4 @@
-import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
+import type { KeycapKit, KeycapSet } from '@roguekeyboards/kbdb-api-client';
 
 export function primaryKitImageUrl(set: KeycapSet): string | undefined {
 	return set.kits?.find((kit) => kit.kitId === set.primaryKitId)?.image?.url;

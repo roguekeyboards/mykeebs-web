@@ -3,7 +3,7 @@ description: Installs Node via mise and the npm dependencies, including the kbdb
 
 inputs:
   packages-token:
-    description: Token with read access to the @rogueserenity GitHub Packages registry.
+    description: Token with read access to the @roguekeyboards GitHub Packages registry.
     required: true
 
 runs:

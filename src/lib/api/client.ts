@@ -6,7 +6,7 @@ import {
 	LookupsApi,
 	ProfilesApi,
 	SwitchesApi
-} from '@rogueserenity/kbdb-api-client';
+} from '@roguekeyboards/kbdb-api-client';
 import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
 import { getAccessToken } from '#lib/auth/auth.svelte.js';
 import { retryWhenThrottled } from './throttle.js';

@@ -1,4 +1,4 @@
-import type { Build, Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import type { Build, Keyboard, KeycapSet, Switch } from '@roguekeyboards/kbdb-api-client';
 import type { StatusFilter } from '#lib/order-status.js';
 
 type Entry = { status: string; price: number | undefined };

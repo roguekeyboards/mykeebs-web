@@ -4,8 +4,8 @@
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
-	import type { Keyboard, KeyboardInput } from '@rogueserenity/kbdb-api-client';
-	import { Visibility } from '@rogueserenity/kbdb-api-client';
+	import type { Keyboard, KeyboardInput } from '@roguekeyboards/kbdb-api-client';
+	import { Visibility } from '@roguekeyboards/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import PurchaseFields from './PurchaseFields.svelte';
 	import { lookupsApi } from '#lib/api/client.js';

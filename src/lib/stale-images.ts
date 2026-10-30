@@ -1,4 +1,4 @@
-import type { KeycapSet } from '@rogueserenity/kbdb-api-client';
+import type { KeycapSet } from '@roguekeyboards/kbdb-api-client';
 import type { ModeratedImage } from './image-moderation';
 
 // Callers copy only image state from the refetch (withFreshImages and friends), so a

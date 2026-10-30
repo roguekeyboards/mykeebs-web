@@ -1,4 +1,4 @@
-import type { Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import type { Keyboard, KeycapSet, Switch } from '@roguekeyboards/kbdb-api-client';
 import type { SearchField } from '#lib/collection-filter.js';
 import type { KeyboardBuildGroup } from '#lib/build-groups.js';
 

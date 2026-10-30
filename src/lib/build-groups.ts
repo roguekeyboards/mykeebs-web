@@ -1,4 +1,4 @@
-import type { Build } from '@rogueserenity/kbdb-api-client';
+import type { Build } from '@roguekeyboards/kbdb-api-client';
 
 export type KeyboardBuildGroup = {
 	keyboardId: string;
