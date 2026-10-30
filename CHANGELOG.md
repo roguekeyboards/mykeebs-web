@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.0...v0.4.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* load the fonts from the brand package ([#149](https://github.com/roguekeyboards/mykeebs-web/issues/149)) ([fed71cb](https://github.com/roguekeyboards/mykeebs-web/commit/fed71cb9c087c22782d0b59689cdcaa6d8d4ac50))
+
 ## [0.4.0](https://github.com/rogueserenity/mykeebs-web/compare/v0.3.0...v0.4.0) (2026-10-29)
 
 
