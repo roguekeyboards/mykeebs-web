@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import type { Profile } from '@rogueserenity/kbdb-api-client';
+import type { Profile } from '@roguekeyboards/kbdb-api-client';
 
 export type UserContext = {
 	readonly userId: string;

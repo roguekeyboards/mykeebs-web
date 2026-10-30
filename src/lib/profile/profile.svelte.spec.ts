@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
+import { ResponseError, type Profile } from '@roguekeyboards/kbdb-api-client';
 
 vi.mock('#lib/auth/auth.svelte.js', async () => {
 	const { authState } = await import('#lib/test-support/auth-state.svelte.js');

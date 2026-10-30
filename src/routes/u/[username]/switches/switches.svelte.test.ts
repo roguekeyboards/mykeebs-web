@@ -6,7 +6,7 @@ import {
 	ResponseError,
 	Visibility,
 	type Switch
-} from '@rogueserenity/kbdb-api-client';
+} from '@roguekeyboards/kbdb-api-client';
 import { buildsApi, switchesApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import SwitchesPage from './+page.svelte';

@@ -1,5 +1,5 @@
-import type { Profile, ProfileInput } from '@rogueserenity/kbdb-api-client';
-import { ResponseError } from '@rogueserenity/kbdb-api-client';
+import type { Profile, ProfileInput } from '@roguekeyboards/kbdb-api-client';
+import { ResponseError } from '@roguekeyboards/kbdb-api-client';
 import { auth } from '#lib/auth/auth.svelte.js';
 import { profilesApi } from '#lib/api/client.js';
 

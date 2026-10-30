@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Keyboard, KeycapSet, Switch } from '@rogueserenity/kbdb-api-client';
+import type { Keyboard, KeycapSet, Switch } from '@roguekeyboards/kbdb-api-client';
 import { collectionStats, countsFor, totalsFor } from './collection-stats';
 
 function sw(purchase: Switch['purchase']): Switch {

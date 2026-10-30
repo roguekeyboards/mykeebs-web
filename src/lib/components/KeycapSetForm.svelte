@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { KeycapSet, KeycapSetInput } from '@rogueserenity/kbdb-api-client';
-	import { Visibility } from '@rogueserenity/kbdb-api-client';
+	import type { KeycapSet, KeycapSetInput } from '@roguekeyboards/kbdb-api-client';
+	import { Visibility } from '@roguekeyboards/kbdb-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
 

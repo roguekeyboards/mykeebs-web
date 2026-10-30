@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError } from '@roguekeyboards/kbdb-api-client';
 import {
 	anyPending,
 	isPending,

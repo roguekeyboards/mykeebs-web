@@ -1,4 +1,4 @@
-import { Visibility } from '@rogueserenity/kbdb-api-client';
+import { Visibility } from '@roguekeyboards/kbdb-api-client';
 
 export type VisibilityMeta = {
 	class: string;

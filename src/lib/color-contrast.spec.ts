@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
 const css = [
-	createRequire(import.meta.url).resolve('@rogueserenity/mykeebs-brand/tokens.css'),
+	createRequire(import.meta.url).resolve('@roguekeyboards/mykeebs-brand/tokens.css'),
 	new URL('../routes/layout.css', import.meta.url)
 ]
 	.map((path) => readFileSync(path, 'utf8'))

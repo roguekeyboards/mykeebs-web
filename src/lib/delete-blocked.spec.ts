@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ResponseError, type Build } from '@rogueserenity/kbdb-api-client';
+import { ResponseError, type Build } from '@roguekeyboards/kbdb-api-client';
 import { blockingBuildIdsFromError, blockingBuildLabels, deleteFailure } from './delete-blocked';
 
 function problem(status: number, body: unknown): ResponseError {

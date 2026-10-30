@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { BuildInput } from '@rogueserenity/kbdb-api-client';
+	import type { BuildInput } from '@roguekeyboards/kbdb-api-client';
 	import { resolve } from '$app/paths';
 	import { buildsApi } from '#lib/api/client.js';
 	import { fetchAllPages } from '#lib/pagination.js';

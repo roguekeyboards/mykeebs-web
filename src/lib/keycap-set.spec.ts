@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { KeycapKit, KeycapSet } from '@rogueserenity/kbdb-api-client';
+import type { KeycapKit, KeycapSet } from '@roguekeyboards/kbdb-api-client';
 import { adjacentKitId, earliestKitDate, kitsWithPhotos, primaryKitImageUrl } from './keycap-set';
 
 function kit(kitId: string, url?: string): KeycapKit {

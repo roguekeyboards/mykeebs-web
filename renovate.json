@@ -31,13 +31,13 @@
 		},
 		{
 			"description": "Our own packages, published by kbdb's releases, skip the release-age wait",
-			"matchPackageNames": ["@rogueserenity/**"],
+			"matchPackageNames": ["@roguekeyboards/**"],
 			"minimumReleaseAge": null
 		}
 	],
 	"hostRules": [
 		{
-			"description": "@rogueserenity/kbdb-api-client lives on GitHub Packages; the workflow passes its GITHUB_TOKEN",
+			"description": "@roguekeyboards/kbdb-api-client lives on GitHub Packages; the workflow passes its GITHUB_TOKEN",
 			"matchHost": "npm.pkg.github.com",
 			"hostType": "npm",
 			"token": "{{ secrets.PACKAGES_TOKEN }}"

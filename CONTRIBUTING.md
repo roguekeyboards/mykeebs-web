@@ -62,7 +62,7 @@ Name new test files to match whichever project they belong in. Run a single file
   an equivalent client-only guard) will crash server-side even though it never actually runs on a
   server in production.
 
-## Installing `@rogueserenity/kbdb-api-client`
+## Installing `@roguekeyboards/kbdb-api-client`
 
 This package is generated from kbdb's OpenAPI spec and published to GitHub Packages on every kbdb
 release — it's not hand-written, so don't patch it in `node_modules`; bump the version in

@@ -1,4 +1,4 @@
-import type { ProfileLink } from '@rogueserenity/kbdb-api-client';
+import type { ProfileLink } from '@roguekeyboards/kbdb-api-client';
 
 // Mirrors ProfileInput.username in kbdb's schema: 3-32 chars, lowercase
 // alphanumeric, single separators only, no leading/trailing separator.

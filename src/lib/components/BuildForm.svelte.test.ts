@@ -2,7 +2,12 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { UnsupportedImageError } from '#lib/image-errors.js';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus, ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import {
+	ImageStatus,
+	ResponseError,
+	Visibility,
+	type Build
+} from '@roguekeyboards/kbdb-api-client';
 import { keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
 import { MAX_IMAGES } from '#lib/image-limit.js';

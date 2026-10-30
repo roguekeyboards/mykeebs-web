@@ -1,4 +1,4 @@
-import type { Middleware } from '@rogueserenity/kbdb-api-client';
+import type { Middleware } from '@roguekeyboards/kbdb-api-client';
 
 const RETRY_DELAYS_MS = [500, 1000, 2000];
 

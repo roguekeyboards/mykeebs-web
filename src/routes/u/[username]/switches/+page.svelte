@@ -2,8 +2,8 @@
 	import { pageTitle } from '#lib/page-title.js';
 	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { Switch as SwitchModel, SwitchInput } from '@rogueserenity/kbdb-api-client';
-	import { ResponseError } from '@rogueserenity/kbdb-api-client';
+	import type { Switch as SwitchModel, SwitchInput } from '@roguekeyboards/kbdb-api-client';
+	import { ResponseError } from '@roguekeyboards/kbdb-api-client';
 	import { switchesApi, buildsApi } from '#lib/api/client.js';
 	import { anyImageFailed, staleImageRefetcher, withFreshImage } from '#lib/stale-images.js';
 	import { formatPrice } from '#lib/format.js';

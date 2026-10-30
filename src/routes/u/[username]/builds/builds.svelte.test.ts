@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ResponseError, Visibility, type Build } from '@rogueserenity/kbdb-api-client';
+import { ResponseError, Visibility, type Build } from '@roguekeyboards/kbdb-api-client';
 import { buildsApi, keyboardsApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import BuildsPage from './+page.svelte';

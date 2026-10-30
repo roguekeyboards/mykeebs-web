@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Visibility } from '@rogueserenity/kbdb-api-client';
+	import { Visibility } from '@roguekeyboards/kbdb-api-client';
 	import { Globe, Layers, Lock, User } from '@lucide/svelte';
 
 	let {

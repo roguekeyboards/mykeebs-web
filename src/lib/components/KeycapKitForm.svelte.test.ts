@@ -6,7 +6,7 @@ import {
 	ResponseError,
 	type KeycapKit,
 	type KeycapKitInput
-} from '@rogueserenity/kbdb-api-client';
+} from '@roguekeyboards/kbdb-api-client';
 import { ImageTooLargeError } from '#lib/image-errors.js';
 import KeycapKitForm from './KeycapKitForm.svelte';
 import FormWithDirty from './test-support/FormWithDirty.svelte';

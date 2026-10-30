@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus, ResponseError, type Profile } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError, type Profile } from '@roguekeyboards/kbdb-api-client';
 import { goto } from '$app/navigation';
 import { profilesApi } from '#lib/api/client.js';
 import { refreshProfile, saveProfile } from '#lib/profile/profile.svelte.js';

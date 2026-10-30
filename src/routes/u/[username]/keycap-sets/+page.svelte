@@ -7,8 +7,8 @@
 		KeycapKitInput,
 		KeycapSet,
 		KeycapSetInput
-	} from '@rogueserenity/kbdb-api-client';
-	import { ResponseError } from '@rogueserenity/kbdb-api-client';
+	} from '@roguekeyboards/kbdb-api-client';
+	import { ResponseError } from '@roguekeyboards/kbdb-api-client';
 	import { keycapSetsApi, buildsApi } from '#lib/api/client.js';
 	import { anyImageFailed, staleImageRefetcher, withFreshKitImages } from '#lib/stale-images.js';
 	import {

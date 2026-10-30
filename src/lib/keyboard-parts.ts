@@ -5,7 +5,7 @@ import type {
 	KeyboardPlateInput,
 	Purchase,
 	PurchaseInput
-} from '@rogueserenity/kbdb-api-client';
+} from '@roguekeyboards/kbdb-api-client';
 import { toDateInput } from '#lib/format.js';
 
 export type PurchaseDraft = {

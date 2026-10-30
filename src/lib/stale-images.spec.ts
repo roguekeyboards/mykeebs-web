@@ -5,7 +5,7 @@ import {
 	type Keyboard,
 	type KeycapSet,
 	type Switch
-} from '@rogueserenity/kbdb-api-client';
+} from '@roguekeyboards/kbdb-api-client';
 import {
 	anyImageFailed,
 	perItemImageRefetcher,

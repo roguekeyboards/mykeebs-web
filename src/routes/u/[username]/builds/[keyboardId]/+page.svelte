@@ -9,8 +9,8 @@
 		Keyboard,
 		KeycapKitImage,
 		Switch as SwitchModel
-	} from '@rogueserenity/kbdb-api-client';
-	import { ResponseError } from '@rogueserenity/kbdb-api-client';
+	} from '@roguekeyboards/kbdb-api-client';
+	import { ResponseError } from '@roguekeyboards/kbdb-api-client';
 	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
 	import {
 		STALE_REFS_MESSAGE,

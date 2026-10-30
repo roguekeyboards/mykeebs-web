@@ -1,4 +1,4 @@
-import { ImageStatus, ResponseError } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, ResponseError } from '@roguekeyboards/kbdb-api-client';
 import { isProblemResponse } from '#lib/api/throttle.js';
 
 export type ModeratedImage = { url?: string; status?: ImageStatus; rejectionReason?: string };

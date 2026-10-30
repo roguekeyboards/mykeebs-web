@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus, type Build } from '@rogueserenity/kbdb-api-client';
+import { ImageStatus, type Build } from '@roguekeyboards/kbdb-api-client';
 import BuildDetails from './BuildDetails.svelte';
 
 const build: Build = {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { Keyboard } from '@rogueserenity/kbdb-api-client';
+	import type { Keyboard } from '@roguekeyboards/kbdb-api-client';
 	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
 	import { formatPrice } from '#lib/format.js';
 	import { pcbLabel, plateLabel } from '#lib/keyboard-parts.js';
