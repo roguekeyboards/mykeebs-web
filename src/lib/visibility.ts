@@ -1,4 +1,4 @@
-import { Visibility } from '@roguekeyboards/kbdb-api-client';
+import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 
 export type VisibilityMeta = {
 	class: string;

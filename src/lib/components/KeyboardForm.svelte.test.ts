@@ -8,7 +8,7 @@ import {
 	Visibility,
 	type Keyboard,
 	type KeyboardInput
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import { lookupsApi } from '#lib/api/client.js';
 import { todayDateInput } from '#lib/format.js';
 import { pcbInput, plateInput, type KeyboardParts } from '#lib/keyboard-parts.js';

@@ -6,7 +6,7 @@ import {
 	ResponseError,
 	Visibility,
 	type Keyboard
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keyboardsApi, lookupsApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';

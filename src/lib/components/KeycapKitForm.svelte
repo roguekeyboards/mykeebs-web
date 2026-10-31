@@ -4,7 +4,7 @@
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
-	import type { KeycapKit, KeycapKitInput } from '@roguekeyboards/kbdb-api-client';
+	import type { KeycapKit, KeycapKitInput } from '@roguekeyboards/mykeebs-api-client';
 	import { lookupsApi } from '#lib/api/client.js';
 	import { toDateInput, todayDateInput } from '#lib/format.js';
 

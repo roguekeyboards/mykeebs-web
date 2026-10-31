@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { Visibility } from '@roguekeyboards/kbdb-api-client';
+import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 import KeyboardDetails from './KeyboardDetails.svelte';
 import SwitchDetails from './SwitchDetails.svelte';
 import KeycapSetDetails from './KeycapSetDetails.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Switch as SwitchModel } from '@roguekeyboards/kbdb-api-client';
+	import type { Switch as SwitchModel } from '@roguekeyboards/mykeebs-api-client';
 	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
 	import { isPending } from '#lib/image-moderation.js';
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';

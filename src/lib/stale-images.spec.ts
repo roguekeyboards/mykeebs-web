@@ -5,7 +5,7 @@ import {
 	type Keyboard,
 	type KeycapSet,
 	type Switch
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import {
 	anyImageFailed,
 	perItemImageRefetcher,

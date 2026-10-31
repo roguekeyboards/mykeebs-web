@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ResponseError, type Build, type Keyboard } from '@roguekeyboards/kbdb-api-client';
+import { ResponseError, type Build, type Keyboard } from '@roguekeyboards/mykeebs-api-client';
 import { pcbDraft, plateDraft, type KeyboardParts } from './keyboard-parts';
 import {
 	blockedRemovalMessage,

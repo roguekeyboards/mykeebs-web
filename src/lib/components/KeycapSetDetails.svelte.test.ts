@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus, type KeycapSet } from '@roguekeyboards/kbdb-api-client';
+import { ImageStatus, type KeycapSet } from '@roguekeyboards/mykeebs-api-client';
 import KeycapSetDetails from './KeycapSetDetails.svelte';
 
 const BROKEN = 'data:image/png;base64,bm90IGFuIGltYWdl';

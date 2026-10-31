@@ -1,6 +1,6 @@
 # mykeebs-web
 
-The web UI for [kbdb](https://github.com/roguekeyboards/kbdb), a personal mechanical keyboard
+The web UI for [kbdb](https://github.com/roguekeyboards/mykeebs-api), a personal mechanical keyboard
 collection tracker. Use it to browse, add and edit keyboards, switches, keycap sets and the builds
 that combine them.
 
@@ -11,7 +11,7 @@ identity kbdb's REST API already trusts, and styled with Skeleton UI.
 
 - [mise](https://mise.jdx.dev/), which installs the pinned Node version from `mise.toml`
 - [gh CLI](https://cli.github.com/), authenticated, with the `read:packages` scope (needed to
-  install `@roguekeyboards/kbdb-api-client` from GitHub Packages):
+  install `@roguekeyboards/mykeebs-api-client` from GitHub Packages):
 
   ```sh
   gh auth refresh -h github.com -s read:packages

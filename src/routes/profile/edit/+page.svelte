@@ -2,8 +2,8 @@
 	import { pageTitle } from '#lib/page-title.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { ProfileInput, ProfileLink } from '@roguekeyboards/kbdb-api-client';
-	import { ResponseError } from '@roguekeyboards/kbdb-api-client';
+	import type { ProfileInput, ProfileLink } from '@roguekeyboards/mykeebs-api-client';
+	import { ResponseError } from '@roguekeyboards/mykeebs-api-client';
 	import { auth } from '#lib/auth/auth.svelte.js';
 	import { profile, saveProfile, refreshProfile } from '#lib/profile/profile.svelte.js';
 	import { profilesApi } from '#lib/api/client.js';

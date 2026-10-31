@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Build } from '@roguekeyboards/kbdb-api-client';
+	import type { Build } from '@roguekeyboards/mykeebs-api-client';
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import { pcbLabel, plateLabel } from '#lib/keyboard-parts.js';
 	import { isPending, viewableImages } from '#lib/image-moderation.js';

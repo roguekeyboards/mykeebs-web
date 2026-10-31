@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Visibility } from '@roguekeyboards/kbdb-api-client';
+import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 import { mixedVisibilityMeta, visibilityMeta, visibilityOptions } from './visibility';
 
 describe('visibilityMeta', () => {

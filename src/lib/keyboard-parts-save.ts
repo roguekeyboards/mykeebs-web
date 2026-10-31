@@ -1,4 +1,4 @@
-import type { Build, Keyboard, KeyboardsApi } from '@roguekeyboards/kbdb-api-client';
+import type { Build, Keyboard, KeyboardsApi } from '@roguekeyboards/mykeebs-api-client';
 import { blockingBuildIdsFromError, blockingBuildLabels } from '#lib/delete-blocked.js';
 import {
 	pcbDraft,

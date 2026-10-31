@@ -4,8 +4,8 @@
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
 	import { untrack } from 'svelte';
-	import type { Switch as SwitchModel, SwitchInput } from '@roguekeyboards/kbdb-api-client';
-	import { Visibility } from '@roguekeyboards/kbdb-api-client';
+	import type { Switch as SwitchModel, SwitchInput } from '@roguekeyboards/mykeebs-api-client';
+	import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
 	import { toDateInput, todayDateInput } from '#lib/format.js';

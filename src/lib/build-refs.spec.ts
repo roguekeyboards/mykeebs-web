@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ResponseError, Visibility, type BuildInput } from '@roguekeyboards/kbdb-api-client';
+import { ResponseError, Visibility, type BuildInput } from '@roguekeyboards/mykeebs-api-client';
 import { kitKey, staleBuildRefs, staleBuildRefsFromError } from './build-refs';
 
 const input: BuildInput = {

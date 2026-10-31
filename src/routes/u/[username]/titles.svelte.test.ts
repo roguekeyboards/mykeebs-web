@@ -2,7 +2,7 @@ import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
-import { ResponseError } from '@roguekeyboards/kbdb-api-client';
+import { ResponseError } from '@roguekeyboards/mykeebs-api-client';
 import { profilesApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import UserLayout from './+layout.svelte';

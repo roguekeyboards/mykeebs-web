@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import type { Profile, ProfileListPage } from '@roguekeyboards/kbdb-api-client';
+import type { Profile, ProfileListPage } from '@roguekeyboards/mykeebs-api-client';
 import { profilesApi } from '#lib/api/client.js';
 import DiscoverPage from './+page.svelte';
 

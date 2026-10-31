@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus, ResponseError, type KeycapSet } from '@roguekeyboards/kbdb-api-client';
+import { ImageStatus, ResponseError, type KeycapSet } from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keycapSetsApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';

@@ -7,7 +7,7 @@ import {
 	ResponseError,
 	Visibility,
 	type Build
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import { keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
 import { MAX_IMAGES } from '#lib/image-limit.js';

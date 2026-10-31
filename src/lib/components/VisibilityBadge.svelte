@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Visibility } from '@roguekeyboards/kbdb-api-client';
+	import type { Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import { mixedVisibilityMeta, visibilityMeta } from '#lib/visibility.js';
 	import VisibilityIcon from './VisibilityIcon.svelte';
 

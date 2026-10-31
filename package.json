@@ -47,7 +47,7 @@
 	"dependencies": {
 		"@jsquash/webp": "^1.5.0",
 		"@lucide/svelte": "^1.52.0",
-		"@roguekeyboards/kbdb-api-client": "^1.70.3",
+		"@roguekeyboards/mykeebs-api-client": "^1.70.6",
 		"@roguekeyboards/mykeebs-brand": "^1.71.0"
 	},
 	"allowScripts": {
