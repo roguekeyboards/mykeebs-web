@@ -1,6 +1,6 @@
 import { ResponseError, type BuildInput } from '@roguekeyboards/mykeebs-api-client';
 
-// Keyed by id, not kbdb's index, so the flags survive edits to the form.
+// Keyed by id, not mykeebs-api's index, so the flags survive edits to the form.
 export type StaleBuildRefs = {
 	keyboardId: string | null;
 	switchIds: Set<string>;

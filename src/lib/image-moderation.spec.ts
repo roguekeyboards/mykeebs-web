@@ -85,7 +85,7 @@ describe('isUploadsUnavailable', () => {
 	const responseError = (status: number, contentType = 'application/json') =>
 		new ResponseError(new Response(null, { status, headers: { 'Content-Type': contentType } }));
 
-	it("recognizes kbdb's upload-cap 429", () => {
+	it("recognizes mykeebs-api's upload-cap 429", () => {
 		expect(isUploadsUnavailable(responseError(429, 'application/problem+json'))).toBe(true);
 	});
 

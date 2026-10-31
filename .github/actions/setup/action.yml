@@ -1,5 +1,5 @@
 name: Set up mykeebs-web
-description: Installs Node via mise and the npm dependencies, including the kbdb client from GitHub Packages.
+description: Installs Node via mise and the npm dependencies, including the mykeebs-api client from GitHub Packages.
 
 inputs:
   packages-token:

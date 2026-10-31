@@ -12,7 +12,7 @@ function problem(status: number, body: unknown): ResponseError {
 }
 
 describe('blockingBuildIdsFromError', () => {
-	it("reads the blocking builds from kbdb's 409 problem response", async () => {
+	it("reads the blocking builds from mykeebs-api's 409 problem response", async () => {
 		const err = problem(409, {
 			type: 'about:blank',
 			title: 'Conflict',

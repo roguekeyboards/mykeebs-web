@@ -26,7 +26,7 @@ function problem(status: number, body: unknown): ResponseError {
 }
 
 describe('staleBuildRefs', () => {
-	it('maps the indices kbdb reports back to the entries that were submitted', () => {
+	it('maps the indices mykeebs-api reports back to the entries that were submitted', () => {
 		const refs = staleBuildRefs(input, [
 			{ name: 'switches[1].switch' },
 			{ name: 'keycap_kits[1].kit' },
@@ -56,7 +56,7 @@ describe('staleBuildRefs', () => {
 });
 
 describe('staleBuildRefsFromError', () => {
-	it("reads the stale entries from kbdb's 400 problem response", async () => {
+	it("reads the stale entries from mykeebs-api's 400 problem response", async () => {
 		const err = problem(400, {
 			status: 400,
 			detail: 'one or more fields do not reference resources in your collection',

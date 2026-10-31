@@ -7,7 +7,7 @@ export function isProblemResponse(response: Response): boolean {
 }
 
 // API Gateway's throttle answers 429 with plain JSON before the request
-// reaches kbdb; kbdb's own 429s (the daily upload cap) are Problem responses.
+// reaches mykeebs-api; mykeebs-api's own 429s (the daily upload cap) are Problem responses.
 export function isThrottled(response: Response): boolean {
 	return response.status === 429 && !isProblemResponse(response);
 }

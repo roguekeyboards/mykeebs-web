@@ -23,7 +23,7 @@ describe('env vars', () => {
 	const used = [
 		...new Set(
 			sourceFiles(join(root, 'src')).flatMap((file) =>
-				[...readFileSync(file, 'utf8').matchAll(/\b(?:PUBLIC|KBDB)_[A-Z_]+\b/g)].map(
+				[...readFileSync(file, 'utf8').matchAll(/\b(?:PUBLIC|MYKEEBS)_[A-Z_]+\b/g)].map(
 					([name]) => name
 				)
 			)

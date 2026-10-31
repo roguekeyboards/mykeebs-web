@@ -35,7 +35,7 @@
 	let bio = $state('');
 	let discoverable = $state(false);
 	let links = $state<ProfileLink[]>([]);
-	// Mirrors kbdb's defaults for a profile with no preferences set.
+	// Mirrors mykeebs-api's defaults for a profile with no preferences set.
 	let currency = $state('USD');
 	let showPriceToMe = $state(true);
 	let showPriceToOthers = $state(false);
@@ -331,7 +331,7 @@
 						{/each}
 					</select>
 					<span class="text-faint text-xs">
-						Used to label your prices. kbdb doesn't convert between currencies.
+						Used to label your prices. mykeebs-api doesn't convert between currencies.
 					</span>
 				</label>
 

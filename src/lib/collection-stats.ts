@@ -33,7 +33,7 @@ export function collectionStats(lists: {
 		keycapSets: keycapSets.map((k) => ({ status: k.orderStatus ?? '', price: k.totalCost })),
 		builds: builds.length,
 		buildsTotalCost: builds.reduce((sum, b) => sum + (b.totalCost ?? 0), 0),
-		// Undefined when kbdb withheld every price, which hides the totals
+		// Undefined when mykeebs-api withheld every price, which hides the totals
 		// rather than showing a misleading $0.00.
 		currency: [
 			...[...keyboards, ...keycapSets, ...builds].map((i) => i.currency),

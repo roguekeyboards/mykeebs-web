@@ -38,7 +38,7 @@ describe('KeycapSetDetails.svelte', () => {
 		await expect.element(page.getByText('$51.00')).toBeInTheDocument();
 	});
 
-	it('labels the total with the currency kbdb returns', async () => {
+	it('labels the total with the currency mykeebs-api returns', async () => {
 		await render(KeycapSetDetails, props({ totalCost: 40, currency: 'EUR' }));
 
 		await expect.element(page.getByText('€40.00')).toBeInTheDocument();

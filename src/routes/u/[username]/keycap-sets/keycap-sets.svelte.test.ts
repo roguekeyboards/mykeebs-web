@@ -283,7 +283,7 @@ describe('keycap sets page', () => {
 				.toBeInTheDocument();
 		});
 
-		it('says the set is still used when kbdb names no builds', async () => {
+		it('says the set is still used when mykeebs-api names no builds', async () => {
 			api.deleteKeycapSet.mockRejectedValue(conflict());
 			await renderPage();
 			await openOlivia();
