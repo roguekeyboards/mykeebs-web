@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.2...v0.4.3) (2026-10-31)
+
+
+### Bug Fixes
+
+* use the renamed AWS resources and variable names ([#153](https://github.com/roguekeyboards/mykeebs-web/issues/153)) ([47e38a5](https://github.com/roguekeyboards/mykeebs-web/commit/47e38a5fbb70f901b6eae2547c08461567541f0f))
+
 ## [0.4.2](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.1...v0.4.2) (2026-10-31)
 
 
