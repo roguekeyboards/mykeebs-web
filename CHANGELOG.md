@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.1...v0.4.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* use the renamed mykeebs-api client ([#151](https://github.com/roguekeyboards/mykeebs-web/issues/151)) ([cc1ae1b](https://github.com/roguekeyboards/mykeebs-web/commit/cc1ae1ba5c16ae5f1af55003aea191361dc29708))
+
 ## [0.4.1](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.0...v0.4.1) (2026-10-30)
 
 
