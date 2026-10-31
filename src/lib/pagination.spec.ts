@@ -15,7 +15,7 @@ describe('fetchAllPages', () => {
 		expect(fetchPage.mock.calls.map(([{ cursor }]) => cursor)).toEqual([undefined, 'c-2', 'c-3']);
 	});
 
-	it("asks for kbdb's largest page every time", async () => {
+	it("asks for mykeebs-api's largest page every time", async () => {
 		const fetchPage = vi.fn(async ({ cursor }: PageRequest) =>
 			cursor === undefined ? { items: [1], nextCursor: 'c-2' } : { items: [2] }
 		);

@@ -52,7 +52,7 @@ describe('collection page size', () => {
 		['keycap sets', KeycapSetsPage, 1],
 		['builds', BuildsPage, 1],
 		["a keyboard's builds", KeyboardBuildsPage, 1]
-	])("requests kbdb's largest page on %s", async (_, component, calls) => {
+	])("requests mykeebs-api's largest page on %s", async (_, component, calls) => {
 		await render(WithUserContext, { component });
 
 		const made = await vi.waitFor(() => {

@@ -744,7 +744,7 @@ describe('KeyboardForm.svelte', () => {
 			expect(onImageUpload.mock.calls).toEqual([[a], [b], [c]]);
 		});
 
-		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+		it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 			await renderForm({
 				initial: keyboard,
 				onImageUpload: vi.fn().mockRejectedValue(
@@ -901,11 +901,11 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	it('locks the buttons while saving and shows a save error', async () => {
-		await renderForm({ initial: keyboard, saving: true, error: 'kbdb said no' });
+		await renderForm({ initial: keyboard, saving: true, error: 'mykeebs-api said no' });
 
 		await expect.element(page.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 		await expect.element(page.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-		await expect.element(page.getByText('kbdb said no')).toBeInTheDocument();
+		await expect.element(page.getByText('mykeebs-api said no')).toBeInTheDocument();
 	});
 
 	it('cancels', async () => {

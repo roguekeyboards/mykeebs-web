@@ -50,7 +50,7 @@ Name new test files to match whichever project they belong in. Run a single file
 - Env vars are declared in `src/env.ts` (`defineEnvVars`) and read via `$app/env/public`. Add a new
   one there, and to `.env.example`, `.env.dev` and `.env.prod` (the deployed values);
   `src/lib/build-config.spec.ts` fails until they all match. CI uses the committed files too.
-  `KBDB_UPLOADS_ORIGIN` and `KBDB_IMAGES_ORIGIN` are build-only (read by `src/lib/csp.ts` when
+  `MYKEEBS_UPLOADS_ORIGIN` and `MYKEEBS_IMAGES_ORIGIN` are build-only (read by `src/lib/csp.ts` when
   `vite.config.ts` loads, not by app code) and go in the same places.
 - The CSP is built from the env's hosts by `src/lib/csp.ts` and emitted by SvelteKit as a `<meta>`
   tag with a hash of its inline script. Headers a `<meta>` can't set (`frame-ancestors`, HSTS, …)
@@ -64,7 +64,7 @@ Name new test files to match whichever project they belong in. Run a single file
 
 ## Installing `@roguekeyboards/mykeebs-api-client`
 
-This package is generated from kbdb's OpenAPI spec and published to GitHub Packages on every kbdb
+This package is generated from mykeebs-api's OpenAPI spec and published to GitHub Packages on every mykeebs-api
 release — it's not hand-written, so don't patch it in `node_modules`; bump the version in
 `package.json` instead when the API changes.
 

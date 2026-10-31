@@ -21,7 +21,7 @@ function run(first: Response, ...retries: Response[]) {
 }
 
 describe('isThrottled', () => {
-	it("is API Gateway's plain 429, not kbdb's Problem 429 or anything else", () => {
+	it("is API Gateway's plain 429, not mykeebs-api's Problem 429 or anything else", () => {
 		expect(isThrottled(throttled())).toBe(true);
 		expect(isThrottled(uploadCap())).toBe(false);
 		expect(isThrottled(ok())).toBe(false);
@@ -48,7 +48,7 @@ describe('retryWhenThrottled', () => {
 		expect(sleep.mock.calls.map(([ms]) => ms)).toEqual([500, 1000, 2000]);
 	});
 
-	it("passes kbdb's upload-cap 429 and ordinary responses straight through", async () => {
+	it("passes mykeebs-api's upload-cap 429 and ordinary responses straight through", async () => {
 		for (const response of [uploadCap(), ok()]) {
 			const { fetch, sleep, result } = run(response);
 

@@ -9,7 +9,7 @@
 	let query = $state('');
 	let results = $state<Profile[]>([]);
 	let nextCursor = $state<string | null>(null);
-	// kbdb only accepts a cursor with the filter it came from, which can differ
+	// mykeebs-api only accepts a cursor with the filter it came from, which can differ
 	// from the box's text while a debounced search is pending.
 	let resultsFilter: string | undefined;
 	let loading = $state(false);

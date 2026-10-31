@@ -142,7 +142,7 @@ describe('KeycapKitForm.svelte image moderation', () => {
 		expect(onImageRemove).toHaveBeenCalled();
 	});
 
-	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+	it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 		await renderKit(kit, {
 			onImageUpload: vi.fn().mockRejectedValue(
 				new ResponseError(

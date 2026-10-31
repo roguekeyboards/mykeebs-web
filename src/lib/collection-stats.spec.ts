@@ -58,7 +58,7 @@ describe('collectionStats', () => {
 		expect(stats.currency).toBe('EUR');
 	});
 
-	it('has no currency when kbdb withheld every price', () => {
+	it('has no currency when mykeebs-api withheld every price', () => {
 		const stats = collectionStats({
 			...empty,
 			keyboards: [kb('k', { purchase: { orderStatus: 'Delivered' } })],

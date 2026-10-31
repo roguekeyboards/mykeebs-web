@@ -13,11 +13,11 @@ export function cspDirectives(env: Env): CspDirectives {
 		'default-src': ['self'],
 		'connect-src': [
 			'self',
-			host('PUBLIC_KBDB_API_BASE_PATH'),
+			host('PUBLIC_MYKEEBS_API_BASE_PATH'),
 			host('PUBLIC_OIDC_ISSUER'),
-			host('KBDB_UPLOADS_ORIGIN')
+			host('MYKEEBS_UPLOADS_ORIGIN')
 		],
-		'img-src': ['self', 'data:', 'blob:', host('KBDB_IMAGES_ORIGIN')],
+		'img-src': ['self', 'data:', 'blob:', host('MYKEEBS_IMAGES_ORIGIN')],
 		'font-src': ['self', 'data:'],
 		'script-src': ['self', 'wasm-unsafe-eval'],
 		'style-src': ['self', 'unsafe-inline'],

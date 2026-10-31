@@ -61,7 +61,7 @@ async function renderForm(staleRefs: StaleBuildRefs | null) {
 const NOTE = 'No longer in your collection';
 
 describe('BuildForm.svelte stale references', () => {
-	it('flags only the switches and kits kbdb rejected', async () => {
+	it('flags only the switches and kits mykeebs-api rejected', async () => {
 		await renderForm({
 			keyboardId: null,
 			switchIds: new Set(['sw-b']),
@@ -75,7 +75,7 @@ describe('BuildForm.svelte stale references', () => {
 		await expect.element(items.filter({ hasText: '8008 2 — Base' })).not.toHaveTextContent(NOTE);
 	});
 
-	it('flags the keyboard when it is the one kbdb rejected', async () => {
+	it('flags the keyboard when it is the one mykeebs-api rejected', async () => {
 		await renderForm({ keyboardId: 'kb', switchIds: new Set(), kitKeys: new Set() });
 
 		await expect.element(page.getByText(NOTE)).toBeInTheDocument();
@@ -315,7 +315,7 @@ describe('BuildForm.svelte photo limit', () => {
 		});
 	}
 
-	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+	it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 		await renderWith({
 			initial: withImages(1),
 			onImageUpload: vi.fn().mockRejectedValue(

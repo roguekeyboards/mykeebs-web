@@ -452,7 +452,7 @@ describe('switches page', () => {
 				.toBeInTheDocument();
 		});
 
-		it('says it is still used when kbdb names no builds', async () => {
+		it('says it is still used when mykeebs-api names no builds', async () => {
 			api.deleteSwitch.mockRejectedValue(conflict());
 			await renderPage();
 			await openAperol();

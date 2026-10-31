@@ -7,12 +7,12 @@ import {
 	ProfilesApi,
 	SwitchesApi
 } from '@roguekeyboards/mykeebs-api-client';
-import { PUBLIC_KBDB_API_BASE_PATH } from '$app/env/public';
+import { PUBLIC_MYKEEBS_API_BASE_PATH } from '$app/env/public';
 import { getAccessToken } from '#lib/auth/auth.svelte.js';
 import { retryWhenThrottled } from './throttle.js';
 
 const configuration = new Configuration({
-	basePath: PUBLIC_KBDB_API_BASE_PATH,
+	basePath: PUBLIC_MYKEEBS_API_BASE_PATH,
 	accessToken: getAccessToken,
 	middleware: [retryWhenThrottled()]
 });

@@ -412,7 +412,7 @@ describe('Profile edit page photo', () => {
 			.toBeInTheDocument();
 	});
 
-	it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+	it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 		api.setProfileImage.mockRejectedValue(
 			new ResponseError(
 				new Response(null, { status: 429, headers: { 'Content-Type': 'application/problem+json' } })

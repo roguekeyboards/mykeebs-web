@@ -1,6 +1,6 @@
 import type { ProfileLink } from '@roguekeyboards/mykeebs-api-client';
 
-// Mirrors ProfileInput.username in kbdb's schema: 3-32 chars, lowercase
+// Mirrors ProfileInput.username in mykeebs-api's schema: 3-32 chars, lowercase
 // alphanumeric, single separators only, no leading/trailing separator.
 const USERNAME_PATTERN = /^(?=.{3,32}$)[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 

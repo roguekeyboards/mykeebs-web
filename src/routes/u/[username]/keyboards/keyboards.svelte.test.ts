@@ -254,7 +254,7 @@ describe('keyboards page', () => {
 			expect(api.getKeyboard).not.toHaveBeenCalled();
 		});
 
-		it('says uploads are unavailable when kbdb refuses with a 429', async () => {
+		it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 			api.createKeyboardImage.mockRejectedValue(
 				new ResponseError(
 					new Response(null, {
@@ -862,7 +862,7 @@ describe('keyboards page', () => {
 				.toBeInTheDocument();
 		});
 
-		it('says it is still used when kbdb names no builds', async () => {
+		it('says it is still used when mykeebs-api names no builds', async () => {
 			api.deleteKeyboard.mockRejectedValue(conflict());
 			await renderPage();
 			await openManta();
