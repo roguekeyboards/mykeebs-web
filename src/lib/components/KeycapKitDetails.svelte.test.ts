@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { ImageStatus } from '@roguekeyboards/kbdb-api-client';
+import { ImageStatus } from '@roguekeyboards/mykeebs-api-client';
 import type { ModeratedImage } from '#lib/image-moderation.js';
 import KeycapKitDetails from './KeycapKitDetails.svelte';
 

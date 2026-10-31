@@ -6,7 +6,7 @@ import {
 	ResponseError,
 	Visibility,
 	type Build
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { STALE_REFS_MESSAGE } from '#lib/build-refs.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';

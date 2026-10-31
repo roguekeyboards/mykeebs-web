@@ -1,4 +1,4 @@
-import { ProblemFromJSON, ResponseError, type Build } from '@roguekeyboards/kbdb-api-client';
+import { ProblemFromJSON, ResponseError, type Build } from '@roguekeyboards/mykeebs-api-client';
 import { formatDate } from '#lib/format.js';
 
 export async function blockingBuildIdsFromError(err: unknown): Promise<string[] | null> {

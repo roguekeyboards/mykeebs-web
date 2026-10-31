@@ -7,7 +7,7 @@ import {
 	Visibility,
 	type Switch as SwitchModel,
 	type SwitchInput
-} from '@roguekeyboards/kbdb-api-client';
+} from '@roguekeyboards/mykeebs-api-client';
 import { lookupsApi } from '#lib/api/client.js';
 import { todayDateInput } from '#lib/format.js';
 import SwitchForm from './SwitchForm.svelte';

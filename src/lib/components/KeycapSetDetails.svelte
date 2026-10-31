@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { KeycapKit, KeycapSet } from '@roguekeyboards/kbdb-api-client';
+	import type { KeycapKit, KeycapSet } from '@roguekeyboards/mykeebs-api-client';
 	import OrderStatusBadge from './OrderStatusBadge.svelte';
 	import { formatPrice } from '#lib/format.js';
 	import { isPending } from '#lib/image-moderation.js';

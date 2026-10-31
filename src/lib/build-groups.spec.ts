@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Visibility, type Build } from '@roguekeyboards/kbdb-api-client';
+import { Visibility, type Build } from '@roguekeyboards/mykeebs-api-client';
 import { groupByKeyboard, newestFirst } from './build-groups';
 
 function build(

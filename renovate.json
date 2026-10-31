@@ -37,7 +37,7 @@
 	],
 	"hostRules": [
 		{
-			"description": "@roguekeyboards/kbdb-api-client lives on GitHub Packages; the workflow passes its GITHUB_TOKEN",
+			"description": "@roguekeyboards/mykeebs-api-client lives on GitHub Packages; the workflow passes its GITHUB_TOKEN",
 			"matchHost": "npm.pkg.github.com",
 			"hostType": "npm",
 			"token": "{{ secrets.PACKAGES_TOKEN }}"

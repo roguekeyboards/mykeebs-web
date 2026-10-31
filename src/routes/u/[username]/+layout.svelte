@@ -2,8 +2,8 @@
 	import { pageTitle } from '#lib/page-title.js';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
-	import type { Profile } from '@roguekeyboards/kbdb-api-client';
-	import { ResponseError } from '@roguekeyboards/kbdb-api-client';
+	import type { Profile } from '@roguekeyboards/mykeebs-api-client';
+	import { ResponseError } from '@roguekeyboards/mykeebs-api-client';
 	import { profilesApi } from '#lib/api/client.js';
 	import { auth } from '#lib/auth/auth.svelte.js';
 	import { setUserContext } from '#lib/user-context.js';

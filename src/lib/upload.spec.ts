@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ResponseError } from '@roguekeyboards/kbdb-api-client';
+import { ResponseError } from '@roguekeyboards/mykeebs-api-client';
 import {
 	stagedUploadFollowUp,
 	stagedUploadMessage,

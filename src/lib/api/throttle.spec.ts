@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ResponseContext } from '@roguekeyboards/kbdb-api-client';
+import type { ResponseContext } from '@roguekeyboards/mykeebs-api-client';
 import { isThrottled, retryWhenThrottled } from './throttle.js';
 
 const throttled = () =>

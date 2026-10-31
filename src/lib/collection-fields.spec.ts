@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Build, Keyboard, KeycapSet, Switch } from '@roguekeyboards/kbdb-api-client';
+import type { Build, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
 import type { KeyboardBuildGroup } from './build-groups';
 import { buildFields, keyboardFields, keycapSetFields, switchFields } from './collection-fields';
 import type { SearchField } from './collection-filter';

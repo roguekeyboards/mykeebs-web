@@ -1,4 +1,4 @@
-import type { ImageUploadRequest } from '@roguekeyboards/kbdb-api-client';
+import type { ImageUploadRequest } from '@roguekeyboards/mykeebs-api-client';
 import {
 	ImageTooLargeError,
 	MAX_IMAGE_BYTES,
