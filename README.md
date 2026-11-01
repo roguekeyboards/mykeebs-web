@@ -56,3 +56,8 @@ deploys the `mykeebs-prod` Worker. Run `Deploy prod` by hand with an older tag t
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the day-to-day workflow (branches and PRs, lint,
 typecheck, tests).
+
+## License
+
+The code is [MIT](LICENSE-MIT). The mykeebs brand, the fonts and third-party packages aren't; see
+[`LICENSE`](LICENSE).
