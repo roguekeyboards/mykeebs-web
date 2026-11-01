@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.4](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.3...v0.4.4) (2026-11-01)
+
+
+### Bug Fixes
+
+* keep item modals and forms from losing state ([#161](https://github.com/roguekeyboards/mykeebs-web/issues/161)) ([e72e5a7](https://github.com/roguekeyboards/mykeebs-web/commit/e72e5a7a22a5ac7451709203c439440763a130f9))
+* keep lists up during refresh and correct site navigation ([#166](https://github.com/roguekeyboards/mykeebs-web/issues/166)) ([ce956ac](https://github.com/roguekeyboards/mykeebs-web/commit/ce956ac0af204e8fce36d8b07d54c9779d35b8f1))
+* text wrapping and username entry on phones ([#167](https://github.com/roguekeyboards/mykeebs-web/issues/167)) ([49ad340](https://github.com/roguekeyboards/mykeebs-web/commit/49ad3400b107db7f025a365a56c11c6dea4d2ea4))
+
 ## [0.4.3](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.2...v0.4.3) (2026-10-31)
 
 
