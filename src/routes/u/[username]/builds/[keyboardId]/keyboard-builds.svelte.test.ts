@@ -220,6 +220,44 @@ describe('keyboard builds page', () => {
 		});
 	});
 
+	describe('refreshing after a change', () => {
+		async function deleteCurrentWhileListing(listing: () => Promise<{ items: Build[] }>) {
+			builds.deleteBuild.mockResolvedValue(undefined);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Delete' }).click();
+			builds.listBuilds.mockImplementationOnce(listing);
+			await page.getByRole('button', { name: 'Confirm delete' }).click();
+			await vi.waitFor(() => expect(builds.listBuilds).toHaveBeenCalledTimes(2));
+		}
+
+		it('keeps the same cards up while the list reloads', async () => {
+			const pending = deferred<{ items: Build[] }>();
+			const olderCard = () => page.getByRole('button', { name: /Nov 2, 2025/ });
+			await deleteCurrentWhileListing(() => pending.promise);
+			const card = olderCard().element();
+
+			await settled();
+
+			expect(card.isConnected).toBe(true);
+			await expect.element(page.getByText('Loading…')).not.toBeInTheDocument();
+
+			pending.resolve({ items: [older, undated] });
+
+			await expect.element(page.getByRole('listitem')).toHaveLength(2);
+			expect(card.isConnected).toBe(true);
+		});
+
+		it('keeps the list and says it may be stale when the reload fails', async () => {
+			await deleteCurrentWhileListing(() => Promise.reject(new Error('network')));
+
+			await expect
+				.element(page.getByRole('alert').filter({ hasText: 'may be out of date' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByRole('listitem')).toHaveLength(3);
+		});
+	});
+
 	describe('deleting a build', () => {
 		it('asks first, then deletes, reloads, and closes', async () => {
 			builds.deleteBuild.mockResolvedValue(undefined);

@@ -168,6 +168,44 @@ describe('BuilderSearch.svelte', () => {
 		expect(listProfiles).toHaveBeenCalledOnce();
 	});
 
+	it("doesn't search if focus leaves before the debounce ends, and searches on return", async () => {
+		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
+		await render(BuilderSearch);
+		await userEvent.fill(searchbox(), 'rog');
+
+		(searchbox().element() as HTMLInputElement).blur();
+		await new Promise((r) => setTimeout(r, 400));
+
+		expect(listProfiles).not.toHaveBeenCalled();
+		await expect.element(page.getByText('@rogue.serenity')).not.toBeInTheDocument();
+
+		await userEvent.click(searchbox());
+
+		await expect.element(page.getByText('@rogue.serenity')).toBeInTheDocument();
+		expect(listProfiles).toHaveBeenCalledOnce();
+	});
+
+	it('stays closed when a search comes back after focus has left, and searches on return', async () => {
+		const pending = deferred<ProfileListPage>();
+		listProfiles.mockReturnValueOnce(pending.promise);
+		await render(BuilderSearch);
+		await userEvent.fill(searchbox(), 'rog');
+		await vi.waitFor(() => expect(listProfiles).toHaveBeenCalledOnce());
+
+		(searchbox().element() as HTMLInputElement).blur();
+		pending.resolve(pageOf([profile('late')]));
+		await pending.promise;
+		await new Promise((r) => setTimeout(r, 20));
+
+		await expect.element(page.getByText('@late')).not.toBeInTheDocument();
+
+		listProfiles.mockResolvedValueOnce(pageOf([profile('rogue.serenity')]));
+		await userEvent.click(searchbox());
+
+		await expect.element(page.getByText('@rogue.serenity')).toBeInTheDocument();
+		await expect.element(page.getByRole('status')).not.toBeInTheDocument();
+	});
+
 	it('stays open when Tab moves focus into the results, and Enter picks one', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity')]));
 		await render(BuilderSearch);

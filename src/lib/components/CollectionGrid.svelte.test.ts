@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
 import CollectionGrid from './CollectionGrid.svelte';
+import { deferred, settled } from './test-support/deferred.js';
 import '../../routes/layout.css';
 
 type Item = { id: string; name: string; brand: string; price?: number; status?: string };
@@ -72,6 +73,98 @@ describe('CollectionGrid.svelte', () => {
 		await expect
 			.element(page.getByRole('alert').filter({ hasText: 'Could not load this collection.' }))
 			.toBeInTheDocument();
+	});
+
+	describe('refreshing', () => {
+		async function renderRefreshable(fetchPage: ReturnType<typeof vi.fn>) {
+			const { component } = await render(CollectionGrid, {
+				userId: 'user-1',
+				fetchPage,
+				itemKey: (item: Item) => item.id,
+				emptyMessage: 'No keyboards yet.',
+				sortOptions: [],
+				getName: (item: Item) => item.name,
+				card
+			} as never);
+			await shown();
+			return component as unknown as { refresh(): Promise<void> };
+		}
+
+		it('keeps the same cards up while it reloads, then shows the new list', async () => {
+			const pending = deferred<{ items: Item[] }>();
+			const fetchPage = vi
+				.fn()
+				.mockResolvedValueOnce({ items: [manta, agar] })
+				.mockReturnValueOnce(pending.promise);
+			const grid = await renderRefreshable(fetchPage);
+			const mantaCard = page.getByRole('article').filter({ hasText: 'Manta' }).element();
+
+			const refreshed = grid.refresh();
+			await settled();
+
+			expect(mantaCard.isConnected).toBe(true);
+			await expect
+				.element(page.getByRole('status').filter({ hasText: 'Loading…' }))
+				.not.toBeInTheDocument();
+
+			pending.resolve({ items: [manta, kafka] });
+			await refreshed;
+
+			await expect.element(page.getByText('Kafka')).toBeInTheDocument();
+			await expect.element(page.getByText('Agar')).not.toBeInTheDocument();
+			expect(mantaCard.isConnected).toBe(true);
+		});
+
+		it('keeps the list and says it may be stale when a refresh fails, until one succeeds', async () => {
+			const fetchPage = vi
+				.fn()
+				.mockResolvedValueOnce({ items: [manta] })
+				.mockRejectedValueOnce(new Error('network'))
+				.mockResolvedValueOnce({ items: [manta, agar] });
+			const grid = await renderRefreshable(fetchPage);
+			const stale = page.getByRole('alert').filter({ hasText: 'may be out of date' });
+
+			await grid.refresh();
+
+			await expect.element(stale).toBeInTheDocument();
+			await expect.element(page.getByText('Manta')).toBeInTheDocument();
+
+			await grid.refresh();
+
+			await expect.element(stale).not.toBeInTheDocument();
+			await expect.element(page.getByText('Agar')).toBeInTheDocument();
+		});
+	});
+
+	it("shows loading, not the previous user's list, when the user changes", async () => {
+		const pending = deferred<{ items: Item[] }>();
+		const fetchPage = vi
+			.fn()
+			.mockResolvedValueOnce({ items: [manta] })
+			.mockReturnValueOnce(pending.promise);
+		const props = {
+			userId: 'user-1',
+			fetchPage,
+			itemKey: (item: Item) => item.id,
+			emptyMessage: 'No keyboards yet.',
+			sortOptions: [],
+			getName: (item: Item) => item.name,
+			card
+		};
+		const { rerender } = await render(CollectionGrid, props as never);
+		await shown();
+
+		await rerender({ userId: 'user-2' } as never);
+
+		await expect
+			.element(page.getByRole('status').filter({ hasText: 'Loading…' }))
+			.toBeInTheDocument();
+		await expect.element(page.getByText('Manta')).not.toBeInTheDocument();
+
+		pending.resolve({ items: [agar] });
+
+		await expect.element(page.getByText('Agar')).toBeInTheDocument();
+		expect(fetchPage).toHaveBeenLastCalledWith('user-2', { cursor: undefined, limit: 100 });
 	});
 
 	it('shows the empty message for an empty collection', async () => {

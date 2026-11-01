@@ -126,14 +126,37 @@ describe('signIn', () => {
 		expect(second[1]).not.toBe(first[1]);
 	});
 
-	it('goes nowhere and stores nothing when discovery fails', async () => {
-		oidcEndpoints.mockRejectedValue(new Error('OIDC discovery failed: 503'));
+	it('goes nowhere, stores nothing and reports the failure when discovery fails', async () => {
+		vi.spyOn(console, 'error').mockImplementationOnce(() => {});
+		oidcEndpoints.mockRejectedValueOnce(new Error('OIDC discovery failed: 503'));
 
-		await expect(authModule.signIn()).rejects.toThrow(/discovery/);
+		await authModule.signIn();
 
+		expect(authModule.auth.signInFailed).toBe(true);
 		expect(assign).not.toHaveBeenCalled();
 		expect(localStorage.getItem(VERIFIER_KEY)).toBeNull();
 		expect(localStorage.getItem(STATE_KEY)).toBeNull();
+	});
+
+	it('clears a reported failure when dismissed', async () => {
+		vi.spyOn(console, 'error').mockImplementationOnce(() => {});
+		oidcEndpoints.mockRejectedValueOnce(new Error('OIDC discovery failed: 503'));
+		await authModule.signIn();
+
+		authModule.dismissSignInFailure();
+
+		expect(authModule.auth.signInFailed).toBe(false);
+	});
+
+	it('clears a reported failure when a retry goes through', async () => {
+		vi.spyOn(console, 'error').mockImplementationOnce(() => {});
+		oidcEndpoints.mockRejectedValueOnce(new Error('OIDC discovery failed: 503'));
+		await authModule.signIn();
+
+		await authModule.signIn();
+
+		expect(authModule.auth.signInFailed).toBe(false);
+		expect(assign).toHaveBeenCalledOnce();
 	});
 });
 

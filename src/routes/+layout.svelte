@@ -9,10 +9,12 @@
 	import appleTouchIcon from '@roguekeyboards/mykeebs-brand/apple-touch-icon.png';
 	import logo from '@roguekeyboards/mykeebs-brand/logo-horizontal-on-dark.svg';
 	import mark from '@roguekeyboards/mykeebs-brand/mark-on-dark.svg';
-	import { initAuth } from '#lib/auth/auth.svelte.js';
+	import { auth, dismissSignInFailure, initAuth } from '#lib/auth/auth.svelte.js';
 	import { initProfile, profile } from '#lib/profile/profile.svelte.js';
 	import AuthControl from '#lib/auth/AuthControl.svelte';
 	import BuilderSearch from '#lib/components/BuilderSearch.svelte';
+	import PageNotice from '#lib/components/PageNotice.svelte';
+	import { isAtOrUnder, isProfileTabActive } from '#lib/nav-active.js';
 	import {
 		setProfileSubNavContext,
 		type ProfileSubNavContext
@@ -28,16 +30,16 @@
 		initProfile();
 	});
 
-	let myCollectionHref = $derived(
-		profile.status === 'ready'
-			? resolve('/u/[username]/keyboards', { username: profile.data!.username })
-			: undefined
-	);
-
 	const navItems = $derived(
 		[
-			myCollectionHref ? { href: myCollectionHref, label: 'My Collection' } : null,
-			{ href: resolve('/discover'), label: 'Discover' }
+			profile.status === 'ready'
+				? {
+						href: resolve('/u/[username]/keyboards', { username: profile.data!.username }),
+						activeUnder: resolve('/u/[username]', { username: profile.data!.username }),
+						label: 'My Collection'
+					}
+				: null,
+			{ href: resolve('/discover'), activeUnder: resolve('/discover'), label: 'Discover' }
 		].filter((item) => item !== null)
 	);
 
@@ -77,10 +79,11 @@
 	<div class="hidden md:block">
 		<nav class="app-nav" aria-label="Main">
 			{#each navItems as item (item.href)}
+				{@const active = isAtOrUnder(page.url.pathname, item.activeUnder)}
 				<a
 					href={item.href}
-					class="nav-key {page.url.pathname.startsWith(item.href) ? 'is-active' : ''}"
-					aria-current={page.url.pathname.startsWith(item.href) ? 'page' : undefined}
+					class="nav-key {active ? 'is-active' : ''}"
+					aria-current={active ? 'page' : undefined}
 				>
 					{item.label}
 				</a>
@@ -96,10 +99,11 @@
 	<div class="app-mobile-menu md:hidden">
 		<nav class="flex flex-col gap-1" aria-label="Main">
 			{#each navItems as item (item.href)}
+				{@const active = isAtOrUnder(page.url.pathname, item.activeUnder)}
 				<a
 					href={item.href}
-					class="nav-key {page.url.pathname.startsWith(item.href) ? 'is-active' : ''}"
-					aria-current={page.url.pathname.startsWith(item.href) ? 'page' : undefined}
+					class="nav-key {active ? 'is-active' : ''}"
+					aria-current={active ? 'page' : undefined}
 				>
 					{item.label}
 				</a>
@@ -110,10 +114,15 @@
 			<nav class="flex flex-col gap-1" aria-label="Profile">
 				{#each profileSubNav.items as item (item.route)}
 					{@const href = resolve(item.route, { username: item.username })}
+					{@const active = isProfileTabActive(
+						page.url.pathname,
+						href,
+						resolve('/u/[username]', { username: item.username })
+					)}
 					<a
 						{href}
-						class="nav-key {page.url.pathname === href ? 'is-active' : ''}"
-						aria-current={page.url.pathname === href ? 'page' : undefined}
+						class="nav-key {active ? 'is-active' : ''}"
+						aria-current={active ? 'page' : undefined}
 					>
 						{item.label}
 					</a>
@@ -121,6 +130,11 @@
 			</nav>
 		{/if}
 	</div>
+{/if}
+{#if auth.signInFailed}
+	<PageNotice onDismiss={dismissSignInFailure}>
+		Couldn't reach sign-in. Check your connection and try again.
+	</PageNotice>
 {/if}
 <main id="main" tabindex="-1">
 	{@render children()}
