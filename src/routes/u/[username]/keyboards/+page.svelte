@@ -134,14 +134,15 @@
 			);
 			await grid?.refresh().catch(() => {});
 			const photos = stagedUploadOutcome('keyboard', photoFailure, true);
-			if (partsSaved && !photos.reopen) {
-				closeModal();
+			const stillOpen = modal.mode === 'create';
+			if (!stillOpen || (partsSaved && !photos.reopen)) {
+				if (stillOpen) closeModal();
 				notice = photos.message;
 			} else {
 				const fresh = await keyboardsApi
 					.getKeyboard({ userId, keyboardId: keyboard.id })
 					.catch(() => keyboard);
-				modal = { mode: 'edit', keyboard: fresh };
+				if (modal.mode === 'create') modal = { mode: 'edit', keyboard: fresh };
 				if (partsSaved) {
 					photoNotice = photos.message;
 				} else {
@@ -175,7 +176,9 @@
 			await saveParts(keyboardsApi, userId, saved, parts);
 			const keyboard = await keyboardsApi.getKeyboard({ userId, keyboardId: saved.id });
 			await grid?.refresh();
-			modal = { mode: 'view', keyboard };
+			if (modal.mode === 'edit' && modal.keyboard.id === saved.id) {
+				modal = { mode: 'view', keyboard };
+			}
 		} catch (err) {
 			if (err instanceof ResponseError) {
 				const body = await err.response.json().catch(() => null);
@@ -195,7 +198,9 @@
 		if (!userId) return;
 		const keyboard = await keyboardsApi.getKeyboard({ userId, keyboardId });
 		await grid?.refresh();
-		if (modal.mode === 'edit') modal = { mode: 'edit', keyboard };
+		if (modal.mode === 'edit' && modal.keyboard.id === keyboardId) {
+			modal = { mode: 'edit', keyboard };
+		}
 	}
 
 	async function uploadKeyboardImage(keyboardId: string, file: File) {

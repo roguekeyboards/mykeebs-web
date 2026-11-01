@@ -104,16 +104,18 @@
 	});
 
 	function pickKeyboard(kb: Keyboard) {
-		keyboard = {
-			id: kb.id,
-			brand: kb.brand,
-			name: kb.name,
-			imageUrl: primaryImageUrl(kb.images)
-		};
-		setKeyboardParts(kb);
-		loadKeyboardParts(kb.id);
-		plate = '';
-		pcb = '';
+		if (kb.id !== keyboard?.id) {
+			keyboard = {
+				id: kb.id,
+				brand: kb.brand,
+				name: kb.name,
+				imageUrl: primaryImageUrl(kb.images)
+			};
+			setKeyboardParts(kb);
+			loadKeyboardParts(kb.id);
+			plate = '';
+			pcb = '';
+		}
 		keyboardPickerOpen = false;
 		refocusKeyboardTrigger.value = true;
 	}
@@ -1018,7 +1020,7 @@
 	{/if}
 
 	<div class="mt-2 flex gap-2">
-		<button type="submit" class="btn btn-accent" disabled={saving}>
+		<button type="submit" class="btn btn-accent" disabled={saving || imageBusy}>
 			{saving ? 'Saving…' : initial ? 'Save changes' : 'Add build'}
 		</button>
 		<button type="button" class="btn" disabled={saving} onclick={onCancel}>Cancel</button>

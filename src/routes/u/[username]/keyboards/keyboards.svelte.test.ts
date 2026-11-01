@@ -8,6 +8,7 @@ import {
 	type Keyboard
 } from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keyboardsApi, lookupsApi } from '#lib/api/client.js';
+import { deferred, openDialogs, settled } from '#lib/components/test-support/deferred.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
 
@@ -757,6 +758,88 @@ describe('keyboards page', () => {
 					headers: { 'Content-Type': 'image/webp', 'If-None-Match': '*' }
 				})
 			);
+		});
+	});
+
+	describe('a late result for a keyboard that was closed', () => {
+		const tofu: Keyboard = {
+			id: 'kb-2',
+			brand: 'KBDFans',
+			name: 'Tofu60',
+			visibility: Visibility.Public
+		};
+
+		it("doesn't retarget the form of the keyboard opened since", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+			);
+			api.listKeyboards.mockResolvedValue({ items: [manta, tofu] });
+			api.createKeyboardImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+			api.updateKeyboard.mockResolvedValue(tofu);
+			const refresh = deferred<Keyboard>();
+			api.getKeyboard.mockImplementation(({ keyboardId }) =>
+				keyboardId === tofu.id ? Promise.resolve(tofu) : refresh.promise
+			);
+			await renderPage();
+			await openManta();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['photo'], 'b.png', { type: 'image/png' })
+			);
+			await vi.waitFor(() => expect(api.getKeyboard).toHaveBeenCalled());
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+
+			await page.getByRole('button', { name: /Tofu60/ }).click();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			refresh.resolve(manta);
+			await settled();
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await vi.waitFor(() => expect(api.updateKeyboard).toHaveBeenCalledOnce());
+			expect(api.updateKeyboard.mock.calls[0][0].keyboardId).toBe(tofu.id);
+		});
+
+		it('stays closed when a save finishes after discarding', async () => {
+			const save = deferred<Keyboard>();
+			api.updateKeyboard.mockReturnValue(save.promise);
+			api.getKeyboard.mockResolvedValue(manta);
+			await renderPage();
+			await openManta();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Name', { exact: false }).fill('Manta R2');
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+			save.resolve(manta);
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
+
+		it('stays closed when a new keyboard finishes after discarding, even if its photo failed', async () => {
+			const create = deferred<Keyboard>();
+			api.createKeyboard.mockReturnValue(create.promise);
+			api.createKeyboardImage.mockRejectedValue(new Error('network'));
+			api.getKeyboard.mockResolvedValue(tofu);
+			await renderPage();
+			await fillNewKeyboard();
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['photo'], 'b.png', { type: 'image/png' })
+			);
+			await dialog().getByRole('button', { name: 'Add keyboard' }).click();
+
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+			create.resolve(tofu);
+			await vi.waitFor(() => expect(api.createKeyboardImage).toHaveBeenCalled());
+			await settled();
+
+			expect(openDialogs()).toBe(0);
 		});
 	});
 

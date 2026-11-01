@@ -782,7 +782,7 @@
 	{/if}
 
 	<div class="mt-2 flex gap-2">
-		<button type="submit" class="btn btn-accent" disabled={saving}>
+		<button type="submit" class="btn btn-accent" disabled={saving || imageBusy}>
 			{saving ? 'Saving…' : initial ? 'Save changes' : 'Add keyboard'}
 		</button>
 		<button type="button" class="btn" disabled={saving} onclick={onCancel}>Cancel</button>

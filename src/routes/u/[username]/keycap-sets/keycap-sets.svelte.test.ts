@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ImageStatus, ResponseError, type KeycapSet } from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keycapSetsApi } from '#lib/api/client.js';
+import { deferred, openDialogs, settled } from '#lib/components/test-support/deferred.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';
 
@@ -636,6 +637,212 @@ describe('keycap sets page', () => {
 				userId: 'user-1',
 				keycapSetId: 'set-1',
 				kitId: 'novs'
+			});
+		});
+
+		describe('a late result for something that was closed', () => {
+			const nocturne: KeycapSet = { id: 'set-2', brand: 'GMK', name: 'Nocturne', kits: [] };
+			const kitFile = () => page.elementLocator(document.querySelector('input[type="file"]')!);
+			const png = new File(['png'], 'kit.png', { type: 'image/png' });
+
+			it("doesn't retarget the form of the set opened since", async () => {
+				vi.stubGlobal(
+					'fetch',
+					vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+				);
+				api.listKeycapSets.mockResolvedValue({ items: [olivia, nocturne] });
+				api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+				api.updateKeycapSet.mockResolvedValue(nocturne);
+				const refresh = deferred<KeycapSet>();
+				api.getKeycapSet.mockReturnValue(refresh.promise);
+				await renderPage();
+				await openOlivia();
+				await openKit('Base');
+				await page.getByRole('button', { name: 'Edit kit' }).click();
+				await userEvent.upload(kitFile(), png);
+				await vi.waitFor(() => expect(api.getKeycapSet).toHaveBeenCalled());
+				await userEvent.keyboard('{Escape}');
+				await userEvent.keyboard('{Escape}');
+				await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+
+				await page.getByRole('button', { name: /Nocturne/ }).click();
+				await dialog().getByRole('button', { name: 'Edit set' }).click();
+				refresh.resolve(olivia);
+				await settled();
+				await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+				await vi.waitFor(() => expect(api.updateKeycapSet).toHaveBeenCalledOnce());
+				expect(api.updateKeycapSet.mock.calls[0][0].keycapSetId).toBe(nocturne.id);
+				vi.unstubAllGlobals();
+			});
+
+			it("doesn't replace the set opened since", async () => {
+				vi.stubGlobal(
+					'fetch',
+					vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+				);
+				api.listKeycapSets.mockResolvedValue({ items: [olivia, nocturne] });
+				api.setKeycapKitImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/k' } as never);
+				const refresh = deferred<KeycapSet>();
+				api.getKeycapSet.mockReturnValue(refresh.promise);
+				await renderPage();
+				await openOlivia();
+				await openKit('Base');
+				await page.getByRole('button', { name: 'Edit kit' }).click();
+				await userEvent.upload(kitFile(), png);
+				await vi.waitFor(() => expect(api.getKeycapSet).toHaveBeenCalled());
+				await userEvent.keyboard('{Escape}');
+				await userEvent.keyboard('{Escape}');
+
+				await page.getByRole('button', { name: /Nocturne/ }).click();
+				await expect.element(page.getByRole('dialog', { name: 'Nocturne' })).toBeInTheDocument();
+				refresh.resolve(olivia);
+				await settled();
+
+				await expect.element(page.getByRole('dialog', { name: 'Nocturne' })).toBeInTheDocument();
+				vi.unstubAllGlobals();
+			});
+
+			it('keeps a set closed when a save finishes after discarding', async () => {
+				const save = deferred<KeycapSet>();
+				api.updateKeycapSet.mockReturnValue(save.promise);
+				await renderPage();
+				await openOlivia();
+				await page.getByRole('button', { name: 'Edit set' }).click();
+				await dialog().getByLabelText('Name', { exact: false }).fill('Olivia R2');
+				await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+				await userEvent.keyboard('{Escape}');
+				await page.getByRole('button', { name: 'Discard' }).click();
+				save.resolve(olivia);
+				await settled();
+
+				expect(openDialogs()).toBe(0);
+			});
+
+			it('keeps a new set closed when it finishes after discarding', async () => {
+				const create = deferred<KeycapSet>();
+				api.createKeycapSet.mockReturnValue(create.promise);
+				await renderPage();
+				await page.getByRole('button', { name: 'Add keycap set' }).click();
+				await dialog().getByLabelText('Brand', { exact: false }).fill('GMK');
+				await dialog().getByLabelText('Name', { exact: false }).fill('Nocturne');
+				await dialog().getByRole('button', { name: 'Add keycap set' }).click();
+
+				await userEvent.keyboard('{Escape}');
+				await page.getByRole('button', { name: 'Discard' }).click();
+				create.resolve(nocturne);
+				await settled();
+
+				expect(openDialogs()).toBe(0);
+			});
+
+			it('keeps a kit closed when a save finishes after discarding', async () => {
+				const save = deferred<never>();
+				api.updateKeycapKit.mockReturnValue(save.promise);
+				await renderPage();
+				await openOlivia();
+				await openKit('Base');
+				await page.getByRole('button', { name: 'Edit kit' }).click();
+				await dialog().getByLabelText('Name', { exact: false }).fill('Base R2');
+				await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+				await userEvent.keyboard('{Escape}');
+				await page.getByRole('button', { name: 'Discard' }).click();
+				save.resolve(undefined as never);
+				await settled();
+
+				expect(openDialogs()).toBe(1);
+			});
+
+			it('keeps a new kit closed when it finishes after discarding, even if its photo failed', async () => {
+				const create = deferred<never>();
+				api.createKeycapKit.mockReturnValue(create.promise);
+				api.setKeycapKitImage.mockRejectedValue(new Error('network'));
+				api.getKeycapSet.mockResolvedValue({
+					...olivia,
+					kits: [...olivia.kits!, { kitId: 'spacebars', name: 'Spacebars' }]
+				});
+				await renderPage();
+				await openOlivia();
+				await page.getByRole('button', { name: '+ Add kit' }).click();
+				await dialog().getByLabelText('Name', { exact: false }).fill('Spacebars');
+				await userEvent.upload(kitFile(), png);
+				await dialog().getByRole('button', { name: 'Add kit' }).click();
+
+				await userEvent.keyboard('{Escape}');
+				await page.getByRole('button', { name: 'Discard' }).click();
+				create.resolve({ kitId: 'spacebars', name: 'Spacebars' } as never);
+				await vi.waitFor(() => expect(api.setKeycapKitImage).toHaveBeenCalled());
+				await settled();
+
+				expect(openDialogs()).toBe(1);
+			});
+		});
+
+		describe('a blocked kit delete', () => {
+			async function blockDelete() {
+				api.deleteKeycapKit.mockRejectedValue(conflict(['b-1']));
+				vi.mocked(buildsApi.getBuild).mockResolvedValue({
+					id: 'b-1',
+					keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' }
+				} as never);
+				await page.getByRole('button', { name: 'Delete kit' }).click();
+				await page.getByRole('button', { name: 'Confirm delete' }).click();
+				await expect
+					.element(page.getByText('Used in: Manta', { exact: false }))
+					.toBeInTheDocument();
+			}
+
+			async function expectCleanKit(name: string) {
+				await expect.element(page.getByRole('heading', { name, level: 2 })).toBeInTheDocument();
+				await expect
+					.element(page.getByText('Used in: Manta', { exact: false }))
+					.not.toBeInTheDocument();
+				await expect.element(page.getByRole('button', { name: 'Delete kit' })).toBeInTheDocument();
+			}
+
+			it('stays behind when stepping to the next kit', async () => {
+				await renderPage();
+				await openOlivia();
+				await openKit('Base');
+				await blockDelete();
+
+				await page.getByRole('button', { name: 'Next kit' }).click();
+
+				await expectCleanKit('Novelties');
+			});
+
+			it('stays behind when stepping to the next kit from the full-size viewer', async () => {
+				api.listKeycapSets.mockResolvedValue({
+					items: [
+						{
+							...olivia,
+							kits: olivia.kits!.map((kit) => ({
+								...kit,
+								image: {
+									url: `data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==#${kit.kitId}`
+								}
+							}))
+						}
+					]
+				});
+				await renderPage();
+				await openOlivia();
+				await openKit('Base');
+				await blockDelete();
+				await dialog().getByRole('button', { name: 'View full size image', exact: false }).click();
+
+				await page
+					.getByRole('dialog', { name: 'Base, full size' })
+					.getByRole('button', { name: 'Next kit' })
+					.click();
+				await expect
+					.element(page.getByRole('dialog', { name: 'Novelties, full size' }))
+					.toBeInTheDocument();
+				await userEvent.keyboard('{Escape}');
+
+				await expectCleanKit('Novelties');
 			});
 		});
 

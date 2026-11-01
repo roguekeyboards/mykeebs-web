@@ -315,6 +315,19 @@ describe('BuildForm.svelte photo limit', () => {
 		});
 	}
 
+	it('holds Save until a photo finishes uploading', async () => {
+		let finish = () => {};
+		const onImageUpload = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+		await renderWith({ initial: withImages(1), onImageUpload });
+		const save = page.getByRole('button', { name: 'Save changes' });
+
+		await userEvent.upload(fileInput(), jpg('a.jpg'));
+		await expect.element(save).toBeDisabled();
+
+		finish();
+		await expect.element(save).toBeEnabled();
+	});
+
 	it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 		await renderWith({
 			initial: withImages(1),
@@ -503,5 +516,51 @@ describe('BuildForm.svelte plate and PCB', () => {
 
 		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
 		expect(onSubmit.mock.calls[0][0]).toMatchObject({ plate: 'p2', pcb: 'c1' });
+	});
+
+	describe('picking a keyboard again', () => {
+		const manta = {
+			id: 'kb',
+			brand: 'Bowl',
+			name: 'Manta',
+			plates: [{ id: 'p2', material: 'POM', color: 'Black', thickness: 1.2 }],
+			pcbs: [{ id: 'c1', assembly: 'Hotswap', firmware: 'QMK' }]
+		};
+		const other = { id: 'kb-2', brand: 'Bowl', name: 'Other' };
+
+		async function pick(name: RegExp) {
+			vi.mocked(keyboardsApi.listKeyboards).mockResolvedValueOnce({
+				items: [manta, other]
+			} as never);
+			const onSubmit = await renderParts(async () => manta);
+			await expect.element(plate()).toHaveValue('p2');
+			await page.getByRole('button', { name: 'Change', exact: true }).click();
+			await page.getByRole('option', { name }).click();
+			return onSubmit;
+		}
+
+		it('keeps the plate and PCB when it is the same keyboard', async () => {
+			const onSubmit = await pick(/Manta/);
+
+			await expect.element(plate()).toHaveValue('p2');
+			await expect.element(pcb()).toHaveValue('c1');
+			await expect.element(page.getByTestId('dirty')).toHaveTextContent('false');
+			await page.getByRole('button', { name: 'Save changes' }).click();
+
+			await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+			expect(onSubmit.mock.calls[0][0]).toMatchObject({ plate: 'p2', pcb: 'c1' });
+		});
+
+		it('clears them when it is a different keyboard', async () => {
+			const onSubmit = await pick(/Other/);
+
+			await expect.element(page.getByText('Other')).toBeInTheDocument();
+			await page.getByRole('button', { name: 'Save changes' }).click();
+
+			await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+			expect(onSubmit.mock.calls[0][0]).toMatchObject({ keyboard: 'kb-2' });
+			expect(onSubmit.mock.calls[0][0].plate).toBeUndefined();
+			expect(onSubmit.mock.calls[0][0].pcb).toBeUndefined();
+		});
 	});
 });

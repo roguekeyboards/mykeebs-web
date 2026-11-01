@@ -100,11 +100,12 @@
 			);
 			await grid?.refresh().catch(() => {});
 			const photos = stagedUploadOutcome('switch', photoFailure, true);
-			if (photos.reopen) {
+			const stillOpen = modal.mode === 'create';
+			if (stillOpen && photos.reopen) {
 				modal = { mode: 'edit', sw };
 				photoNotice = photos.message;
 			} else {
-				closeModal();
+				if (stillOpen) closeModal();
 				notice = photos.message;
 			}
 		} catch {
@@ -124,7 +125,7 @@
 		try {
 			const sw = await switchesApi.updateSwitch({ userId, switchId, switchInput: input });
 			await grid?.refresh();
-			modal = { mode: 'view', sw };
+			if (modal.mode === 'edit' && modal.sw.id === switchId) modal = { mode: 'view', sw };
 		} catch (err) {
 			if (err instanceof ResponseError) {
 				const body = await err.response.json().catch(() => null);
@@ -143,7 +144,7 @@
 		if (!userId) return;
 		const sw = await switchesApi.getSwitch({ userId, switchId });
 		await grid?.refresh();
-		if (modal.mode === 'edit') modal = { mode: 'edit', sw };
+		if (modal.mode === 'edit' && modal.sw.id === switchId) modal = { mode: 'edit', sw };
 	}
 
 	async function uploadSwitchImage(switchId: string, file: File) {

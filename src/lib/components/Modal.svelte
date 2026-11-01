@@ -55,6 +55,11 @@
 	$effect(() => {
 		if (confirmingDiscard) keepEditingButton?.focus();
 	});
+
+	$effect(() => {
+		if (confirmingDiscard && !isDirty?.()) confirmingDiscard = false;
+	});
+
 	let previouslyFocused: HTMLElement | null = null;
 
 	function requestClose() {
@@ -78,6 +83,7 @@
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
+			if (event.defaultPrevented) return;
 			if (confirmingDiscard) confirmingDiscard = false;
 			else requestClose();
 			return;
