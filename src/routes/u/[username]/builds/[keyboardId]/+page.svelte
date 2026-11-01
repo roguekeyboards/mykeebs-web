@@ -67,10 +67,17 @@
 	);
 
 	let loadToken = 0;
+	let shownKey = '';
+	let refreshFailed = $state(false);
 
 	async function load(userId: string, kId: string) {
 		const token = ++loadToken;
-		view = { status: 'loading' };
+		const key = `${userId}/${kId}`;
+		refreshFailed = false;
+		if (key !== shownKey) {
+			shownKey = '';
+			view = { status: 'loading' };
+		}
 		try {
 			const [keyboard, builds] = await Promise.all([
 				keyboardsApi.getKeyboard({ userId, keyboardId: kId }).catch(() => null),
@@ -79,9 +86,11 @@
 			if (token !== loadToken) return;
 			builds.sort(newestFirst);
 			view = { status: 'ready', keyboard, builds };
+			shownKey = key;
 		} catch {
 			if (token !== loadToken) return;
-			view = { status: 'error', message: 'Could not load builds for this keyboard.' };
+			if (key === shownKey) refreshFailed = true;
+			else view = { status: 'error', message: 'Could not load builds for this keyboard.' };
 		}
 	}
 
@@ -367,6 +376,11 @@
 {:else}
 	{@const { keyboard, builds } = view}
 	{@const headerImageUrl = primaryImageUrl(keyboard?.images)}
+	{#if refreshFailed}
+		<p class="px-4 pb-4 text-center text-sm" role="alert" style="color: var(--danger)">
+			Could not refresh this list, so it may be out of date.
+		</p>
+	{/if}
 	<div class="flex items-center gap-3 px-4">
 		{#if keyboard && headerImageUrl}
 			<img

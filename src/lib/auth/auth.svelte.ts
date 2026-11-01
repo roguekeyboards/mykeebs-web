@@ -17,6 +17,7 @@ type AuthState =
 
 let state = $state<AuthState>({ status: 'loading' });
 let initPromise: Promise<void> | undefined;
+let signInFailed = $state(false);
 
 type AccessTokenPayload = { sub: string; exp: number };
 
@@ -60,6 +61,20 @@ export function initAuth(): Promise<void> {
 }
 
 export async function signIn(): Promise<void> {
+	signInFailed = false;
+	try {
+		await redirectToSignIn();
+	} catch (err) {
+		console.error('signIn failed', err);
+		signInFailed = true;
+	}
+}
+
+export function dismissSignInFailure(): void {
+	signInFailed = false;
+}
+
+async function redirectToSignIn(): Promise<void> {
 	const { authorization } = await oidcEndpoints();
 	const verifier = generateCodeVerifier();
 	const challenge = await generateCodeChallenge(verifier);
@@ -183,6 +198,9 @@ export const auth = {
 	},
 	get user() {
 		return state.status === 'signed-in' ? state.user : null;
+	},
+	get signInFailed() {
+		return signInFailed;
 	}
 };
 

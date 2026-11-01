@@ -28,6 +28,7 @@
 	}
 
 	let searchToken = 0;
+	let searchedQuery = '';
 
 	async function runSearch() {
 		const username = searchQuery.trim();
@@ -38,6 +39,7 @@
 			const result = await profilesApi.listProfiles({ username, limit: 6 });
 			if (token !== searchToken) return;
 			searchResults = result.items ?? [];
+			searchedQuery = username;
 			searchFailed = false;
 			searchOpen = true;
 		} catch {
@@ -59,7 +61,17 @@
 
 	function closeIfFocusLeft(event: FocusEvent) {
 		const area = event.currentTarget as HTMLElement;
-		if (!area.contains(event.relatedTarget as Node | null)) searchOpen = false;
+		if (area.contains(event.relatedTarget as Node | null)) return;
+		clearTimeout(debounceTimer);
+		searchToken++;
+		searchLoading = false;
+		searchOpen = false;
+	}
+
+	function resumeOnFocus() {
+		const query = searchQuery.trim();
+		if (query && query !== searchedQuery) runSearch();
+		else if (searchResults.length > 0) searchOpen = true;
 	}
 </script>
 
@@ -71,7 +83,7 @@
 		placeholder="Find a builder…"
 		bind:value={searchQuery}
 		oninput={onSearchInput}
-		onfocus={() => searchResults.length > 0 && (searchOpen = true)}
+		onfocus={resumeOnFocus}
 	/>
 	{#if searchOpen}
 		<div

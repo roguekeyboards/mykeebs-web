@@ -8,6 +8,7 @@
 	import { auth } from '#lib/auth/auth.svelte.js';
 	import { setUserContext } from '#lib/user-context.js';
 	import { getProfileSubNavContext } from '#lib/profile-subnav-context.js';
+	import { isProfileTabActive } from '#lib/nav-active.js';
 	import Avatar from '#lib/components/Avatar.svelte';
 
 	const profileSubNav = getProfileSubNavContext();
@@ -22,12 +23,17 @@
 
 	let view = $state<ViewState>({ status: 'loading' });
 
+	let loadToken = 0;
+
 	async function loadProfile(identifier: string) {
+		const token = ++loadToken;
 		view = { status: 'loading' };
 		try {
 			const profile = await profilesApi.getProfile({ identifier });
+			if (token !== loadToken) return;
 			view = { status: 'ready', profile };
 		} catch (err) {
+			if (token !== loadToken) return;
 			view =
 				err instanceof ResponseError && err.response.status === 404
 					? { status: 'not-found' }
@@ -147,10 +153,15 @@
 		<div class="mt-6 hidden border-b pb-2 md:block" style="border-color: var(--border)">
 			<nav class="app-nav" aria-label="Profile">
 				{#each subNavItems as item (item.href)}
+					{@const active = isProfileTabActive(
+						page.url.pathname,
+						item.href,
+						resolve('/u/[username]', { username: profile.username })
+					)}
 					<a
 						href={item.href}
-						class="nav-key {page.url.pathname === item.href ? 'is-active' : ''}"
-						aria-current={page.url.pathname === item.href ? 'page' : undefined}
+						class="nav-key {active ? 'is-active' : ''}"
+						aria-current={active ? 'page' : undefined}
 					>
 						{item.label}
 					</a>

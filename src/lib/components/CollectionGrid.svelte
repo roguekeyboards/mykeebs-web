@@ -51,8 +51,8 @@
 	let statusFilter = $state<StatusFilter>('all');
 
 	let items = $state<T[]>([]);
-	let loading = $state(true);
-	let loadError = $state<string | null>(null);
+	let loadedUserId = $state<string | null>(null);
+	let loadFailed = $state(false);
 	let filterText = $state('');
 	let fieldFilters = $state<FieldFilter[]>([]);
 	let filterExpanded = $state(false);
@@ -81,18 +81,17 @@
 	async function load() {
 		if (!userId) return;
 
+		const requestedUserId = userId;
 		const token = ++loadToken;
-		loadError = null;
-		loading = true;
+		loadFailed = false;
 		try {
-			const allItems = await fetchAllPages((request) => fetchPage(userId, request));
+			const allItems = await fetchAllPages((request) => fetchPage(requestedUserId, request));
 			if (token !== loadToken) return;
 			items = allItems;
+			loadedUserId = requestedUserId;
 		} catch {
 			if (token !== loadToken) return;
-			loadError = 'Could not load this collection.';
-		} finally {
-			if (token === loadToken) loading = false;
+			loadFailed = true;
 		}
 	}
 
@@ -110,15 +109,22 @@
 	});
 </script>
 
-{#if loading}
+{#if loadedUserId !== userId}
 	<div class="flex items-center justify-center p-16">
-		<p class="text-muted font-mono text-sm tracking-wide" role="status">Loading&hellip;</p>
-	</div>
-{:else if loadError}
-	<div class="flex items-center justify-center p-16">
-		<p class="text-lg" role="alert" style="color: var(--danger)">{loadError}</p>
+		{#if loadFailed}
+			<p class="text-lg" role="alert" style="color: var(--danger)">
+				Could not load this collection.
+			</p>
+		{:else}
+			<p class="text-muted font-mono text-sm tracking-wide" role="status">Loading&hellip;</p>
+		{/if}
 	</div>
 {:else}
+	{#if loadFailed}
+		<p class="px-4 pt-4 text-center text-sm" role="alert" style="color: var(--danger)">
+			Could not refresh this list, so it may be out of date.
+		</p>
+	{/if}
 	{#if getOrderStatus}
 		<div class="mt-4 flex justify-center px-4">
 			<div class="segmented-control" role="group" aria-label="Filter by order status">

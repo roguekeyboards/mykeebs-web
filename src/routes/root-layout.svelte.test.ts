@@ -2,15 +2,22 @@ import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
+import { dismissSignInFailure } from '#lib/auth/auth.svelte.js';
 import Layout from './+layout.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/discover') } }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+const authState = vi.hoisted(() => ({
+	status: 'signed-out',
+	user: null,
+	signInFailed: false
+}));
 vi.mock('#lib/auth/auth.svelte.js', () => ({
 	initAuth: vi.fn(async () => {}),
+	dismissSignInFailure: vi.fn(),
 	signIn: vi.fn(),
 	signOut: vi.fn(),
-	auth: { status: 'signed-out', user: null }
+	auth: authState
 }));
 vi.mock('#lib/profile/profile.svelte.js', () => ({
 	initProfile: vi.fn(),
@@ -88,6 +95,27 @@ describe('root layout', () => {
 		} finally {
 			await page.viewport(414, 896);
 		}
+	});
+
+	it('says when sign-in could not be reached, and can be dismissed', async () => {
+		authState.signInFailed = true;
+		try {
+			await renderLayout();
+			const notice = page.getByRole('alert').filter({ hasText: "Couldn't reach sign-in." });
+
+			await expect.element(notice).toBeInTheDocument();
+			await notice.getByRole('button', { name: 'Dismiss' }).click();
+
+			expect(dismissSignInFailure).toHaveBeenCalledOnce();
+		} finally {
+			authState.signInFailed = false;
+		}
+	});
+
+	it('shows no sign-in notice otherwise', async () => {
+		await renderLayout();
+
+		await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
 	});
 
 	it("uses the brand's favicons and touch icon", async () => {
