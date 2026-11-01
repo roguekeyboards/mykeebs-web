@@ -386,6 +386,19 @@ describe('SwitchForm.svelte', () => {
 			await vi.waitFor(() => expect(onImageUpload).toHaveBeenCalledWith(a));
 		});
 
+		it('holds Save until the photo finishes uploading', async () => {
+			let finish = () => {};
+			const onImageUpload = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+			await renderForm({ initial: sw, onImageUpload });
+			const save = page.getByRole('button', { name: 'Save changes' });
+
+			await userEvent.upload(fileInput(), png('a.png'));
+			await expect.element(save).toBeDisabled();
+
+			finish();
+			await expect.element(save).toBeEnabled();
+		});
+
 		it('says so when an upload fails', async () => {
 			await renderForm({ initial: sw, onImageUpload: vi.fn().mockRejectedValue(new Error('x')) });
 

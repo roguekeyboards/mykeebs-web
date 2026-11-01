@@ -142,6 +142,22 @@ describe('KeycapKitForm.svelte image moderation', () => {
 		expect(onImageRemove).toHaveBeenCalled();
 	});
 
+	it('holds Save until the photo finishes uploading', async () => {
+		let finish = () => {};
+		const onImageUpload = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+		await renderKit(kit, { onImageUpload });
+		const save = page.getByRole('button', { name: 'Save changes' });
+
+		await userEvent.upload(
+			page.elementLocator(document.querySelector('input[type="file"]')!),
+			new File(['png'], 'a.png', { type: 'image/png' })
+		);
+		await expect.element(save).toBeDisabled();
+
+		finish();
+		await expect.element(save).toBeEnabled();
+	});
+
 	it('says uploads are unavailable when mykeebs-api refuses with a 429', async () => {
 		await renderKit(kit, {
 			onImageUpload: vi.fn().mockRejectedValue(

@@ -49,6 +49,19 @@ describe('Modal.svelte', () => {
 			expect(onClose).toHaveBeenCalledOnce();
 		});
 
+		it('ignores an Escape that something inside it already handled', async () => {
+			const onClose = await openModal({ dirty: true });
+			document
+				.querySelector('input[name="first"]')!
+				.addEventListener('keydown', (event) => event.preventDefault());
+			await page.getByLabelText('First field').click();
+
+			await userEvent.keyboard('{Escape}');
+
+			expect(onClose).not.toHaveBeenCalled();
+			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+		});
+
 		it('ignores Escape while something is open on top of it', async () => {
 			const onClose = await openModal({ obscured: true });
 
@@ -90,6 +103,20 @@ describe('Modal.svelte', () => {
 			await userEvent.keyboard('{Escape}');
 
 			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+			expect(onClose).not.toHaveBeenCalled();
+		});
+
+		it('drops the question once there are no changes left to discard', async () => {
+			const onClose = vi.fn();
+			const { rerender } = await render(ModalHarness, { onClose, dirty: true });
+			await page.getByRole('button', { name: 'Open' }).click();
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByText('Discard your changes?')).toBeInTheDocument();
+
+			await rerender({ onClose, dirty: false });
+
+			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+			await expect.element(page.getByRole('dialog')).toBeInTheDocument();
 			expect(onClose).not.toHaveBeenCalled();
 		});
 

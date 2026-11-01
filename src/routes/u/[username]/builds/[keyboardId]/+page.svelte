@@ -128,23 +128,31 @@
 	let kitDetailLoading = $state(false);
 	let kitViewerOpen = $state(false);
 
+	let detailToken = 0;
+	let keyboardDetailToken = 0;
+	let switchDetailToken = 0;
+	let kitDetailToken = 0;
+
 	async function openBuild(buildId: string) {
 		const userId = userContext.userId;
 		if (!userId) return;
 
+		const token = ++detailToken;
 		detailError = null;
 		detailLoading = true;
 		selectedBuild = null;
 		try {
-			selectedBuild = await buildsApi.getBuild({ userId, buildId });
+			const build = await buildsApi.getBuild({ userId, buildId });
+			if (token === detailToken) selectedBuild = build;
 		} catch {
-			detailError = 'Could not load this build.';
+			if (token === detailToken) detailError = 'Could not load this build.';
 		} finally {
-			detailLoading = false;
+			if (token === detailToken) detailLoading = false;
 		}
 	}
 
 	function closeModal() {
+		detailToken++;
 		selectedBuild = null;
 		staleRefs = null;
 		detailError = null;
@@ -172,8 +180,10 @@
 		try {
 			const build = await buildsApi.updateBuild({ userId, buildId, buildInput: input });
 			await load(userId, keyboardId);
-			selectedBuild = build;
-			formMode = { mode: 'closed' };
+			if (selectedBuild?.id === buildId) {
+				selectedBuild = build;
+				formMode = { mode: 'closed' };
+			}
 		} catch (err) {
 			staleRefs = await staleBuildRefsFromError(err, input);
 			if (err instanceof ResponseError) {
@@ -193,8 +203,10 @@
 		if (!userId) return;
 		const build = await buildsApi.getBuild({ userId, buildId });
 		await load(userId, keyboardId);
-		selectedBuild = build;
-		if (formMode.mode === 'edit') formMode = { mode: 'edit', build };
+		if (selectedBuild?.id === buildId) selectedBuild = build;
+		if (formMode.mode === 'edit' && formMode.build.id === buildId) {
+			formMode = { mode: 'edit', build };
+		}
 	}
 
 	async function uploadBuildImage(buildId: string, file: File) {
@@ -240,19 +252,22 @@
 		const userId = userContext.userId;
 		if (!userId) return;
 
+		const token = ++keyboardDetailToken;
 		keyboardDetailError = null;
 		keyboardDetailLoading = true;
 		keyboardDetail = null;
 		try {
-			keyboardDetail = await keyboardsApi.getKeyboard({ userId, keyboardId: kId });
+			const keyboard = await keyboardsApi.getKeyboard({ userId, keyboardId: kId });
+			if (token === keyboardDetailToken) keyboardDetail = keyboard;
 		} catch {
-			keyboardDetailError = 'Could not load this keyboard.';
+			if (token === keyboardDetailToken) keyboardDetailError = 'Could not load this keyboard.';
 		} finally {
-			keyboardDetailLoading = false;
+			if (token === keyboardDetailToken) keyboardDetailLoading = false;
 		}
 	}
 
 	function closeKeyboardDetail() {
+		keyboardDetailToken++;
 		keyboardDetail = null;
 		keyboardDetailError = null;
 		keyboardDetailLoading = false;
@@ -264,19 +279,22 @@
 		const userId = userContext.userId;
 		if (!userId) return;
 
+		const token = ++switchDetailToken;
 		switchDetailError = null;
 		switchDetailLoading = true;
 		switchDetail = null;
 		try {
-			switchDetail = await switchesApi.getSwitch({ userId, switchId });
+			const sw = await switchesApi.getSwitch({ userId, switchId });
+			if (token === switchDetailToken) switchDetail = sw;
 		} catch {
-			switchDetailError = 'Could not load this switch.';
+			if (token === switchDetailToken) switchDetailError = 'Could not load this switch.';
 		} finally {
-			switchDetailLoading = false;
+			if (token === switchDetailToken) switchDetailLoading = false;
 		}
 	}
 
 	function closeSwitchDetail() {
+		switchDetailToken++;
 		switchDetail = null;
 		switchDetailError = null;
 		switchDetailLoading = false;
@@ -287,11 +305,13 @@
 		const userId = userContext.userId;
 		if (!userId) return;
 
+		const token = ++kitDetailToken;
 		kitDetailError = null;
 		kitDetailLoading = true;
 		kitDetail = null;
 		try {
 			const set = await keycapSetsApi.getKeycapSet({ userId, keycapSetId });
+			if (token !== kitDetailToken) return;
 			const kit = set.kits?.find((k) => k.kitId === kitId);
 			if (!kit) {
 				kitDetailError = 'This kit no longer exists.';
@@ -299,13 +319,14 @@
 				kitDetail = { name: kit.name, image: kit.image, purchase: kit.purchase };
 			}
 		} catch {
-			kitDetailError = 'Could not load this kit.';
+			if (token === kitDetailToken) kitDetailError = 'Could not load this kit.';
 		} finally {
-			kitDetailLoading = false;
+			if (token === kitDetailToken) kitDetailLoading = false;
 		}
 	}
 
 	function closeKitDetail() {
+		kitDetailToken++;
 		kitDetail = null;
 		kitDetailError = null;
 		kitDetailLoading = false;

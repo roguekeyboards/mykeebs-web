@@ -8,6 +8,7 @@ import {
 	type Switch
 } from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, switchesApi } from '#lib/api/client.js';
+import { deferred, openDialogs, settled } from '#lib/components/test-support/deferred.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import SwitchesPage from './+page.svelte';
 import { MAX_IMAGE_BYTES } from '#lib/image-errors.js';
@@ -412,6 +413,79 @@ describe('switches page', () => {
 			.element(page.getByRole('alert').filter({ hasText: 'Discard your changes?' }))
 			.toBeInTheDocument();
 		await expect.element(dialog().getByLabelText('Name', { exact: false })).toHaveValue('Oil King');
+	});
+
+	describe('a late result for a switch that was closed', () => {
+		const oilKing: Switch = {
+			id: 'sw-2',
+			brand: 'Gateron',
+			name: 'Oil King',
+			type: 'Linear',
+			visibility: Visibility.Public
+		};
+
+		it("doesn't retarget the form of the switch opened since", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+			);
+			api.listSwitches.mockResolvedValue({ items: [aperol, oilKing] });
+			api.setSwitchImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/s' } as never);
+			api.updateSwitch.mockResolvedValue(oilKing);
+			const refresh = deferred<Switch>();
+			api.getSwitch.mockReturnValue(refresh.promise);
+			await renderPage();
+			await openAperol();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await userEvent.upload(fileInput(), png('a.png'));
+			await vi.waitFor(() => expect(api.getSwitch).toHaveBeenCalled());
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+
+			await page.getByRole('button', { name: /Oil King/ }).click();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			refresh.resolve(aperol);
+			await settled();
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await vi.waitFor(() => expect(api.updateSwitch).toHaveBeenCalledOnce());
+			expect(api.updateSwitch.mock.calls[0][0].switchId).toBe(oilKing.id);
+		});
+
+		it('stays closed when a save finishes after discarding', async () => {
+			const save = deferred<Switch>();
+			api.updateSwitch.mockReturnValue(save.promise);
+			await renderPage();
+			await openAperol();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Name', { exact: false }).fill('Aperol V2');
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+			save.resolve(aperol);
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
+
+		it('stays closed when a new switch finishes after discarding, even if its photo failed', async () => {
+			const create = deferred<Switch>();
+			api.createSwitch.mockReturnValue(create.promise);
+			api.setSwitchImage.mockRejectedValue(new Error('network'));
+			await renderPage();
+			await fillNewSwitch();
+			await userEvent.upload(fileInput(), png('a.png'));
+			await dialog().getByRole('button', { name: 'Add switch' }).click();
+
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+			create.resolve(oilKing);
+			await vi.waitFor(() => expect(api.setSwitchImage).toHaveBeenCalled());
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
 	});
 
 	describe('deleting a switch', () => {

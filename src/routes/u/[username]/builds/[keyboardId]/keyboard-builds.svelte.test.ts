@@ -9,6 +9,7 @@ import {
 } from '@roguekeyboards/mykeebs-api-client';
 import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { STALE_REFS_MESSAGE } from '#lib/build-refs.js';
+import { deferred, openDialogs, settled } from '#lib/components/test-support/deferred.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardBuildsPage from './+page.svelte';
 
@@ -29,7 +30,7 @@ vi.mock('#lib/api/client.js', () => ({
 		createBuildImage: vi.fn(),
 		deleteBuildImage: vi.fn()
 	},
-	keyboardsApi: { getKeyboard: vi.fn() },
+	keyboardsApi: { getKeyboard: vi.fn(), listKeyboards: vi.fn() },
 	switchesApi: { getSwitch: vi.fn() },
 	keycapSetsApi: { getKeycapSet: vi.fn() },
 	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) }
@@ -365,6 +366,206 @@ describe('keyboard builds page', () => {
 			await expect
 				.element(page.getByRole('alert').filter({ hasText: 'Could not save your changes.' }))
 				.toBeInTheDocument();
+		});
+
+		it("doesn't take Escape from the keyboard picker", async () => {
+			vi.mocked(keyboardsApi.listKeyboards).mockResolvedValue({ items: [neo65] } as never);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Notes').fill('Lubed the stabs');
+			await dialog().getByRole('button', { name: 'Change', exact: true }).click();
+			const search = dialog().getByRole('combobox', { name: 'Search keyboards' });
+			await search.fill('neo');
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(search).toHaveValue('');
+			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(search).not.toBeInTheDocument();
+			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+			await expect.element(dialog().getByLabelText('Notes')).toHaveValue('Lubed the stabs');
+		});
+
+		it("drops the discard question on leaving the form with the form's own Cancel", async () => {
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Notes').fill('Lubed the stabs');
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByText('Discard your changes?')).toBeInTheDocument();
+
+			await dialog().getByRole('button', { name: 'Cancel' }).click();
+
+			await expect.element(dialog().getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+			await expect.element(page.getByText('Discard your changes?')).not.toBeInTheDocument();
+		});
+
+		it('stays closed when a save finishes after discarding', async () => {
+			const save = deferred<Build>();
+			builds.updateBuild.mockReturnValue(save.promise);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Notes').fill('Lubed the stabs');
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+			save.resolve(current);
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
+
+		it('stays closed when a photo finishes uploading after closing', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+			);
+			builds.createBuildImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/b' } as never);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			const refresh = deferred<Build>();
+			builds.getBuild.mockReturnValueOnce(refresh.promise);
+			const readsBefore = builds.getBuild.mock.calls.length;
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['photo'], 'build.jpg', { type: 'image/jpeg' })
+			);
+			await vi.waitFor(() => expect(builds.getBuild.mock.calls.length).toBe(readsBefore + 1));
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+			refresh.resolve(current);
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
+	});
+
+	describe('a late result for a build that was closed', () => {
+		it("doesn't retarget the form of the build opened since", async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn<typeof fetch>(async () => new Response(null, { status: 200 }))
+			);
+			builds.createBuildImage.mockResolvedValue({ uploadUrl: 'https://bucket.example/b' } as never);
+			builds.updateBuild.mockResolvedValue(older);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			const refresh = deferred<Build>();
+			builds.getBuild.mockImplementation(({ buildId }) =>
+				buildId === older.id ? Promise.resolve(older) : refresh.promise
+			);
+			await userEvent.upload(
+				page.elementLocator(document.querySelector('input[type="file"]')!),
+				new File(['photo'], 'build.jpg', { type: 'image/jpeg' })
+			);
+			await vi.waitFor(() => expect(builds.createBuildImage).toHaveBeenCalled());
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+
+			await page.getByRole('button', { name: /Nov 2, 2025/ }).click();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			refresh.resolve(current);
+			await settled();
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+
+			await vi.waitFor(() => expect(builds.updateBuild).toHaveBeenCalledOnce());
+			expect(builds.updateBuild.mock.calls[0][0].buildId).toBe(older.id);
+		});
+
+		it("doesn't close the form of the build opened since when a save finishes", async () => {
+			const save = deferred<Build>();
+			builds.updateBuild.mockReturnValue(save.promise);
+			builds.getBuild.mockImplementation(async ({ buildId }) =>
+				buildId === older.id ? older : current
+			);
+			await renderPage();
+			await openCurrent();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			await dialog().getByLabelText('Notes').fill('Lubed the stabs');
+			await dialog().getByRole('button', { name: 'Save changes' }).click();
+			await userEvent.keyboard('{Escape}');
+			await page.getByRole('button', { name: 'Discard' }).click();
+
+			await page.getByRole('button', { name: /Nov 2, 2025/ }).click();
+			await dialog().getByRole('button', { name: 'Edit' }).click();
+			save.resolve(current);
+			await settled();
+
+			await expect
+				.element(dialog().getByRole('heading', { name: 'Edit build' }))
+				.toBeInTheDocument();
+		});
+	});
+
+	describe('closing while loading', () => {
+		it('keeps a build closed when its response arrives late', async () => {
+			const late = deferred<Build>();
+			builds.getBuild.mockReturnValue(late.promise);
+			await renderPage();
+			await page.getByRole('button', { name: /Jun 30, 2026/ }).click();
+			await expect.element(dialog().getByText('Loading…')).toBeInTheDocument();
+
+			await userEvent.keyboard('{Escape}');
+			await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+			late.resolve(current);
+			await settled();
+
+			expect(openDialogs()).toBe(0);
+		});
+
+		it("doesn't let a late build replace the one opened since", async () => {
+			const late = deferred<Build>();
+			builds.getBuild.mockImplementation(({ buildId }) =>
+				buildId === older.id ? Promise.resolve(older) : late.promise
+			);
+			await renderPage();
+			await page.getByRole('button', { name: /Jun 30, 2026/ }).click();
+			await expect.element(dialog().getByText('Loading…')).toBeInTheDocument();
+			await userEvent.keyboard('{Escape}');
+
+			await page.getByRole('button', { name: /Nov 2, 2025/ }).click();
+			await expect.element(dialog().getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+			late.resolve(current);
+			await settled();
+
+			await expect.element(page.getByText('Ding Ding')).not.toBeInTheDocument();
+		});
+
+		it.each([
+			['keyboard', /Neo65 Cu/, () => vi.mocked(keyboardsApi.getKeyboard), neo65],
+			[
+				'switch',
+				/Ding Ding/,
+				() => vi.mocked(switchesApi.getSwitch),
+				{ id: 'sw-1', brand: 'Keygeek', name: 'Ding Ding', type: 'Linear' }
+			],
+			[
+				'keycap kit',
+				/Fremen — Base/,
+				() => vi.mocked(keycapSetsApi.getKeycapSet),
+				{ id: 'set-1', brand: 'GMK', name: 'Fremen', kits: [{ kitId: 'base', name: 'Base' }] }
+			]
+		] as const)('keeps a %s closed when its response arrives late', async (_, name, api, item) => {
+			await renderPage();
+			await openCurrent();
+			const late = deferred<never>();
+			api().mockReturnValueOnce(late.promise);
+
+			await dialog().getByRole('button', { name }).click();
+			await expect.element(dialog().getByText('Loading…')).toBeInTheDocument();
+			await userEvent.keyboard('{Escape}');
+			await vi.waitFor(() => expect(openDialogs()).toBe(1));
+			late.resolve(item as never);
+			await settled();
+
+			expect(openDialogs()).toBe(1);
 		});
 	});
 

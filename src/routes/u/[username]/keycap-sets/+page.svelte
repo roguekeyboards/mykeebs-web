@@ -90,7 +90,12 @@
 	function stepKit(delta: 1 | -1) {
 		if (modal.mode !== 'view' || kitModal.mode !== 'view') return;
 		const kitId = adjacentKitId(modal.set, kitModal.kitId, delta);
-		if (kitId) kitModal = { mode: 'view', kitId };
+		if (kitId) showKit(kitId);
+	}
+
+	function showKit(kitId: string) {
+		resetKitState();
+		kitModal = { mode: 'view', kitId };
 	}
 
 	function handleKitNavKeydown(event: KeyboardEvent) {
@@ -101,7 +106,7 @@
 	let photoKits = $derived(modal.mode === 'view' ? kitsWithPhotos(modal.set) : []);
 
 	function stepPhotoKit(index: number, delta: 1 | -1) {
-		kitModal = { mode: 'view', kitId: photoKits[stepIndex(index, delta, photoKits.length)].kitId };
+		showKit(photoKits[stepIndex(index, delta, photoKits.length)].kitId);
 	}
 
 	let hasMultipleKits = $derived(modal.mode === 'view' ? (modal.set.kits?.length ?? 0) > 1 : false);
@@ -168,7 +173,7 @@
 			const set = await keycapSetsApi.createKeycapSet({ userId, keycapSetInput: input });
 			await grid?.refresh();
 			// The next step is adding kits, which needs the set's view.
-			modal = { mode: 'view', set };
+			if (modal.mode === 'create') modal = { mode: 'view', set };
 		} catch {
 			saveError = 'Could not create this keycap set.';
 		} finally {
@@ -189,7 +194,7 @@
 				keycapSetInput: input
 			});
 			await grid?.refresh();
-			modal = { mode: 'view', set };
+			if (modal.mode === 'edit' && modal.set.id === keycapSetId) modal = { mode: 'view', set };
 		} catch (err) {
 			if (err instanceof ResponseError) {
 				const body = await err.response.json().catch(() => null);
@@ -208,8 +213,8 @@
 		if (!userId) return;
 		const set = await keycapSetsApi.getKeycapSet({ userId, keycapSetId });
 		await grid?.refresh();
-		if (modal.mode === 'view') modal = { mode: 'view', set };
-		else if (modal.mode === 'edit') modal = { mode: 'edit', set };
+		if (modal.mode === 'view' && modal.set.id === keycapSetId) modal = { mode: 'view', set };
+		else if (modal.mode === 'edit' && modal.set.id === keycapSetId) modal = { mode: 'edit', set };
 	}
 
 	async function deleteSet(keycapSetId: string) {
@@ -284,11 +289,12 @@
 			const shown =
 				modal.mode === 'view' ? modal.set.kits?.find((k) => k.kitId === kit.kitId) : undefined;
 			const photos = stagedUploadOutcome('kit', photoFailure, shown !== undefined);
-			if (photos.reopen) {
+			const stillOpen = kitModal.mode === 'create';
+			if (stillOpen && photos.reopen) {
 				kitModal = { mode: 'edit', kitId: kit.kitId };
 				kitPhotoNotice = photos.message;
 			} else {
-				closeKitModal();
+				if (stillOpen) closeKitModal();
 				kitNotice = photos.message;
 			}
 		} catch {
@@ -309,7 +315,7 @@
 		try {
 			await keycapSetsApi.updateKeycapKit({ userId, keycapSetId, kitId, keycapKitInput: input });
 			await refreshViewedSet(keycapSetId);
-			kitModal = { mode: 'view', kitId };
+			if (kitModal.mode === 'edit' && kitModal.kitId === kitId) kitModal = { mode: 'view', kitId };
 		} catch (err) {
 			if (err instanceof ResponseError) {
 				const body = await err.response.json().catch(() => null);
