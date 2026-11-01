@@ -39,6 +39,13 @@ describe('Discover page', () => {
 		expect(listProfiles).toHaveBeenCalledWith({ username: undefined });
 	});
 
+	it('keeps a phone keyboard from capitalizing the lowercase usernames it looks up', async () => {
+		await render(DiscoverPage);
+
+		await expect.element(page.getByRole('searchbox')).toHaveAttribute('autocapitalize', 'none');
+		await expect.element(page.getByRole('searchbox')).toHaveAttribute('autocorrect', 'off');
+	});
+
 	it('searches by the trimmed username as the user types', async () => {
 		listProfiles.mockResolvedValue(pageOf([]));
 		await render(DiscoverPage);

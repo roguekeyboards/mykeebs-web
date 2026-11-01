@@ -229,6 +229,28 @@ describe('Profile edit page saving', () => {
 		expect(save).not.toHaveBeenCalled();
 	});
 
+	it('saves a username without the space a phone keyboard adds after a suggestion', async () => {
+		save.mockResolvedValue(existing);
+		await render(ProfileEditPage);
+
+		await usernameField().fill('keeb.fan ');
+		await expect.element(page.getByText('Your profile will be at /u/keeb.fan')).toBeInTheDocument();
+		await saveButton().click();
+
+		await vi.waitFor(() => expect(save).toHaveBeenCalled());
+		expect(save.mock.calls[0][0]).toMatchObject({ username: 'keeb.fan' });
+	});
+
+	it.each([
+		['username', () => usernameField()],
+		['Discord username', () => page.getByLabelText('Discord username')]
+	])('keeps a phone keyboard from capitalizing the %s', async (_, field) => {
+		await render(ProfileEditPage);
+
+		await expect.element(field()).toHaveAttribute('autocapitalize', 'none');
+		await expect.element(field()).toHaveAttribute('autocorrect', 'off');
+	});
+
 	it('refuses a link with no URL', async () => {
 		await render(ProfileEditPage);
 

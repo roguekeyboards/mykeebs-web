@@ -31,8 +31,8 @@
 	}
 </script>
 
-<div class="pr-8">
-	<h2 class="heading-lg text-2xl">{keyboard.name}</h2>
+<div>
+	<h2 class="heading-lg pr-20 text-2xl break-words">{keyboard.name}</h2>
 	<p class="text-muted">{keyboard.brand}</p>
 	{#if keyboard.size || keyboard.layout}
 		<p class="text-faint mt-1 font-mono text-sm">
@@ -40,7 +40,7 @@
 		</p>
 	{/if}
 	{#if keyboard.notes}
-		<p class="text-muted mt-2 text-sm">{keyboard.notes}</p>
+		<p class="text-muted mt-2 text-sm break-words whitespace-pre-line">{keyboard.notes}</p>
 	{/if}
 </div>
 

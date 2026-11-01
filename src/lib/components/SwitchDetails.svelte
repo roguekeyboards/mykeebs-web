@@ -20,7 +20,7 @@
 	let failedUrl = $state<string | null>(null);
 </script>
 
-<div class="flex items-start gap-4 pr-8">
+<div class="flex flex-col items-start gap-4 sm:flex-row">
 	{#if sw.image?.url && sw.image.url !== failedUrl}
 		<button
 			type="button"
@@ -47,14 +47,14 @@
 	{:else if sw.image && !sw.image.url}
 		<RejectedImage reason={sw.image.rejectionReason} class="h-24 w-24 shrink-0" />
 	{/if}
-	<div>
-		<h2 class="heading-lg text-2xl">{sw.name}</h2>
+	<div class="w-full min-w-0">
+		<h2 class="heading-lg pr-20 text-2xl break-words">{sw.name}</h2>
 		<p class="text-muted">{[sw.brand, sw.manufacturer].filter(Boolean).join(' · ')}</p>
 		<p class="text-faint mt-1 font-mono text-sm">
 			{[sw.type, sw.factoryLubed ? 'Factory lubed' : undefined].filter(Boolean).join(' · ')}
 		</p>
 		{#if sw.notes}
-			<p class="text-muted mt-2 text-sm">{sw.notes}</p>
+			<p class="text-muted mt-2 text-sm break-words whitespace-pre-line">{sw.notes}</p>
 		{/if}
 	</div>
 </div>

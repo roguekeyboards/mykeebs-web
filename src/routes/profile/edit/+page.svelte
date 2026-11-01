@@ -66,7 +66,8 @@
 	const uid = $props.id();
 	const usernameErrorId = `username-error-${uid}`;
 
-	let usernameValid = $derived(usernameLooksValid(username));
+	const trimmedUsername = $derived(username.trim());
+	let usernameValid = $derived(usernameLooksValid(trimmedUsername));
 
 	function addLink() {
 		if (links.length < MAX_LINKS) links = [...links, { name: '', url: '' }];
@@ -100,7 +101,7 @@
 		const cleanedLinks = cleaned.links;
 
 		const input: ProfileInput = {
-			username,
+			username: trimmedUsername,
 			discoverable,
 			discordUsername: discordUsername.trim() || undefined,
 			bio: bio.trim() || undefined,
@@ -252,9 +253,11 @@
 					aria-invalid={usernameError !== null}
 					aria-describedby={usernameError !== null ? usernameErrorId : undefined}
 					autocomplete="off"
+					autocapitalize="none"
+					autocorrect="off"
 				/>
 				<span class="text-faint text-xs">
-					Your profile will be at /u/{usernameValid ? username : 'username'}
+					Your profile will be at /u/{usernameValid ? trimmedUsername : 'username'}
 				</span>
 				{#if usernameError}
 					<span id={usernameErrorId} class="text-xs" role="alert" style="color: var(--danger)"
@@ -271,6 +274,8 @@
 					class="field-input font-mono"
 					maxlength="32"
 					placeholder="e.g. jayb"
+					autocapitalize="none"
+					autocorrect="off"
 					bind:value={discordUsername}
 				/>
 			</label>
@@ -377,8 +382,9 @@
 					<span class="text-sm">Make my profile discoverable</span>
 				</label>
 				<p class="text-faint -mt-2 text-xs">
-					Others can find you in Discover and view /u/{usernameValid ? username : 'username'}.
-					Individual builds still use their own visibility setting.
+					Others can find you in Discover and view /u/{usernameValid
+						? trimmedUsername
+						: 'username'}. Individual builds still use their own visibility setting.
 				</p>
 			</div>
 

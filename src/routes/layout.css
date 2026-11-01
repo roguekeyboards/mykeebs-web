@@ -458,7 +458,9 @@ select:focus-visible {
 .spec-row dd {
 	font-family: var(--font-display);
 	color: var(--text);
-	white-space: nowrap;
+	min-width: 0;
+	text-align: right;
+	overflow-wrap: anywhere;
 }
 
 /* Section labels -- eyebrow style */

@@ -8,7 +8,7 @@
 	let deleting = $state(false);
 	let error = $state<string | null>(null);
 
-	let confirmed = $derived(typed === username);
+	let confirmed = $derived(typed.trim() === username);
 
 	function openDialog() {
 		typed = '';
@@ -60,6 +60,8 @@
 				type="text"
 				class="field-input"
 				autocomplete="off"
+				autocapitalize="none"
+				autocorrect="off"
 				spellcheck="false"
 				bind:value={typed}
 				disabled={deleting}

@@ -37,6 +37,21 @@ describe('DeleteAccount.svelte', () => {
 		await expect.element(confirmButton()).toBeEnabled();
 	});
 
+	it('ignores the space a phone keyboard adds after a suggestion', async () => {
+		await renderAndOpen();
+
+		await usernameField().fill('rogue.serenity ');
+
+		await expect.element(confirmButton()).toBeEnabled();
+	});
+
+	it("keeps a phone keyboard from capitalizing or correcting what's typed", async () => {
+		await renderAndOpen();
+
+		await expect.element(usernameField()).toHaveAttribute('autocapitalize', 'none');
+		await expect.element(usernameField()).toHaveAttribute('autocorrect', 'off');
+	});
+
 	it('deletes once and shows progress while it runs', async () => {
 		let finish!: () => void;
 		const onDelete = await renderAndOpen(
