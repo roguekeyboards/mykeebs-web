@@ -25,8 +25,8 @@
 	const totalCost = $derived(showPrice ? formatPrice(set.totalCost, set.currency) : undefined);
 </script>
 
-<div class="pr-8">
-	<h2 class="heading-lg text-2xl">{set.name}</h2>
+<div>
+	<h2 class="heading-lg pr-20 text-2xl break-words">{set.name}</h2>
 	<p class="text-muted">{set.brand}</p>
 	{#if set.profile || set.material}
 		<p class="text-faint mt-1 font-mono text-sm">
@@ -34,7 +34,7 @@
 		</p>
 	{/if}
 	{#if set.notes}
-		<p class="text-muted mt-2 text-sm">{set.notes}</p>
+		<p class="text-muted mt-2 text-sm break-words whitespace-pre-line">{set.notes}</p>
 	{/if}
 </div>
 

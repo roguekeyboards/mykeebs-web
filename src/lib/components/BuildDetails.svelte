@@ -31,10 +31,10 @@
 	);
 </script>
 
-<div class="pr-8">
+<div>
 	<button
 		type="button"
-		class="flex items-center gap-3 text-left"
+		class="flex flex-col items-start gap-3 text-left sm:flex-row sm:items-center"
 		onclick={() => onKeyboardClick(build.keyboard.id)}
 	>
 		{#if build.keyboard.imageUrl}
@@ -45,8 +45,8 @@
 				decoding="async"
 			/>
 		{/if}
-		<div>
-			<h2 class="heading-lg text-2xl hover:underline">{build.keyboard.name}</h2>
+		<div class="w-full min-w-0">
+			<h2 class="heading-lg pr-20 text-2xl break-words hover:underline">{build.keyboard.name}</h2>
 			<p class="text-muted">{build.keyboard.brand}</p>
 		</div>
 	</button>
@@ -61,7 +61,7 @@
 		</p>
 	{/if}
 	{#if build.notes}
-		<p class="text-muted mt-2 text-sm">{build.notes}</p>
+		<p class="text-muted mt-2 text-sm break-words whitespace-pre-line">{build.notes}</p>
 	{/if}
 </div>
 

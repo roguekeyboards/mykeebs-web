@@ -55,7 +55,7 @@
 		</div>
 	{/if}
 	<div>
-		<h2 class="heading-lg text-2xl">{name}</h2>
+		<h2 class="heading-lg text-2xl sm:pr-24">{name}</h2>
 		<PurchaseDetails {purchase} {showPrice} />
 	</div>
 </div>

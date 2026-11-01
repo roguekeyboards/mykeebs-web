@@ -105,7 +105,7 @@
 		{#if profile.bio}
 			<div>
 				<h2 class="section-label">Bio</h2>
-				<p class="text-muted max-w-prose text-sm">{profile.bio}</p>
+				<p class="text-muted max-w-prose text-sm break-words whitespace-pre-line">{profile.bio}</p>
 			</div>
 		{/if}
 		{#if profile.links && profile.links.length > 0}

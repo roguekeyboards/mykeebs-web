@@ -81,6 +81,8 @@
 		type="search"
 		class="field-input w-56"
 		placeholder="Find a builder…"
+		autocapitalize="none"
+		autocorrect="off"
 		bind:value={searchQuery}
 		oninput={onSearchInput}
 		onfocus={resumeOnFocus}

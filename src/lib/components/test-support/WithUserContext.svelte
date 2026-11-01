@@ -4,14 +4,22 @@
 
 	let {
 		component: Inner,
-		isOwnProfile = true
+		isOwnProfile = true,
+		bio
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	}: { component: Component<any>; isOwnProfile?: boolean } = $props();
+	}: { component: Component<any>; isOwnProfile?: boolean; bio?: string } = $props();
 
 	setUserContext({
 		userId: 'user-1',
 		username: 'rogue.serenity',
-		profile: { userId: 'user-1', username: 'rogue.serenity', discoverable: true },
+		profile: {
+			userId: 'user-1',
+			username: 'rogue.serenity',
+			discoverable: true,
+			get bio() {
+				return bio;
+			}
+		},
 		get isOwnProfile() {
 			return isOwnProfile;
 		},

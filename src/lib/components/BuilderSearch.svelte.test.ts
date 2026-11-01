@@ -33,6 +33,13 @@ describe('BuilderSearch.svelte', () => {
 		vi.mocked(goto).mockReset();
 	});
 
+	it('keeps a phone keyboard from capitalizing the lowercase usernames it looks up', async () => {
+		await render(BuilderSearch);
+
+		await expect.element(searchbox()).toHaveAttribute('autocapitalize', 'none');
+		await expect.element(searchbox()).toHaveAttribute('autocorrect', 'off');
+	});
+
 	it('looks up the trimmed username, six at most, and lists the matches', async () => {
 		listProfiles.mockResolvedValue(pageOf([profile('rogue.serenity', 'rogue#1')]));
 		await render(BuilderSearch);

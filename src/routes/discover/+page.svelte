@@ -89,6 +89,8 @@
 		type="search"
 		class="field-input mt-6 w-full"
 		placeholder="Search by username..."
+		autocapitalize="none"
+		autocorrect="off"
 		bind:value={query}
 		oninput={onInput}
 	/>
