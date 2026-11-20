@@ -659,6 +659,18 @@ describe('BuildForm.svelte EC builds', () => {
 		expect(input.ecParts).toBeUndefined();
 	});
 
+	it('closes an open part picker when the build type changes', async () => {
+		await renderBuild(build);
+
+		await page.getByRole('button', { name: '+ Add switch' }).click();
+		await expect.element(page.getByPlaceholder('Search switches…')).toBeInTheDocument();
+		await buildType().selectOptions('EC');
+		await buildType().selectOptions('MX');
+
+		await expect.element(page.getByPlaceholder('Search switches…')).not.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: '+ Add switch' })).toBeInTheDocument();
+	});
+
 	it('round-trips an EC build, and is dirty only once its type or parts change', async () => {
 		const onSubmit = await renderBuild(ecBuild);
 		const dirty = page.getByTestId('dirty');

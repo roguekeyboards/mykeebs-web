@@ -710,7 +710,12 @@
 
 	<label class="flex flex-col gap-1.5">
 		<span class="field-label">Build type</span>
-		<select name="buildType" class="field-select w-56" bind:value={buildType}>
+		<select
+			name="buildType"
+			class="field-select w-56"
+			bind:value={buildType}
+			onchange={() => (countedPickerOpen = null)}
+		>
 			{#each optionsWith(buildTypes, buildType) as value (value)}
 				<option {value}>{value}</option>
 			{/each}
