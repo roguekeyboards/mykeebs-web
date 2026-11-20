@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import type { Build, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
+import {
+	ECPartType,
+	type Build,
+	type ECPart,
+	type Keyboard,
+	type KeycapSet,
+	type Switch
+} from '@roguekeyboards/mykeebs-api-client';
 import type { KeyboardBuildGroup } from './build-groups';
-import { buildFields, keyboardFields, keycapSetFields, switchFields } from './collection-fields';
+import {
+	buildFields,
+	ecPartFields,
+	keyboardFields,
+	keycapSetFields,
+	switchFields
+} from './collection-fields';
 import type { SearchField } from './collection-filter';
 
 function valuesByTag<T>(fields: SearchField<T>[], item: T) {
@@ -54,6 +67,39 @@ describe('collection fields', () => {
 		});
 	});
 
+	it('reads an EC part, whatever its part type', () => {
+		const domes: ECPart = {
+			id: 'ec-1',
+			brand: 'Deskeys',
+			name: 'Silicone domes',
+			partType: ECPartType.Domes,
+			domes: { weight: 45, material: 'Silicone', color: 'Red' },
+			purchase: { vendor: 'Deskeys', orderStatus: 'Delivered' }
+		};
+		const sliders: ECPart = {
+			id: 'ec-2',
+			brand: 'Keebwerk',
+			name: 'MX sliders',
+			partType: ECPartType.Sliders,
+			sliders: { size: '1U', stem: 'MX', material: 'POM' }
+		};
+
+		expect(valuesByTag(ecPartFields, domes)).toEqual({
+			name: ['Silicone domes'],
+			brand: ['Deskeys'],
+			part: ['Domes'],
+			material: ['Silicone'],
+			color: ['Red'],
+			vendor: ['Deskeys'],
+			status: ['Delivered']
+		});
+		expect(valuesByTag(ecPartFields, sliders)).toMatchObject({
+			part: ['Sliders'],
+			material: ['POM'],
+			color: [undefined]
+		});
+	});
+
 	it("reads a keycap set, including every kit's name", () => {
 		const set: KeycapSet = {
 			id: 'set-1',
@@ -79,10 +125,11 @@ describe('collection fields', () => {
 		});
 	});
 
-	it("reads a build's keyboard, and the switches and keycap sets of all its builds", () => {
+	it("reads a build's keyboard, and the parts, keycap sets and types of all its builds", () => {
 		const current: Build = {
 			id: 'b-2',
 			keyboard: { id: 'kb-1', brand: 'NyxKeys', name: 'Athena' },
+			buildType: 'MX',
 			switches: [
 				{ _switch: { id: 'sw-1', brand: 'Gateron', name: 'Oil King', type: 'Linear' }, count: 70 }
 			],
@@ -91,21 +138,35 @@ describe('collection fields', () => {
 		const past: Build = {
 			id: 'b-1',
 			keyboard: current.keyboard,
+			buildType: 'MX',
 			switches: [
 				{ _switch: { id: 'sw-2', brand: 'HMX', name: 'Yogurt S', type: 'Linear' }, count: 68 }
+			]
+		};
+		const ec: Build = {
+			id: 'b-0',
+			keyboard: current.keyboard,
+			buildType: 'EC',
+			ecParts: [
+				{
+					ecPart: { id: 'ec-1', brand: 'Deskeys', name: 'Silicone domes', partType: 'domes' },
+					count: 68
+				}
 			]
 		};
 		const group: KeyboardBuildGroup = {
 			keyboardId: 'kb-1',
 			current,
-			builds: [current, past],
-			buildCount: 2,
+			builds: [current, past, ec],
+			buildCount: 3,
 			mixedVisibility: false
 		};
 
 		expect(valuesByTag(buildFields, group)).toEqual({
 			keyboard: ['Athena'],
 			switches: ['Oil King', 'Yogurt S'],
+			ec: ['Silicone domes'],
+			type: ['MX', 'MX', 'EC'],
 			keycaps: ['Olivia']
 		});
 	});

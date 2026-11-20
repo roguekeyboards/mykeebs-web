@@ -363,12 +363,14 @@ describe('withFreshImages on a build', () => {
 		const shown: Build = {
 			id: 'b',
 			keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
+			buildType: 'MX',
 			notes: 'edited',
 			images: [{ imageId: 'i1', url: 'old' }]
 		};
 		const fresh: Build = {
 			id: 'b',
 			keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
+			buildType: 'MX',
 			notes: 'stale',
 			images: [{ imageId: 'i1', url: 'new' }]
 		};

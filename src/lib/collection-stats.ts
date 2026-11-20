@@ -1,4 +1,10 @@
-import type { Build, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
+import type {
+	Build,
+	ECPart,
+	Keyboard,
+	KeycapSet,
+	Switch
+} from '@roguekeyboards/mykeebs-api-client';
 import type { StatusFilter } from '#lib/order-status.js';
 
 type Entry = { status: string; price: number | undefined };
@@ -6,21 +12,29 @@ type Entry = { status: string; price: number | undefined };
 export type CollectionStats = {
 	keyboards: Entry[];
 	switches: Entry[];
+	ecParts: Entry[];
 	keycapSets: Entry[];
 	builds: number;
 	buildsTotalCost: number;
 	currency: string | undefined;
 };
 
-export type Tally = { keyboards: number; switches: number; keycapSets: number; builds: number };
+export type Tally = {
+	keyboards: number;
+	switches: number;
+	ecParts: number;
+	keycapSets: number;
+	builds: number;
+};
 
 export function collectionStats(lists: {
 	keyboards: Keyboard[];
 	switches: Switch[];
+	ecParts: ECPart[];
 	keycapSets: KeycapSet[];
 	builds: Build[];
 }): CollectionStats {
-	const { keyboards, switches, keycapSets, builds } = lists;
+	const { keyboards, switches, ecParts, keycapSets, builds } = lists;
 	return {
 		keyboards: keyboards.map((k) => ({
 			status: k.purchase?.orderStatus ?? '',
@@ -30,6 +44,10 @@ export function collectionStats(lists: {
 			status: s.purchase?.orderStatus ?? '',
 			price: s.purchase?.price
 		})),
+		ecParts: ecParts.map((p) => ({
+			status: p.purchase?.orderStatus ?? '',
+			price: p.purchase?.price
+		})),
 		keycapSets: keycapSets.map((k) => ({ status: k.orderStatus ?? '', price: k.totalCost })),
 		builds: builds.length,
 		buildsTotalCost: builds.reduce((sum, b) => sum + (b.totalCost ?? 0), 0),
@@ -37,7 +55,7 @@ export function collectionStats(lists: {
 		// rather than showing a misleading $0.00.
 		currency: [
 			...[...keyboards, ...keycapSets, ...builds].map((i) => i.currency),
-			...switches.map((i) => i.purchase?.currency)
+			...[...switches, ...ecParts].map((i) => i.purchase?.currency)
 		].find(Boolean)
 	};
 }
@@ -55,6 +73,7 @@ export function countsFor(stats: CollectionStats, filter: StatusFilter): Tally {
 	return {
 		keyboards: matching(stats.keyboards, filter).length,
 		switches: matching(stats.switches, filter).length,
+		ecParts: matching(stats.ecParts, filter).length,
 		keycapSets: matching(stats.keycapSets, filter).length,
 		builds: filter === 'all' ? stats.builds : 0
 	};
@@ -64,6 +83,7 @@ export function totalsFor(stats: CollectionStats, filter: StatusFilter): Tally {
 	return {
 		keyboards: sum(matching(stats.keyboards, filter)),
 		switches: sum(matching(stats.switches, filter)),
+		ecParts: sum(matching(stats.ecParts, filter)),
 		keycapSets: sum(matching(stats.keycapSets, filter)),
 		builds: filter === 'all' ? stats.buildsTotalCost : 0
 	};

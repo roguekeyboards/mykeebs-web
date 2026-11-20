@@ -10,6 +10,7 @@
 		build,
 		onKeyboardClick,
 		onSwitchClick,
+		onECPartClick,
 		onKeycapKitClick,
 		onImageClick,
 		showPrice
@@ -17,6 +18,7 @@
 		build: Build;
 		onKeyboardClick: (keyboardId: string) => void;
 		onSwitchClick: (switchId: string) => void;
+		onECPartClick: (ecPartId: string) => void;
 		onKeycapKitClick: (keycapSetId: string, kitId: string) => void;
 		onImageClick: (index: number) => void;
 		showPrice: boolean;
@@ -99,47 +101,47 @@
 {/if}
 
 <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-	{#if build.plate || build.pcb || build.caseMountType || build.stabs || build.foam != null}
-		<div>
-			<h3 class="section-label">Build details</h3>
-			<dl class="spec-list">
-				{#if build.plate}
-					<div class="spec-row">
-						<dt>Plate</dt>
-						<dd>{plateLabel(build.plate)}</dd>
-					</div>
-				{/if}
-				{#if build.pcb}
-					<div class="spec-row">
-						<dt>PCB</dt>
-						<dd>{pcbLabel(build.pcb)}</dd>
-					</div>
-				{/if}
-				{#if build.caseMountType?.type}
-					<div class="spec-row">
-						<dt>Mount type</dt>
-						<dd>
-							{[build.caseMountType.type, build.caseMountType.durometer]
-								.filter(Boolean)
-								.join(' · ')}
-						</dd>
-					</div>
-				{/if}
-				{#if build.stabs?.name}
-					<div class="spec-row">
-						<dt>Stabs</dt>
-						<dd>{[build.stabs.name, build.stabs.mountType].filter(Boolean).join(' · ')}</dd>
-					</div>
-				{/if}
-				{#if build.foam != null}
-					<div class="spec-row">
-						<dt>Foam</dt>
-						<dd>{build.foam ? 'Yes' : 'No'}</dd>
-					</div>
-				{/if}
-			</dl>
-		</div>
-	{/if}
+	<div>
+		<h3 class="section-label">Build details</h3>
+		<dl class="spec-list">
+			<div class="spec-row">
+				<dt>Build type</dt>
+				<dd>{build.buildType}</dd>
+			</div>
+			{#if build.plate}
+				<div class="spec-row">
+					<dt>Plate</dt>
+					<dd>{plateLabel(build.plate)}</dd>
+				</div>
+			{/if}
+			{#if build.pcb}
+				<div class="spec-row">
+					<dt>PCB</dt>
+					<dd>{pcbLabel(build.pcb)}</dd>
+				</div>
+			{/if}
+			{#if build.caseMountType?.type}
+				<div class="spec-row">
+					<dt>Mount type</dt>
+					<dd>
+						{[build.caseMountType.type, build.caseMountType.durometer].filter(Boolean).join(' · ')}
+					</dd>
+				</div>
+			{/if}
+			{#if build.stabs?.name}
+				<div class="spec-row">
+					<dt>Stabs</dt>
+					<dd>{[build.stabs.name, build.stabs.mountType].filter(Boolean).join(' · ')}</dd>
+				</div>
+			{/if}
+			{#if build.foam != null}
+				<div class="spec-row">
+					<dt>Foam</dt>
+					<dd>{build.foam ? 'Yes' : 'No'}</dd>
+				</div>
+			{/if}
+		</dl>
+	</div>
 
 	{#if build.switches && build.switches.length > 0}
 		<div>
@@ -163,6 +165,36 @@
 							{/if}
 							<span class="font-mono"
 								>{entry.count}x {entry._switch.name} ({entry._switch.brand})</span
+							>
+						</button>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
+
+	{#if build.ecParts && build.ecParts.length > 0}
+		<div>
+			<h3 class="section-label">EC parts</h3>
+			<ul class="space-y-2 text-sm">
+				{#each build.ecParts as entry, index (index)}
+					<li>
+						<button
+							type="button"
+							class="flex items-center gap-2 text-left hover:underline"
+							onclick={() => onECPartClick(entry.ecPart.id)}
+						>
+							{#if entry.ecPart.imageUrl}
+								<img
+									src={entry.ecPart.imageUrl}
+									alt={entry.ecPart.name}
+									class="kc-thumb h-8 w-8 shrink-0 object-contain"
+									loading="lazy"
+									decoding="async"
+								/>
+							{/if}
+							<span class="font-mono"
+								>{entry.count}x {entry.ecPart.name} ({entry.ecPart.brand})</span
 							>
 						</button>
 					</li>

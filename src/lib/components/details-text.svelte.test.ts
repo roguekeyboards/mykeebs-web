@@ -6,6 +6,7 @@ import KeyboardDetails from './KeyboardDetails.svelte';
 import KeycapKitDetails from './KeycapKitDetails.svelte';
 import KeycapSetDetails from './KeycapSetDetails.svelte';
 import SwitchDetails from './SwitchDetails.svelte';
+import ECPartDetails from './ECPartDetails.svelte';
 import DetailsInModal from './test-support/DetailsInModal.svelte';
 import '../../routes/layout.css';
 
@@ -52,6 +53,23 @@ const CASES = [
 		}
 	],
 	[
+		'EC part',
+		ECPartDetails,
+		{
+			part: {
+				id: 'e',
+				brand: 'Deskeys',
+				name: LONG_NAME,
+				partType: 'domes',
+				notes: NOTES,
+				image: { url: IMAGE },
+				domes: { color: LONG_VALUE }
+			},
+			onImageClick: noop,
+			showPrice: true
+		}
+	],
+	[
 		'keycap set',
 		KeycapSetDetails,
 		{
@@ -84,6 +102,7 @@ const CASES = [
 function withName(props: (typeof CASES)[number][2], name: string): Record<string, unknown> {
 	if ('keyboard' in props) return { ...props, keyboard: { ...props.keyboard, name } };
 	if ('sw' in props) return { ...props, sw: { ...props.sw, name } };
+	if ('part' in props) return { ...props, part: { ...props.part, name } };
 	if ('set' in props) return { ...props, set: { ...props.set, name } };
 	return { ...props, build: { ...props.build, keyboard: { ...props.build.keyboard, name } } };
 }

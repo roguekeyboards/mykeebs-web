@@ -50,8 +50,8 @@
 	<form class="flex flex-col gap-4" onsubmit={confirmDelete}>
 		<h2 class="heading-lg text-xl">Delete your account?</h2>
 		<p class="text-sm">
-			This permanently deletes your profile and avatar, every keyboard, switch, keycap set and build
-			in your collection, and all of their photos. It can't be undone.
+			This permanently deletes your profile and avatar, every keyboard, switch, EC part, keycap set
+			and build in your collection, and all of their photos. It can't be undone.
 		</p>
 		<label class="flex flex-col gap-1.5">
 			<span class="field-label">Type <strong>{username}</strong> to confirm</span>

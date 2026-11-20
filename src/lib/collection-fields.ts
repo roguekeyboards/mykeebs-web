@@ -1,4 +1,5 @@
-import type { Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
+import type { ECPart, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
+import { ecPartMaterial, ecPartTypeLabel } from '#lib/ec-parts.js';
 import type { SearchField } from '#lib/collection-filter.js';
 import type { KeyboardBuildGroup } from '#lib/build-groups.js';
 
@@ -32,6 +33,24 @@ export const switchFields: SearchField<Switch>[] = [
 	{ tag: 'status', description: 'Order status', values: (sw) => [sw.purchase?.orderStatus] }
 ];
 
+export const ecPartFields: SearchField<ECPart>[] = [
+	{ tag: 'name', description: "The part's name", values: (part) => [part.name] },
+	{ tag: 'brand', description: 'Who sells the part', values: (part) => [part.brand] },
+	{
+		tag: 'part',
+		description: 'Domes, sliders, housings, springs or rings',
+		values: (part) => [ecPartTypeLabel(part.partType)]
+	},
+	{ tag: 'material', description: "The part's material", values: (part) => [ecPartMaterial(part)] },
+	{ tag: 'color', description: 'Dome color', values: (part) => [part.domes?.color] },
+	{
+		tag: 'vendor',
+		description: 'Where they were bought',
+		values: (part) => [part.purchase?.vendor]
+	},
+	{ tag: 'status', description: 'Order status', values: (part) => [part.purchase?.orderStatus] }
+];
+
 export const keycapSetFields: SearchField<KeycapSet>[] = [
 	{ tag: 'name', description: "The set's name", values: (set) => [set.name] },
 	{ tag: 'brand', description: 'Who makes the set', values: (set) => [set.brand] },
@@ -61,6 +80,17 @@ export const buildFields: SearchField<KeyboardBuildGroup>[] = [
 		description: 'Switches in any build of the keyboard',
 		values: (group) =>
 			group.builds.flatMap((build) => build.switches?.map((entry) => entry._switch.name) ?? [])
+	},
+	{
+		tag: 'ec',
+		description: 'EC parts in any build of the keyboard',
+		values: (group) =>
+			group.builds.flatMap((build) => build.ecParts?.map((entry) => entry.ecPart.name) ?? [])
+	},
+	{
+		tag: 'type',
+		description: 'Build type, e.g. MX or EC',
+		values: (group) => group.builds.map((build) => build.buildType)
 	},
 	{
 		tag: 'keycaps',

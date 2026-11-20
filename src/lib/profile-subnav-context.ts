@@ -7,6 +7,7 @@ export type ProfileSubNavItem = {
 		| '/u/[username]'
 		| '/u/[username]/keyboards'
 		| '/u/[username]/switches'
+		| '/u/[username]/ec-parts'
 		| '/u/[username]/keycap-sets'
 		| '/u/[username]/builds';
 	username: string;

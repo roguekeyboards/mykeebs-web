@@ -10,11 +10,7 @@
 	import PageNotice from '#lib/components/PageNotice.svelte';
 	import { groupByKeyboard, type KeyboardBuildGroup } from '#lib/build-groups.js';
 	import { perItemImageRefetcher, withFreshImages } from '#lib/stale-images.js';
-	import {
-		STALE_REFS_MESSAGE,
-		staleBuildRefsFromError,
-		type StaleBuildRefs
-	} from '#lib/build-refs.js';
+	import { buildSaveFailure, type StaleBuildRefs } from '#lib/build-refs.js';
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
@@ -88,8 +84,9 @@
 					keyboardId: build.keyboard.id
 				};
 		} catch (err) {
-			staleRefs = await staleBuildRefsFromError(err, input);
-			saveError = staleRefs ? STALE_REFS_MESSAGE : 'Could not create this build.';
+			const failure = await buildSaveFailure(err, input, 'Could not create this build.');
+			staleRefs = failure.staleRefs;
+			saveError = failure.message;
 		} finally {
 			saving = false;
 		}

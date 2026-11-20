@@ -90,6 +90,10 @@
 						label: 'Switches'
 					},
 					{
+						href: resolve('/u/[username]/ec-parts', { username: view.profile.username }),
+						label: 'EC Parts'
+					},
+					{
 						href: resolve('/u/[username]/keycap-sets', { username: view.profile.username }),
 						label: 'Keycap Sets'
 					},
@@ -110,6 +114,7 @@
 			{ route: '/u/[username]', username, label: 'Overview' },
 			{ route: '/u/[username]/keyboards', username, label: 'Keyboards' },
 			{ route: '/u/[username]/switches', username, label: 'Switches' },
+			{ route: '/u/[username]/ec-parts', username, label: 'EC Parts' },
 			{ route: '/u/[username]/keycap-sets', username, label: 'Keycap Sets' },
 			{ route: '/u/[username]/builds', username, label: 'Builds' }
 		];

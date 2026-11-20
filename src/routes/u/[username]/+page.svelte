@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { pageTitle } from '#lib/page-title.js';
 	import { fetchAllPages } from '#lib/pagination.js';
-	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
+	import {
+		buildsApi,
+		ecPartsApi,
+		keyboardsApi,
+		switchesApi,
+		keycapSetsApi
+	} from '#lib/api/client.js';
 	import { formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import { resolve } from '$app/paths';
@@ -31,13 +37,14 @@
 	async function loadCounts(userId: string) {
 		countsLoading = true;
 		try {
-			const [keyboards, switches, keycapSets, builds] = await Promise.all([
+			const [keyboards, switches, ecParts, keycapSets, builds] = await Promise.all([
 				fetchAllPages((request) => keyboardsApi.listKeyboards({ userId, ...request })),
 				fetchAllPages((request) => switchesApi.listSwitches({ userId, ...request })),
+				fetchAllPages((request) => ecPartsApi.listECParts({ userId, ...request })),
 				fetchAllPages((request) => keycapSetsApi.listKeycapSets({ userId, ...request })),
 				fetchAllPages((request) => buildsApi.listBuilds({ userId, ...request }))
 			]);
-			stats = collectionStats({ keyboards, switches, keycapSets, builds });
+			stats = collectionStats({ keyboards, switches, ecParts, keycapSets, builds });
 		} catch {
 			stats = null;
 		} finally {
@@ -57,7 +64,7 @@
 	const currency = $derived(stats?.currency);
 
 	const grandTotal = $derived(
-		totals ? totals.keyboards + totals.switches + totals.keycapSets : null
+		totals ? totals.keyboards + totals.switches + totals.ecParts + totals.keycapSets : null
 	);
 
 	const statTiles = $derived(
@@ -74,6 +81,12 @@
 						value: counts.switches,
 						price: totals?.switches,
 						href: resolve('/u/[username]/switches', { username: userContext.username })
+					},
+					{
+						label: 'EC Parts',
+						value: counts.ecParts,
+						price: totals?.ecParts,
+						href: resolve('/u/[username]/ec-parts', { username: userContext.username })
 					},
 					{
 						label: 'Keycap Sets',
@@ -149,15 +162,15 @@
 		</div>
 	</div>
 	{#if countsLoading && !counts}
-		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-			{#each [0, 1, 2, 3] as i (i)}
+		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+			{#each [0, 1, 2, 3, 4] as i (i)}
 				<div class="kc-card p-4">
 					<p class="text-faint font-mono text-xs">&nbsp;</p>
 				</div>
 			{/each}
 		</div>
 	{:else if counts}
-		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+		<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
 			{#each statTiles as tile (tile.label)}
 				<a href={tile.href} class="kc-card block p-4">
 					<p class="section-label mb-1">{tile.label}</p>
