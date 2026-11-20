@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.4...v0.5.0) (2026-11-20)
+
+
+### Features
+
+* EC parts and EC builds ([#227](https://github.com/roguekeyboards/mykeebs-web/issues/227)) ([869a0e5](https://github.com/roguekeyboards/mykeebs-web/commit/869a0e519003e5ac23663171093c17fa6c7d4e9c))
+
 ## [0.4.4](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.3...v0.4.4) (2026-11-01)
 
 
