@@ -33,6 +33,7 @@ const mantaBuild: Build = {
 	id: 'b-1',
 	visibility: Visibility.Public,
 	keyboard: manta,
+	buildType: 'MX',
 	buildDate: new Date('2026-09-10T12:00:00Z')
 };
 
@@ -81,7 +82,8 @@ describe('builds page', () => {
 		const agarBuild: Build = {
 			id: 'b-9',
 			visibility: Visibility.Public,
-			keyboard: { id: 'kb-2', brand: 'KBDFans', name: 'Agar' }
+			keyboard: { id: 'kb-2', brand: 'KBDFans', name: 'Agar' },
+			buildType: 'MX'
 		};
 		builds.listBuilds.mockResolvedValue({ items: [mantaBuild, pastBuild, agarBuild] });
 		await renderPage();

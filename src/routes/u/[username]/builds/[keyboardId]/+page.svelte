@@ -6,17 +6,20 @@
 	import type {
 		Build,
 		BuildInput,
+		ECPart,
 		Keyboard,
 		KeycapKitImage,
 		Switch as SwitchModel
 	} from '@roguekeyboards/mykeebs-api-client';
 	import { ResponseError } from '@roguekeyboards/mykeebs-api-client';
-	import { buildsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
 	import {
-		STALE_REFS_MESSAGE,
-		staleBuildRefsFromError,
-		type StaleBuildRefs
-	} from '#lib/build-refs.js';
+		buildsApi,
+		ecPartsApi,
+		keyboardsApi,
+		switchesApi,
+		keycapSetsApi
+	} from '#lib/api/client.js';
+	import { buildSaveFailure, type StaleBuildRefs } from '#lib/build-refs.js';
 	import { formatDate, formatPrice, type PurchaseLike } from '#lib/format.js';
 	import { perItemImageRefetcher, updateWhere, withFreshImages } from '#lib/stale-images.js';
 	import { newestFirst } from '#lib/build-groups.js';
@@ -32,6 +35,7 @@
 	import BuildForm from '#lib/components/BuildForm.svelte';
 	import KeyboardDetails from '#lib/components/KeyboardDetails.svelte';
 	import SwitchDetails from '#lib/components/SwitchDetails.svelte';
+	import ECPartDetails from '#lib/components/ECPartDetails.svelte';
 	import KeycapKitDetails from '#lib/components/KeycapKitDetails.svelte';
 
 	const userContext = getUserContext();
@@ -128,6 +132,11 @@
 	let switchDetailLoading = $state(false);
 	let switchViewerOpen = $state(false);
 
+	let ecPartDetail = $state<ECPart | null>(null);
+	let ecPartDetailError = $state<string | null>(null);
+	let ecPartDetailLoading = $state(false);
+	let ecPartViewerOpen = $state(false);
+
 	let kitDetail = $state<{
 		name: string;
 		image: KeycapKitImage | undefined;
@@ -140,6 +149,7 @@
 	let detailToken = 0;
 	let keyboardDetailToken = 0;
 	let switchDetailToken = 0;
+	let ecPartDetailToken = 0;
 	let kitDetailToken = 0;
 
 	async function openBuild(buildId: string) {
@@ -194,14 +204,15 @@
 				formMode = { mode: 'closed' };
 			}
 		} catch (err) {
-			staleRefs = await staleBuildRefsFromError(err, input);
+			const failure = await buildSaveFailure(err, input, 'Could not save your changes.');
+			staleRefs = failure.staleRefs;
 			if (err instanceof ResponseError) {
 				const body = await err.response.json().catch(() => null);
 				console.error('updateBuild failed', err.response.status, body);
 			} else {
 				console.error('updateBuild failed', err);
 			}
-			saveError = staleRefs ? STALE_REFS_MESSAGE : 'Could not save your changes.';
+			saveError = failure.message;
 		} finally {
 			saving = false;
 		}
@@ -310,6 +321,32 @@
 		switchViewerOpen = false;
 	}
 
+	async function openECPartDetail(ecPartId: string) {
+		const userId = userContext.userId;
+		if (!userId) return;
+
+		const token = ++ecPartDetailToken;
+		ecPartDetailError = null;
+		ecPartDetailLoading = true;
+		ecPartDetail = null;
+		try {
+			const part = await ecPartsApi.getECPart({ userId, ecPartId });
+			if (token === ecPartDetailToken) ecPartDetail = part;
+		} catch {
+			if (token === ecPartDetailToken) ecPartDetailError = 'Could not load this EC part.';
+		} finally {
+			if (token === ecPartDetailToken) ecPartDetailLoading = false;
+		}
+	}
+
+	function closeECPartDetail() {
+		ecPartDetailToken++;
+		ecPartDetail = null;
+		ecPartDetailError = null;
+		ecPartDetailLoading = false;
+		ecPartViewerOpen = false;
+	}
+
 	async function openKitDetail(keycapSetId: string, kitId: string) {
 		const userId = userContext.userId;
 		if (!userId) return;
@@ -349,6 +386,9 @@
 			switchDetailLoading ||
 			switchDetailError !== null ||
 			switchDetail !== null ||
+			ecPartDetailLoading ||
+			ecPartDetailError !== null ||
+			ecPartDetail !== null ||
 			kitDetailLoading ||
 			kitDetailError !== null ||
 			kitDetail !== null ||
@@ -489,6 +529,7 @@
 			{build}
 			onKeyboardClick={openKeyboardDetail}
 			onSwitchClick={openSwitchDetail}
+			onECPartClick={openECPartDetail}
 			onKeycapKitClick={openKitDetail}
 			onImageClick={(index) => {
 				galleryIndex = index;
@@ -623,6 +664,32 @@
 		src={switchDetail.image.url}
 		alt={switchDetail.name}
 		onClose={() => (switchViewerOpen = false)}
+	/>
+{/if}
+
+<Modal
+	open={ecPartDetailLoading || ecPartDetailError !== null || ecPartDetail !== null}
+	label="EC part"
+	onClose={closeECPartDetail}
+	obscured={ecPartViewerOpen}
+>
+	{#if ecPartDetailLoading}
+		<p class="text-muted p-8 text-center text-lg" role="status">Loading&hellip;</p>
+	{:else if ecPartDetailError}
+		<p class="p-8 text-center text-lg" role="alert" style="color: var(--danger)">
+			{ecPartDetailError}
+		</p>
+	{:else if ecPartDetail}
+		<ECPartDetails part={ecPartDetail} onImageClick={() => (ecPartViewerOpen = true)} {showPrice} />
+	{/if}
+</Modal>
+
+{#if ecPartDetail?.image?.url}
+	<ImageViewer
+		open={ecPartViewerOpen}
+		src={ecPartDetail.image.url}
+		alt={ecPartDetail.name}
+		onClose={() => (ecPartViewerOpen = false)}
 	/>
 {/if}
 

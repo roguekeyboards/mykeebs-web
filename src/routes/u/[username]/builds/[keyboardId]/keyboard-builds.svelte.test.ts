@@ -7,7 +7,13 @@ import {
 	Visibility,
 	type Build
 } from '@roguekeyboards/mykeebs-api-client';
-import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
+import {
+	buildsApi,
+	ecPartsApi,
+	keyboardsApi,
+	keycapSetsApi,
+	switchesApi
+} from '#lib/api/client.js';
 import { STALE_REFS_MESSAGE } from '#lib/build-refs.js';
 import { deferred, openDialogs, settled } from '#lib/components/test-support/deferred.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
@@ -32,6 +38,7 @@ vi.mock('#lib/api/client.js', () => ({
 	},
 	keyboardsApi: { getKeyboard: vi.fn(), listKeyboards: vi.fn() },
 	switchesApi: { getSwitch: vi.fn() },
+	ecPartsApi: { getECPart: vi.fn() },
 	keycapSetsApi: { getKeycapSet: vi.fn() },
 	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) }
 }));
@@ -45,6 +52,7 @@ function build(id: string, buildDate?: string, extra: Partial<Build> = {}): Buil
 		id,
 		visibility: Visibility.Public,
 		keyboard: neo65,
+		buildType: 'MX',
 		buildDate: buildDate ? new Date(`${buildDate}T12:00:00Z`) : undefined,
 		...extra
 	};
@@ -641,6 +649,38 @@ describe('keyboard builds page', () => {
 
 			await expect.element(page.getByRole('dialog', { name: /Ding Ding/ })).toBeInTheDocument();
 			expect(switchesApi.getSwitch).toHaveBeenCalledWith({ userId: 'user-1', switchId: 'sw-1' });
+		});
+
+		it('opens an EC part of an EC build', async () => {
+			const ecBuild = build('b-ec', '2026-06-30', {
+				buildType: 'EC',
+				ecParts: [
+					{
+						ecPart: { id: 'ec-1', brand: 'Deskeys', name: 'Silicone domes', partType: 'domes' },
+						count: 68
+					}
+				]
+			});
+			builds.listBuilds.mockResolvedValue({ items: [ecBuild] });
+			builds.getBuild.mockResolvedValue(ecBuild);
+			vi.mocked(ecPartsApi.getECPart).mockResolvedValue({
+				id: 'ec-1',
+				brand: 'Deskeys',
+				name: 'Silicone domes',
+				partType: 'domes',
+				domes: { weight: 45 },
+				purchase: { price: 60, quantity: 110, currency: 'USD' }
+			});
+			await renderPage();
+			await page.getByRole('button', { name: /Jun 30, 2026/ }).click();
+
+			await dialog().getByRole('button', { name: '68x Silicone domes (Deskeys)' }).click();
+
+			const part = page.getByRole('dialog', { name: 'Silicone domes' });
+			await expect.element(part).toBeInTheDocument();
+			await expect.element(part).toMatchTextContent('45g');
+			await expect.element(part).toMatchTextContent('$60.00');
+			expect(ecPartsApi.getECPart).toHaveBeenCalledWith({ userId: 'user-1', ecPartId: 'ec-1' });
 		});
 
 		it('opens a keycap kit', async () => {

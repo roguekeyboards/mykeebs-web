@@ -20,7 +20,9 @@ describe('DeleteAccount.svelte', () => {
 
 		await expect
 			.element(dialog())
-			.toMatchTextContent(/profile and avatar, every keyboard, switch, keycap set and build/);
+			.toMatchTextContent(
+				/profile and avatar, every keyboard, switch, EC part, keycap set and build/
+			);
 		await expect.element(dialog()).toMatchTextContent("It can't be undone.");
 		expect(onDelete).not.toHaveBeenCalled();
 	});

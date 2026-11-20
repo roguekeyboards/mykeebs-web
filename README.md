@@ -1,8 +1,8 @@
 # mykeebs-web
 
 The web UI for [mykeebs-api](https://github.com/roguekeyboards/mykeebs-api), a personal mechanical keyboard
-collection tracker. Use it to browse, add and edit keyboards, switches, keycap sets and the builds
-that combine them.
+collection tracker. Use it to browse, add and edit keyboards, switches, EC parts, keycap sets and the
+builds that combine them.
 
 Built with SvelteKit as a static SPA, authenticated via Stytch Connected Apps against the same
 identity mykeebs-api's REST API already trusts, and styled with Skeleton UI.

@@ -11,6 +11,7 @@ function build(
 	return {
 		id,
 		keyboard: { id: keyboardId, brand: 'Bowl', name: 'Manta' },
+		buildType: 'MX',
 		buildDate: date ? new Date(date) : undefined,
 		visibility
 	};

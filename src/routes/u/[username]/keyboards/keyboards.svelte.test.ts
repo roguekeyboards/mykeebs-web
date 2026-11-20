@@ -641,6 +641,7 @@ describe('keyboards page', () => {
 			vi.mocked(buildsApi.getBuild).mockResolvedValue({
 				id: 'b1',
 				keyboard: { id: 'kb-1', brand: 'Bowl', name: 'Manta' },
+				buildType: 'MX',
 				buildDate: new Date('2026-08-03')
 			});
 			await renderPage();

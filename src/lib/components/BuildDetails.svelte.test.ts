@@ -7,6 +7,7 @@ import BuildDetails from './BuildDetails.svelte';
 const build: Build = {
 	id: 'b',
 	keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
+	buildType: 'MX',
 	switches: [{ _switch: { id: 'sw', brand: 'HMX', name: 'Aperol', type: 'Linear' }, count: 70 }],
 	keycapSets: [
 		{
@@ -32,6 +33,7 @@ async function renderDetails() {
 		build,
 		onKeyboardClick: vi.fn(),
 		onSwitchClick: vi.fn(),
+		onECPartClick: vi.fn(),
 		onKeycapKitClick: vi.fn(),
 		onImageClick: vi.fn(),
 		showPrice: true
@@ -77,6 +79,7 @@ describe('BuildDetails.svelte', () => {
 			},
 			onKeyboardClick: vi.fn(),
 			onSwitchClick: vi.fn(),
+			onECPartClick: vi.fn(),
 			onKeycapKitClick: vi.fn(),
 			onImageClick: vi.fn(),
 			showPrice: true
@@ -100,6 +103,7 @@ describe('BuildDetails.svelte image moderation', () => {
 			},
 			onKeyboardClick: vi.fn(),
 			onSwitchClick: vi.fn(),
+			onECPartClick: vi.fn(),
 			onKeycapKitClick: vi.fn(),
 			onImageClick,
 			showPrice: true
@@ -111,5 +115,41 @@ describe('BuildDetails.svelte image moderation', () => {
 		await expect.element(page.getByTitle('Pending review')).toBeInTheDocument();
 		await page.getByRole('button', { name: 'View full size image', exact: false }).click();
 		expect(onImageClick).toHaveBeenCalledWith(0);
+	});
+});
+
+describe('BuildDetails.svelte EC builds', () => {
+	it('names the build type and opens an EC part by id', async () => {
+		const onECPartClick = vi.fn();
+		await render(BuildDetails, {
+			build: {
+				...build,
+				buildType: 'EC',
+				switches: undefined,
+				ecParts: [
+					{
+						ecPart: { id: 'ec-1', brand: 'Deskeys', name: 'Silicone domes', partType: 'domes' },
+						count: 68
+					}
+				]
+			},
+			onKeyboardClick: vi.fn(),
+			onSwitchClick: vi.fn(),
+			onECPartClick,
+			onKeycapKitClick: vi.fn(),
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('Switches')).not.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('term').filter({ hasText: 'Build type' }))
+			.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('definition').filter({ hasText: 'EC' }))
+			.toBeInTheDocument();
+		await page.getByRole('button', { name: '68x Silicone domes (Deskeys)' }).click();
+
+		expect(onECPartClick).toHaveBeenCalledWith('ec-1');
 	});
 });

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
+import type { ECPart, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
 import { collectionStats, countsFor, totalsFor } from './collection-stats';
 
 function sw(purchase: Switch['purchase']): Switch {
 	return { id: 's', brand: 'HMX', name: 'Aperol', type: 'Linear', purchase };
+}
+
+function ec(purchase: ECPart['purchase']): ECPart {
+	return { id: 'e', brand: 'Deskeys', name: 'Domes', partType: 'domes', purchase };
 }
 
 function kb(id: string, fields: Pick<Keyboard, 'purchase' | 'totalCost' | 'currency'>): Keyboard {
@@ -14,7 +18,7 @@ function set(purchase: Pick<KeycapSet, 'orderStatus' | 'totalCost' | 'currency'>
 	return { id: 'c', brand: 'GMK', name: 'Olivia', ...purchase };
 }
 
-const empty = { keyboards: [], switches: [], keycapSets: [], builds: [] };
+const empty = { keyboards: [], switches: [], ecParts: [], keycapSets: [], builds: [] };
 
 describe('collectionStats', () => {
 	it('reads a switch status and price from its purchase', () => {
@@ -23,6 +27,19 @@ describe('collectionStats', () => {
 			switches: [sw({ orderStatus: 'Delivered', price: 31.5, currency: 'USD' })]
 		});
 		expect(stats.switches).toEqual([{ status: 'Delivered', price: 31.5 }]);
+	});
+
+	it('reads an EC part status and price from its purchase', () => {
+		const stats = collectionStats({
+			...empty,
+			ecParts: [ec({ orderStatus: 'Shipped', price: 60, currency: 'USD' })]
+		});
+		expect(stats.ecParts).toEqual([{ status: 'Shipped', price: 60 }]);
+	});
+
+	it('takes the currency from an EC part when nothing else carries a price', () => {
+		const stats = collectionStats({ ...empty, ecParts: [ec({ price: 60, currency: 'JPY' })] });
+		expect(stats.currency).toBe('JPY');
 	});
 
 	it('reads a keyboard price from its total cost, parts included', () => {
@@ -63,7 +80,7 @@ describe('collectionStats', () => {
 			...empty,
 			keyboards: [kb('k', { purchase: { orderStatus: 'Delivered' } })],
 			switches: [sw({ orderStatus: 'Delivered' })],
-			builds: [{ id: 'b', keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' } }]
+			builds: [{ id: 'b', keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' }, buildType: 'MX' }]
 		});
 		expect(stats.currency).toBeUndefined();
 	});
@@ -79,11 +96,16 @@ describe('countsFor and totalsFor', () => {
 			sw({ orderStatus: 'Delivered', price: 30, currency: 'USD' }),
 			sw({ orderStatus: 'Shipped', price: 20, currency: 'USD' })
 		],
+		ecParts: [
+			ec({ orderStatus: 'Delivered', price: 60, currency: 'USD' }),
+			ec({ orderStatus: 'Ordered', price: 15, currency: 'USD' })
+		],
 		keycapSets: [set({ orderStatus: 'Delivered', totalCost: 120, currency: 'USD' })],
 		builds: [
 			{
 				id: 'b',
 				keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
+				buildType: 'MX',
 				totalCost: 400,
 				currency: 'USD'
 			}
@@ -94,12 +116,14 @@ describe('countsFor and totalsFor', () => {
 		expect(countsFor(stats, 'all')).toEqual({
 			keyboards: 2,
 			switches: 2,
+			ecParts: 2,
 			keycapSets: 1,
 			builds: 1
 		});
 		expect(totalsFor(stats, 'all')).toEqual({
 			keyboards: 150,
 			switches: 50,
+			ecParts: 75,
 			keycapSets: 120,
 			builds: 400
 		});
@@ -109,12 +133,14 @@ describe('countsFor and totalsFor', () => {
 		expect(countsFor(stats, 'delivered')).toEqual({
 			keyboards: 1,
 			switches: 1,
+			ecParts: 1,
 			keycapSets: 1,
 			builds: 0
 		});
 		expect(totalsFor(stats, 'delivered')).toEqual({
 			keyboards: 100,
 			switches: 30,
+			ecParts: 60,
 			keycapSets: 120,
 			builds: 0
 		});

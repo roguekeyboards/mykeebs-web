@@ -8,19 +8,31 @@ import {
 	Visibility,
 	type Build
 } from '@roguekeyboards/mykeebs-api-client';
-import { keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
+import { ecPartsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
 import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
 import { MAX_IMAGES } from '#lib/image-limit.js';
 import BuildFormWithUser from './test-support/BuildFormWithUser.svelte';
 import '../../routes/layout.css';
 
 vi.mock('#lib/api/client.js', () => ({
-	lookupsApi: { getLookup: vi.fn(async () => ({ values: [] })) },
+	lookupsApi: {
+		getLookup: vi.fn(async ({ category }: { category: string }) => ({
+			values: category === 'build_type' ? ['MX', 'EC', 'HE', 'Alps'] : []
+		}))
+	},
 	keyboardsApi: {
 		getKeyboard: vi.fn(async () => ({ id: 'kb', brand: '', name: '' })),
 		listKeyboards: vi.fn(async () => ({ items: [] }))
 	},
 	switchesApi: { listSwitches: vi.fn(async () => ({ items: [] })) },
+	ecPartsApi: {
+		listECParts: vi.fn(async () => ({
+			items: [
+				{ id: 'ec-d', brand: 'Deskeys', name: 'Silicone domes', partType: 'domes' },
+				{ id: 'ec-s', brand: 'Keebwerk', name: 'MX sliders', partType: 'sliders' }
+			]
+		}))
+	},
 	keycapSetsApi: { listKeycapSets: vi.fn(async () => ({ items: [] })) }
 }));
 
@@ -28,6 +40,7 @@ const build: Build = {
 	id: 'b',
 	visibility: Visibility.Private,
 	keyboard: { id: 'kb', brand: 'Bowl', name: 'Manta' },
+	buildType: 'MX',
 	switches: [
 		{ _switch: { id: 'sw-a', brand: 'HMX', name: 'Aperol', type: 'Linear' }, count: 70 },
 		{ _switch: { id: 'sw-b', brand: 'Gateron', name: 'Oil King', type: 'Linear' }, count: 4 }
@@ -65,6 +78,7 @@ describe('BuildForm.svelte stale references', () => {
 		await renderForm({
 			keyboardId: null,
 			switchIds: new Set(['sw-b']),
+			ecPartIds: new Set(),
 			kitKeys: new Set([kitKey('set-1', 'aesthetic')])
 		});
 
@@ -76,13 +90,23 @@ describe('BuildForm.svelte stale references', () => {
 	});
 
 	it('flags the keyboard when it is the one mykeebs-api rejected', async () => {
-		await renderForm({ keyboardId: 'kb', switchIds: new Set(), kitKeys: new Set() });
+		await renderForm({
+			keyboardId: 'kb',
+			switchIds: new Set(),
+			ecPartIds: new Set(),
+			kitKeys: new Set()
+		});
 
 		await expect.element(page.getByText(NOTE)).toBeInTheDocument();
 	});
 
 	it("doesn't flag a keyboard other than the rejected one", async () => {
-		await renderForm({ keyboardId: 'replaced', switchIds: new Set(), kitKeys: new Set() });
+		await renderForm({
+			keyboardId: 'replaced',
+			switchIds: new Set(),
+			ecPartIds: new Set(),
+			kitKeys: new Set()
+		});
 
 		await expect.element(page.getByText('Manta')).toBeInTheDocument();
 		await expect.element(page.getByText(NOTE)).not.toBeInTheDocument();
@@ -562,5 +586,126 @@ describe('BuildForm.svelte plate and PCB', () => {
 			expect(onSubmit.mock.calls[0][0].plate).toBeUndefined();
 			expect(onSubmit.mock.calls[0][0].pcb).toBeUndefined();
 		});
+	});
+});
+
+describe('BuildForm.svelte EC builds', () => {
+	const ecBuild: Build = {
+		...build,
+		buildType: 'EC',
+		switches: undefined,
+		ecParts: [
+			{
+				ecPart: { id: 'ec-d', brand: 'Deskeys', name: 'Silicone domes', partType: 'domes' },
+				count: 68
+			}
+		]
+	};
+
+	async function renderBuild(initial: Build, staleRefs: StaleBuildRefs | null = null) {
+		const onSubmit = vi.fn();
+		await render(BuildFormWithUser, {
+			formProps: { initial, saving: false, error: null, staleRefs, onSubmit, onCancel: vi.fn() }
+		});
+		return onSubmit;
+	}
+
+	const buildType = () => page.getByRole('combobox', { name: 'Build type' });
+	const save = () => page.getByRole('button', { name: 'Save changes' }).click();
+
+	it('swaps the switches for EC parts, and saves only the EC parts', async () => {
+		const onSubmit = await renderBuild(build);
+		await expect.element(page.getByText('Aperol (HMX)')).toBeInTheDocument();
+
+		await buildType().selectOptions('EC');
+		await expect.element(page.getByText('Aperol (HMX)')).not.toBeInTheDocument();
+		await page.getByRole('button', { name: '+ Add EC part' }).click();
+		await page.getByRole('option', { name: /Silicone domes/ }).click();
+		await page.getByRole('spinbutton', { name: 'Count of Silicone domes (Deskeys)' }).fill('68');
+		await save();
+
+		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+		const [input] = onSubmit.mock.calls[0];
+		expect(input).toMatchObject({ buildType: 'EC', ecParts: [{ ecPart: 'ec-d', count: 68 }] });
+		expect(input.switches).toBeUndefined();
+	});
+
+	it('loads the EC part picker a full page at a time, labelled with each part type', async () => {
+		await renderBuild(ecBuild);
+
+		await page.getByRole('button', { name: '+ Add EC part' }).click();
+
+		await expect
+			.element(page.getByRole('option', { name: /MX sliders/ }))
+			.toMatchTextContent(/Keebwerk\W+Sliders/);
+		expect(ecPartsApi.listECParts).toHaveBeenCalledWith({
+			userId: 'user-1',
+			cursor: undefined,
+			limit: 100
+		});
+	});
+
+	it('keeps the switches for a build switched away from EC and back', async () => {
+		const onSubmit = await renderBuild(build);
+
+		await buildType().selectOptions('EC');
+		await buildType().selectOptions('MX');
+		await save();
+
+		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+		const [input] = onSubmit.mock.calls[0];
+		expect(input.buildType).toBe('MX');
+		expect(input.switches).toHaveLength(2);
+		expect(input.ecParts).toBeUndefined();
+	});
+
+	it('round-trips an EC build, and is dirty only once its type or parts change', async () => {
+		const onSubmit = await renderBuild(ecBuild);
+		const dirty = page.getByTestId('dirty');
+		const count = page.getByRole('spinbutton', { name: 'Count of Silicone domes (Deskeys)' });
+		await expect.element(buildType()).toHaveValue('EC');
+		await expect.element(dirty).toHaveTextContent('false');
+
+		await count.fill('70');
+		await expect.element(dirty).toHaveTextContent('true');
+		await count.fill('68');
+		await expect.element(dirty).toHaveTextContent('false');
+		await buildType().selectOptions('HE');
+		await expect.element(dirty).toHaveTextContent('true');
+		await buildType().selectOptions('EC');
+		await save();
+
+		await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+		expect(onSubmit.mock.calls[0][0]).toMatchObject({
+			buildType: 'EC',
+			ecParts: [{ ecPart: 'ec-d', count: 68 }]
+		});
+	});
+
+	it('refuses to save an EC part whose count was cleared', async () => {
+		const onSubmit = await renderBuild(ecBuild);
+
+		await page.getByRole('spinbutton', { name: 'Count of Silicone domes (Deskeys)' }).fill('');
+		await save();
+
+		await expect
+			.element(
+				page.getByRole('alert').filter({ hasText: 'Every EC part needs a count of at least 1.' })
+			)
+			.toBeInTheDocument();
+		expect(onSubmit).not.toHaveBeenCalled();
+	});
+
+	it('flags an EC part mykeebs-api rejected', async () => {
+		await renderBuild(ecBuild, {
+			keyboardId: null,
+			switchIds: new Set(),
+			ecPartIds: new Set(['ec-d']),
+			kitKeys: new Set()
+		});
+
+		await expect
+			.element(page.getByRole('listitem').filter({ hasText: 'Silicone domes' }))
+			.toMatchTextContent(NOTE);
 	});
 });

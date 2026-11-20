@@ -8,17 +8,26 @@
 	import type {
 		Build,
 		BuildInput,
+		BuildECPartEntry,
 		BuildKeycapKitEntry,
 		BuildSwitchEntry,
 		BuildPCBRef,
 		BuildPlateRef,
+		ECPart,
 		Keyboard,
 		KeycapSet,
 		Switch
 	} from '@roguekeyboards/mykeebs-api-client';
 	import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
-	import { lookupsApi, keyboardsApi, switchesApi, keycapSetsApi } from '#lib/api/client.js';
+	import {
+		ecPartsApi,
+		lookupsApi,
+		keyboardsApi,
+		switchesApi,
+		keycapSetsApi
+	} from '#lib/api/client.js';
+	import { ecPartTypeLabel } from '#lib/ec-parts.js';
 	import { primaryKitImageUrl } from '#lib/keycap-set.js';
 	import { kitKey, type StaleBuildRefs } from '#lib/build-refs.js';
 	import { pcbLabel, plateLabel } from '#lib/keyboard-parts.js';
@@ -55,6 +64,7 @@
 
 	const keyboardPickerCache: ItemPickerCache<Keyboard> = { items: null };
 	const switchPickerCache: ItemPickerCache<Switch> = { items: null };
+	const ecPartPickerCache: ItemPickerCache<ECPart> = { items: null };
 	const keycapSetPickerCache: ItemPickerCache<KeycapSet> = { items: null };
 
 	// A stale-reference rejection means the cached picker lists are stale too.
@@ -62,6 +72,7 @@
 		if (!staleRefs) return;
 		keyboardPickerCache.items = null;
 		switchPickerCache.items = null;
+		ecPartPickerCache.items = null;
 		keycapSetPickerCache.items = null;
 	});
 
@@ -120,6 +131,9 @@
 		refocusKeyboardTrigger.value = true;
 	}
 
+	const EC = 'EC';
+	let buildType = $state(seed?.buildType ?? 'MX');
+	let buildTypes = $state<string[]>([]);
 	let caseMountType = $state(seed?.caseMountType?.type ?? '');
 	let durometer = $state(seed?.caseMountType?.durometer ?? '');
 	let stabsName = $state(seed?.stabs?.name ?? '');
@@ -167,79 +181,106 @@
 			lookupsApi.getLookup({ category: 'build_case_mount_type' }),
 			lookupsApi.getLookup({ category: 'build_stabilizer' }),
 			lookupsApi.getLookup({ category: 'build_stabilizer_mount_type' }),
-			lookupsApi.getLookup({ category: 'build_durometer' })
+			lookupsApi.getLookup({ category: 'build_durometer' }),
+			lookupsApi.getLookup({ category: 'build_type' })
 		])
-			.then(([mountLookup, stabLookup, stabMountLookup, durometerLookup]) => {
+			.then(([mountLookup, stabLookup, stabMountLookup, durometerLookup, buildTypeLookup]) => {
 				mountTypes = (mountLookup.values as { name: string; supports_durometer: boolean }[]).map(
 					(v) => ({ name: v.name, supportsDurometer: v.supports_durometer })
 				);
 				stabNames = stabLookup.values;
 				stabMountTypes = stabMountLookup.values;
 				durometers = durometerLookup.values;
+				buildTypes = buildTypeLookup.values;
 			})
 			// Lookups only populate suggestions; the fields work without them.
 			.catch(() => {});
 	});
 
-	type SwitchEntry = { switchId: string; count: number; label: string; imageUrl?: string };
-	let switchEntries = $state<SwitchEntry[]>(
+	type CountedKind = 'switch' | 'ecPart';
+	type CountedEntry = { id: string; count: number; label: string; imageUrl?: string };
+	const partLabel = (part: { name: string; brand: string }) => `${part.name} (${part.brand})`;
+
+	let switchEntries = $state<CountedEntry[]>(
 		(seed?.switches ?? []).map((entry) => ({
-			switchId: entry._switch.id,
+			id: entry._switch.id,
 			count: entry.count,
-			label: `${entry._switch.name} (${entry._switch.brand})`,
+			label: partLabel(entry._switch),
 			imageUrl: entry._switch.imageUrl
 		}))
 	);
-	let switchPickerOpen = $state(false);
-	const refocusSwitchTrigger = { value: false };
-	let switchCountInputs = new SvelteMap<string, HTMLInputElement>();
-	let focusSwitchId = $state<string | null>(null);
+	let ecPartEntries = $state<CountedEntry[]>(
+		(seed?.ecParts ?? []).map((entry) => ({
+			id: entry.ecPart.id,
+			count: entry.count,
+			label: partLabel(entry.ecPart),
+			imageUrl: entry.ecPart.imageUrl
+		}))
+	);
+	let countedPickerOpen = $state<CountedKind | null>(null);
+	const refocusCountedTrigger = { value: false };
+	let countInputs = new SvelteMap<string, HTMLInputElement>();
+	let focusCountKey = $state<string | null>(null);
 
-	function addSwitch(sw: Switch) {
-		const switchId = sw.id ?? '';
-		const existing = switchEntries.find((e) => e.switchId === switchId);
+	function entriesOf(kind: CountedKind): CountedEntry[] {
+		return kind === 'switch' ? switchEntries : ecPartEntries;
+	}
+
+	function setEntries(kind: CountedKind, entries: CountedEntry[]) {
+		if (kind === 'switch') switchEntries = entries;
+		else ecPartEntries = entries;
+	}
+
+	function addCounted(
+		kind: CountedKind,
+		item: { id?: string; name: string; brand: string },
+		imageUrl?: string
+	) {
+		const id = item.id ?? '';
+		const entries = entriesOf(kind);
+		const existing = entries.find((e) => e.id === id);
 		if (existing) {
 			existing.count += 1;
 		} else {
-			switchEntries = [
-				...switchEntries,
-				{
-					switchId,
-					count: 1,
-					label: `${sw.name} (${sw.brand})`,
-					imageUrl: sw.image?.url
-				}
-			];
+			setEntries(kind, [...entries, { id, count: 1, label: partLabel(item), imageUrl }]);
 		}
-		switchPickerOpen = false;
-		focusSwitchId = switchId;
+		countedPickerOpen = null;
+		focusCountKey = `${kind}:${id}`;
 	}
 
-	function focusCountInput(node: HTMLInputElement, switchId: string) {
-		switchCountInputs.set(switchId, node);
+	function focusCountInput(node: HTMLInputElement, key: string) {
+		countInputs.set(key, node);
 		return {
 			destroy() {
-				switchCountInputs.delete(switchId);
+				countInputs.delete(key);
 			}
 		};
 	}
 
 	$effect(() => {
-		if (!focusSwitchId) return;
-		// Re-picking an existing switch only bumps its count, so its row never
+		if (!focusCountKey) return;
+		// Re-picking an existing part only bumps its count, so its row never
 		// remounts and the use: action above won't fire.
-		const input = switchCountInputs.get(focusSwitchId);
+		const input = countInputs.get(focusCountKey);
 		if (input) {
 			input.focus();
 			input.select();
 		}
-		focusSwitchId = null;
+		focusCountKey = null;
 	});
 
-	function removeSwitch(switchId: string) {
-		switchEntries = switchEntries.filter((e) => e.switchId !== switchId);
+	function removeCounted(kind: CountedKind, id: string) {
+		setEntries(
+			kind,
+			entriesOf(kind).filter((e) => e.id !== id)
+		);
 		// The focused remove button is gone once this re-renders.
-		refocusSwitchTrigger.value = true;
+		refocusCountedTrigger.value = true;
+	}
+
+	function closeCountedPicker() {
+		countedPickerOpen = null;
+		refocusCountedTrigger.value = true;
 	}
 
 	type KeycapKitEntryDisplay = {
@@ -304,7 +345,7 @@
 		keycapKitEntries = keycapKitEntries.filter(
 			(e) => !(e.keycapSetId === keycapSetId && e.kitId === kitId)
 		);
-		// See removeSwitch.
+		// See removeCounted.
 		refocusKeycapKitTrigger.value = true;
 	}
 
@@ -393,9 +434,11 @@
 	const initialBuildDate = seed ? toDateInput(seed.buildDate) : todayDateInput();
 	const initialNotes = seed?.notes ?? '';
 	const initialVisibility = seed?.visibility ?? Visibility.Private;
-	const initialSwitchIds = untrack(() =>
-		switchEntries.map((e) => `${e.switchId}:${e.count}`).sort()
-	);
+	const initialBuildType = seed?.buildType ?? 'MX';
+	const countKeys = (entries: CountedEntry[]) =>
+		JSON.stringify(entries.map((e) => `${e.id}:${e.count}`).sort());
+	const initialSwitchKeys = untrack(() => countKeys(switchEntries));
+	const initialECPartKeys = untrack(() => countKeys(ecPartEntries));
 	const initialKeycapKitIds = untrack(() =>
 		keycapKitEntries.map((e) => `${e.keycapSetId}:${e.kitId}`).sort()
 	);
@@ -403,6 +446,7 @@
 	export function isDirty(): boolean {
 		return (
 			(keyboard?.id ?? '') !== initialKeyboardId ||
+			buildType !== initialBuildType ||
 			plate !== initialPlate ||
 			pcb !== initialPcb ||
 			caseMountType !== initialCaseMountType ||
@@ -415,8 +459,8 @@
 			notes !== initialNotes ||
 			visibility !== initialVisibility ||
 			stagedImages.length > 0 ||
-			JSON.stringify(switchEntries.map((e) => `${e.switchId}:${e.count}`).sort()) !==
-				JSON.stringify(initialSwitchIds) ||
+			countKeys(switchEntries) !== initialSwitchKeys ||
+			countKeys(ecPartEntries) !== initialECPartKeys ||
 			JSON.stringify(keycapKitEntries.map((e) => `${e.keycapSetId}:${e.kitId}`).sort()) !==
 				JSON.stringify(initialKeycapKitIds)
 		);
@@ -444,18 +488,23 @@
 			return;
 		}
 
-		if (switchEntries.some((e) => e.count == null || e.count < 1)) {
-			validationError = 'Every switch needs a count of at least 1.';
+		const isEC = buildType === EC;
+		if (entriesOf(isEC ? 'ecPart' : 'switch').some((e) => e.count == null || e.count < 1)) {
+			validationError = isEC
+				? 'Every EC part needs a count of at least 1.'
+				: 'Every switch needs a count of at least 1.';
 			return;
 		}
 
 		const hasCaseMountType = caseMountType.trim() || durometer.trim();
 		const hasStabs = stabsName.trim() || stabsMountType.trim() || stabsPrice != null;
 
-		const switches: BuildSwitchEntry[] = switchEntries.map((e) => ({
-			_switch: e.switchId,
-			count: e.count
-		}));
+		const switches: BuildSwitchEntry[] = isEC
+			? []
+			: switchEntries.map((e) => ({ _switch: e.id, count: e.count }));
+		const ecParts: BuildECPartEntry[] = isEC
+			? ecPartEntries.map((e) => ({ ecPart: e.id, count: e.count }))
+			: [];
 		const keycapKits: BuildKeycapKitEntry[] = keycapKitEntries.map((e) => ({
 			keycapSet: e.keycapSetId,
 			kit: e.kitId
@@ -463,6 +512,7 @@
 
 		const input: BuildInput = {
 			keyboard: keyboard.id,
+			buildType,
 			plate: plate || undefined,
 			pcb: pcb || undefined,
 			caseMountType: hasCaseMountType
@@ -480,6 +530,7 @@
 				: undefined,
 			foam: foam || undefined,
 			switches: switches.length > 0 ? switches : undefined,
+			ecParts: ecParts.length > 0 ? ecParts : undefined,
 			keycapKits: keycapKits.length > 0 ? keycapKits : undefined,
 			buildDate: buildDate.trim() ? new Date(buildDate.trim()) : undefined,
 			notes: notes.trim() || undefined,
@@ -657,6 +708,15 @@
 		{/if}
 	</div>
 
+	<label class="flex flex-col gap-1.5">
+		<span class="field-label">Build type</span>
+		<select name="buildType" class="field-select w-56" bind:value={buildType}>
+			{#each optionsWith(buildTypes, buildType) as value (value)}
+				<option {value}>{value}</option>
+			{/each}
+		</select>
+	</label>
+
 	{#if keyboard && (keyboardPlates.length > 0 || keyboardPcbs.length > 0)}
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 			{#if keyboardPlates.length > 0}
@@ -758,94 +818,106 @@
 		Foam
 	</label>
 
-	<div class="flex flex-col gap-1.5">
-		<span class="field-label">Switches</span>
-		{#if switchEntries.length > 0}
-			<ul class="flex flex-col gap-2">
-				{#each switchEntries as entry (entry.switchId)}
-					{@const stale = staleRefs?.switchIds.has(entry.switchId)}
-					<li
-						class="kc-card flex items-center gap-3 p-2"
-						style:border-color={stale ? 'var(--danger)' : undefined}
-					>
-						{#if entry.imageUrl}
-							<img
-								src={entry.imageUrl}
-								alt=""
-								class="kc-thumb h-8 w-8 shrink-0 object-contain"
-								loading="lazy"
-								decoding="async"
-							/>
-						{/if}
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm">{entry.label}</p>
-							{#if stale}
-								{@render staleNote()}
-							{/if}
-						</div>
-						<input
-							name="switchCount"
-							type="number"
-							class="field-input w-20"
-							aria-label="Count of {entry.label}"
-							aria-invalid={validationError !== null && (entry.count == null || entry.count < 1)}
-							aria-describedby={validationError !== null && (entry.count == null || entry.count < 1)
-								? validationId
-								: undefined}
-							min="1"
-							step="1"
-							bind:value={entry.count}
-							use:focusCountInput={entry.switchId}
-						/>
-						<button
-							type="button"
-							class="btn-icon h-7 w-7 text-xs"
-							aria-label="Remove {entry.label}"
-							onclick={() => removeSwitch(entry.switchId)}
+	{#if buildType === EC}
+		{@render countedSection('ecPart', 'EC parts', staleRefs?.ecPartIds)}
+	{:else}
+		{@render countedSection('switch', 'Switches', staleRefs?.switchIds)}
+	{/if}
+
+	{#snippet countedSection(kind: CountedKind, heading: string, staleIds: Set<string> | undefined)}
+		{@const entries = entriesOf(kind)}
+		<div class="flex flex-col gap-1.5">
+			<span class="field-label">{heading}</span>
+			{#if entries.length > 0}
+				<ul class="flex flex-col gap-2">
+					{#each entries as entry (entry.id)}
+						{@const stale = staleIds?.has(entry.id)}
+						{@const invalidCount =
+							validationError !== null && (entry.count == null || entry.count < 1)}
+						<li
+							class="kc-card flex items-center gap-3 p-2"
+							style:border-color={stale ? 'var(--danger)' : undefined}
 						>
-							<X class="h-3.5 w-3.5" />
-						</button>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-		{#if switchPickerOpen}
-			<ItemPicker
-				userId={userContext.userId}
-				fetchPage={(userId, request) => switchesApi.listSwitches({ userId, ...request })}
-				itemKey={(sw) => sw.id ?? ''}
-				getLabel={(sw) => sw.name}
-				getSublabel={(sw) => sw.brand}
-				getImageUrl={(sw) => sw.image?.url}
-				placeholder="Search switches…"
-				cache={switchPickerCache}
-				onPick={addSwitch}
-				onCancel={() => {
-					switchPickerOpen = false;
-					refocusSwitchTrigger.value = true;
-				}}
-			/>
-			<button
-				type="button"
-				class="btn self-start"
-				onclick={() => {
-					switchPickerOpen = false;
-					refocusSwitchTrigger.value = true;
-				}}
-			>
-				Done
-			</button>
-		{:else}
-			<button
-				type="button"
-				class="btn self-start"
-				use:focusOnMount={refocusSwitchTrigger}
-				onclick={() => (switchPickerOpen = true)}
-			>
-				+ Add switch
-			</button>
-		{/if}
-	</div>
+							{#if entry.imageUrl}
+								<img
+									src={entry.imageUrl}
+									alt=""
+									class="kc-thumb h-8 w-8 shrink-0 object-contain"
+									loading="lazy"
+									decoding="async"
+								/>
+							{/if}
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm">{entry.label}</p>
+								{#if stale}
+									{@render staleNote()}
+								{/if}
+							</div>
+							<input
+								name="{kind}Count"
+								type="number"
+								class="field-input w-20"
+								aria-label="Count of {entry.label}"
+								aria-invalid={invalidCount}
+								aria-describedby={invalidCount ? validationId : undefined}
+								min="1"
+								step="1"
+								bind:value={entry.count}
+								use:focusCountInput={`${kind}:${entry.id}`}
+							/>
+							<button
+								type="button"
+								class="btn-icon h-7 w-7 text-xs"
+								aria-label="Remove {entry.label}"
+								onclick={() => removeCounted(kind, entry.id)}
+							>
+								<X class="h-3.5 w-3.5" />
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			{#if countedPickerOpen === kind}
+				{#if kind === 'switch'}
+					<ItemPicker
+						userId={userContext.userId}
+						fetchPage={(userId, request) => switchesApi.listSwitches({ userId, ...request })}
+						itemKey={(sw) => sw.id ?? ''}
+						getLabel={(sw) => sw.name}
+						getSublabel={(sw) => sw.brand}
+						getImageUrl={(sw) => sw.image?.url}
+						placeholder="Search switches…"
+						cache={switchPickerCache}
+						onPick={(sw) => addCounted('switch', sw, sw.image?.url)}
+						onCancel={closeCountedPicker}
+					/>
+				{:else}
+					<ItemPicker
+						userId={userContext.userId}
+						fetchPage={(userId, request) => ecPartsApi.listECParts({ userId, ...request })}
+						itemKey={(part) => part.id}
+						getLabel={(part) => part.name}
+						getSublabel={(part) => `${part.brand} · ${ecPartTypeLabel(part.partType)}`}
+						getImageUrl={(part) => part.image?.url}
+						placeholder="Search EC parts…"
+						cache={ecPartPickerCache}
+						onPick={(part) => addCounted('ecPart', part, part.image?.url)}
+						onCancel={closeCountedPicker}
+					/>
+				{/if}
+				<button type="button" class="btn self-start" onclick={closeCountedPicker}>Done</button>
+			{:else}
+				<button
+					type="button"
+					class="btn self-start"
+					use:focusOnMount={refocusCountedTrigger}
+					onclick={() => (countedPickerOpen = kind)}
+				>
+					{kind === 'switch' ? '+ Add switch' : '+ Add EC part'}
+				</button>
+			{/if}
+		</div>
+	{/snippet}
 
 	<div class="flex flex-col gap-1.5">
 		<span class="field-label">Keycap kits</span>

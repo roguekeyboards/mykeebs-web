@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { buildsApi, keyboardsApi, keycapSetsApi, switchesApi } from '#lib/api/client.js';
+import {
+	buildsApi,
+	ecPartsApi,
+	keyboardsApi,
+	keycapSetsApi,
+	switchesApi
+} from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import OverviewPage from './+page.svelte';
 import KeyboardsPage from './keyboards/+page.svelte';
 import SwitchesPage from './switches/+page.svelte';
+import ECPartsPage from './ec-parts/+page.svelte';
 import KeycapSetsPage from './keycap-sets/+page.svelte';
 import BuildsPage from './builds/+page.svelte';
 import KeyboardBuildsPage from './builds/[keyboardId]/+page.svelte';
@@ -27,6 +34,7 @@ vi.mock('#lib/api/client.js', () => {
 			getKeyboard: async () => ({ id: 'kb-1', brand: 'Qwertykeys', name: 'Neo65 Cu' })
 		},
 		switchesApi: { listSwitches: empty() },
+		ecPartsApi: { listECParts: empty() },
 		keycapSetsApi: { listKeycapSets: empty() },
 		buildsApi: { listBuilds: empty() },
 		lookupsApi: { getLookup: async () => ({ values: [] }) }
@@ -36,6 +44,7 @@ vi.mock('#lib/api/client.js', () => {
 const lists = [
 	keyboardsApi.listKeyboards,
 	switchesApi.listSwitches,
+	ecPartsApi.listECParts,
 	keycapSetsApi.listKeycapSets,
 	buildsApi.listBuilds
 ].map((list) => vi.mocked(list));
@@ -46,9 +55,10 @@ beforeEach(() => {
 
 describe('collection page size', () => {
 	it.each([
-		['the overview', OverviewPage, 4],
+		['the overview', OverviewPage, 5],
 		['keyboards', KeyboardsPage, 1],
 		['switches', SwitchesPage, 1],
+		['EC parts', ECPartsPage, 1],
 		['keycap sets', KeycapSetsPage, 1],
 		['builds', BuildsPage, 1],
 		["a keyboard's builds", KeyboardBuildsPage, 1]

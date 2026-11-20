@@ -1,6 +1,7 @@
 import {
 	Configuration,
 	BuildsApi,
+	EcPartsApi,
 	KeyboardsApi,
 	KeycapSetsApi,
 	LookupsApi,
@@ -18,6 +19,7 @@ const configuration = new Configuration({
 });
 
 export const buildsApi = new BuildsApi(configuration);
+export const ecPartsApi = new EcPartsApi(configuration);
 export const keyboardsApi = new KeyboardsApi(configuration);
 export const keycapSetsApi = new KeycapSetsApi(configuration);
 export const lookupsApi = new LookupsApi(configuration);

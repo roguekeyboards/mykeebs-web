@@ -10,6 +10,7 @@ vi.mock('#lib/api/client.js', () => {
 	return {
 		keyboardsApi: { listKeyboards: empty },
 		switchesApi: { listSwitches: empty },
+		ecPartsApi: { listECParts: empty },
 		keycapSetsApi: { listKeycapSets: empty },
 		buildsApi: { listBuilds: empty }
 	};

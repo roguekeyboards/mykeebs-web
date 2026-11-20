@@ -42,6 +42,7 @@ describe('blockingBuildLabels', () => {
 	const build = (id: string, buildDate?: Date): Build => ({
 		id,
 		keyboard: { id: 'kb', brand: 'KBDFans', name: 'Agar' },
+		buildType: 'MX',
 		buildDate
 	});
 

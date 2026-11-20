@@ -9,6 +9,7 @@ import UserLayout from './+layout.svelte';
 import OverviewPage from './+page.svelte';
 import KeyboardsPage from './keyboards/+page.svelte';
 import SwitchesPage from './switches/+page.svelte';
+import ECPartsPage from './ec-parts/+page.svelte';
 import KeycapSetsPage from './keycap-sets/+page.svelte';
 import BuildsPage from './builds/+page.svelte';
 import KeyboardBuildsPage from './builds/[keyboardId]/+page.svelte';
@@ -31,6 +32,7 @@ vi.mock('#lib/api/client.js', () => {
 			getKeyboard: async () => ({ id: 'kb-1', brand: 'Qwertykeys', name: 'Neo65 Cu' })
 		},
 		switchesApi: { listSwitches: empty },
+		ecPartsApi: { listECParts: empty },
 		keycapSetsApi: { listKeycapSets: empty },
 		buildsApi: { listBuilds: empty },
 		lookupsApi: { getLookup: async () => ({ values: [] }) }
@@ -44,6 +46,7 @@ describe('user page titles', () => {
 		['the overview', OverviewPage, '@rogue.serenity · mykeebs'],
 		['keyboards', KeyboardsPage, 'Keyboards · @rogue.serenity · mykeebs'],
 		['switches', SwitchesPage, 'Switches · @rogue.serenity · mykeebs'],
+		['EC parts', ECPartsPage, 'EC parts · @rogue.serenity · mykeebs'],
 		['keycap sets', KeycapSetsPage, 'Keycap sets · @rogue.serenity · mykeebs'],
 		['builds', BuildsPage, 'Builds · @rogue.serenity · mykeebs']
 	])('titles %s', async (_, component, expected) => {

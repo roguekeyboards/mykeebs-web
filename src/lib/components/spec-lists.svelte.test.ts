@@ -3,6 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 import KeyboardDetails from './KeyboardDetails.svelte';
 import SwitchDetails from './SwitchDetails.svelte';
+import ECPartDetails from './ECPartDetails.svelte';
 import KeycapSetDetails from './KeycapSetDetails.svelte';
 import BuildDetails from './BuildDetails.svelte';
 import '../../routes/layout.css';
@@ -70,6 +71,23 @@ describe('spec lists hold only dt and dd in each row', () => {
 		expect(invalidSpecRows()).toEqual([]);
 	});
 
+	it('EC part details', async () => {
+		await render(ECPartDetails, {
+			part: {
+				id: 'e',
+				brand: 'Keebwerk',
+				name: 'MX sliders',
+				partType: 'sliders',
+				sliders: { size: '1U', stem: 'MX', material: 'POM' },
+				purchase
+			},
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		expect(invalidSpecRows()).toEqual([]);
+	});
+
 	it('keycap set details', async () => {
 		await render(KeycapSetDetails, {
 			set: {
@@ -104,6 +122,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 			} as never,
 			onKeyboardClick: vi.fn(),
 			onSwitchClick: vi.fn(),
+			onECPartClick: vi.fn(),
 			onKeycapKitClick: vi.fn(),
 			onImageClick: vi.fn(),
 			showPrice: true

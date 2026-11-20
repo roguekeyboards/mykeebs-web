@@ -45,7 +45,7 @@ async function expectCurrent(navName: string, expected: string[], all: string[])
 	}
 }
 
-const TABS = ['Overview', 'Keyboards', 'Switches', 'Keycap Sets', 'Builds'];
+const TABS = ['Overview', 'Keyboards', 'Switches', 'EC Parts', 'Keycap Sets', 'Builds'];
 
 beforeEach(() => {
 	getProfile.mockReset();
@@ -65,6 +65,7 @@ describe('site navigation', () => {
 			['/u/jay', 'Overview'],
 			['/u/jay/keyboards', 'Keyboards'],
 			['/u/jay/switches', 'Switches'],
+			['/u/jay/ec-parts', 'EC Parts'],
 			['/u/jay/keycap-sets', 'Keycap Sets'],
 			['/u/jay/builds', 'Builds'],
 			['/u/jay/builds/kb-1', 'Builds']
@@ -90,6 +91,22 @@ describe('site navigation', () => {
 			await expect.element(current('Keyboards', 'Profile')).toHaveAttribute('aria-current', 'page');
 			await expect.element(current('My Collection', 'Main')).not.toHaveAttribute('aria-current');
 		});
+	});
+
+	it('fits every profile tab on one row just above the mobile breakpoint', async () => {
+		await page.viewport(768, 768);
+		try {
+			goTo('/u/jay');
+			await render(RootWithProfile);
+			await expect.element(current('Builds', 'Profile')).toBeVisible();
+
+			const tops = TABS.map(
+				(name) => (current(name, 'Profile').element() as HTMLElement).getBoundingClientRect().top
+			);
+			expect(new Set(tops).size).toBe(1);
+		} finally {
+			await page.viewport(414, 896);
+		}
 	});
 
 	it('marks the Builds tab under a keyboard in the mobile menu too', async () => {
