@@ -117,20 +117,4 @@ describe('root layout', () => {
 
 		await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
 	});
-
-	it("uses the brand's favicons and touch icon", async () => {
-		await renderLayout();
-
-		const href = (selector: string) =>
-			document.head.querySelector<HTMLLinkElement>(selector)?.getAttribute('href') ?? '';
-		await vi.waitFor(() => {
-			expect(href('link[rel="icon"][type="image/svg+xml"]')).toMatch(
-				/favicon\.svg|^data:image\/svg/
-			);
-			expect(href('link[rel="icon"][sizes="32x32"]')).toMatch(/favicon\.ico|^data:image/);
-			expect(href('link[rel="apple-touch-icon"]')).toMatch(
-				/apple-touch-icon\.png|^data:image\/png/
-			);
-		});
-	});
 });

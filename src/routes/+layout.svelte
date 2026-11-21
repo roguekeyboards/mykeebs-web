@@ -4,9 +4,6 @@
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
 	import './layout.css';
-	import favicon from '@roguekeyboards/mykeebs-brand/favicon.svg';
-	import faviconIco from '@roguekeyboards/mykeebs-brand/favicon.ico';
-	import appleTouchIcon from '@roguekeyboards/mykeebs-brand/apple-touch-icon.png';
 	import logo from '@roguekeyboards/mykeebs-brand/logo-horizontal-on-dark.svg';
 	import mark from '@roguekeyboards/mykeebs-brand/mark-on-dark.svg';
 	import { auth, dismissSignInFailure, initAuth } from '#lib/auth/auth.svelte.js';
@@ -50,11 +47,6 @@
 	});
 </script>
 
-<svelte:head>
-	<link rel="icon" href={faviconIco} sizes="32x32" />
-	<link rel="icon" href={favicon} type="image/svg+xml" />
-	<link rel="apple-touch-icon" href={appleTouchIcon} />
-</svelte:head>
 <a href="#main" class="skip-link">Skip to content</a>
 <header class="app-header">
 	<div class="md:hidden">
