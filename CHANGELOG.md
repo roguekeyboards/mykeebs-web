@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/roguekeyboards/mykeebs-web/compare/v0.5.0...v0.5.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* serve favicons from the static HTML so Safari shows them ([#233](https://github.com/roguekeyboards/mykeebs-web/issues/233)) ([bf49a9b](https://github.com/roguekeyboards/mykeebs-web/commit/bf49a9b756d9ef74c68876f79210abc5a08e2063))
+
 ## [0.5.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.4.4...v0.5.0) (2026-11-20)
 
 
