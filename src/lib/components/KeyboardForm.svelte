@@ -425,9 +425,9 @@
 
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<label class="flex flex-col gap-1.5">
-			<span class="field-label"
-				>Brand <span aria-hidden="true" style="color: var(--danger)">*</span></span
-			>
+			<span class="field-label">
+				Brand <span aria-hidden="true" style="color: var(--danger)">*</span>
+			</span>
 			<input
 				name="brand"
 				type="text"
@@ -442,9 +442,9 @@
 		</label>
 
 		<label class="flex flex-col gap-1.5">
-			<span class="field-label"
-				>Name <span aria-hidden="true" style="color: var(--danger)">*</span></span
-			>
+			<span class="field-label">
+				Name <span aria-hidden="true" style="color: var(--danger)">*</span>
+			</span>
 			<input
 				name="name"
 				type="text"
@@ -575,9 +575,9 @@
 					</button>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 						<label class="flex flex-col gap-1.5">
-							<span class="field-label"
-								>Material <span aria-hidden="true" style="color: var(--danger)">*</span></span
-							>
+							<span class="field-label">
+								Material <span aria-hidden="true" style="color: var(--danger)">*</span>
+							</span>
 							<select
 								name="plates[{index}].material"
 								class="field-select w-full"
@@ -619,9 +619,9 @@
 					<details class="field-group" bind:open={plate.purchaseOpen}>
 						<summary>
 							Purchase
-							<span class="field-group-hint"
-								>— {purchaseSummary(plate.purchase) ?? 'Came with the keyboard'}</span
-							>
+							<span class="field-group-hint">
+								— {purchaseSummary(plate.purchase) ?? 'Came with the keyboard'}
+							</span>
 						</summary>
 						<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<PurchaseFields
@@ -686,9 +686,9 @@
 							</select>
 						</label>
 						<label class="flex flex-col gap-1.5">
-							<span class="field-label"
-								>Assembly <span aria-hidden="true" style="color: var(--danger)">*</span></span
-							>
+							<span class="field-label">
+								Assembly <span aria-hidden="true" style="color: var(--danger)">*</span>
+							</span>
 							<select
 								name="pcbs[{index}].assembly"
 								class="field-select w-full"
@@ -706,9 +706,9 @@
 							</select>
 						</label>
 						<label class="flex flex-col gap-1.5">
-							<span class="field-label"
-								>Connectivity <span aria-hidden="true" style="color: var(--danger)">*</span></span
-							>
+							<span class="field-label">
+								Connectivity <span aria-hidden="true" style="color: var(--danger)">*</span>
+							</span>
 							<select
 								name="pcbs[{index}].connectivity"
 								class="field-select w-full"
@@ -729,9 +729,9 @@
 					<details class="field-group" bind:open={pcb.purchaseOpen}>
 						<summary>
 							Purchase
-							<span class="field-group-hint"
-								>— {purchaseSummary(pcb.purchase) ?? 'Came with the keyboard'}</span
-							>
+							<span class="field-group-hint">
+								— {purchaseSummary(pcb.purchase) ?? 'Came with the keyboard'}
+							</span>
 						</summary>
 						<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<PurchaseFields

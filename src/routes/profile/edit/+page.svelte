@@ -220,9 +220,9 @@
 						{rejectionText(profile.data.avatar.rejectionReason)}. Remove it or choose another photo.
 					</span>
 				{:else if isPending(profile.data?.avatar)}
-					<span class="text-faint text-xs"
-						>Pending review. Only you can see it until it's approved.</span
-					>
+					<span class="text-faint text-xs">
+						Pending review. Only you can see it until it's approved.
+					</span>
 				{/if}
 				{#if avatarError}
 					<span class="text-xs" role="alert" style="color: var(--danger)">{avatarError}</span>
@@ -240,9 +240,9 @@
 
 		<form class="mt-8 flex flex-col gap-5" onsubmit={handleSubmit}>
 			<label class="flex flex-col gap-1.5">
-				<span class="section-label mb-0"
-					>Username <span aria-hidden="true" style="color: var(--danger)">*</span></span
-				>
+				<span class="section-label mb-0">
+					Username <span aria-hidden="true" style="color: var(--danger)">*</span>
+				</span>
 				<input
 					name="username"
 					type="text"
@@ -260,9 +260,9 @@
 					Your profile will be at /u/{usernameValid ? trimmedUsername : 'username'}
 				</span>
 				{#if usernameError}
-					<span id={usernameErrorId} class="text-xs" role="alert" style="color: var(--danger)"
-						>{usernameError}</span
-					>
+					<span id={usernameErrorId} class="text-xs" role="alert" style="color: var(--danger)">
+						{usernameError}
+					</span>
 				{/if}
 			</label>
 

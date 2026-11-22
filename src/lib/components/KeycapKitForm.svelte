@@ -259,9 +259,9 @@
 	</div>
 
 	<label class="flex flex-col gap-1.5">
-		<span class="field-label"
-			>Name <span aria-hidden="true" style="color: var(--danger)">*</span></span
-		>
+		<span class="field-label">
+			Name <span aria-hidden="true" style="color: var(--danger)">*</span>
+		</span>
 		<input
 			name="name"
 			type="text"
