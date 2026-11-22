@@ -112,8 +112,10 @@
 			href={resolve('/u/[username]/builds/[keyboardId]', {
 				username: userContext.username,
 				keyboardId: notice.keyboardId
-			})}>See this keyboard's builds</a
+			})}
 		>
+			See this keyboard's builds
+		</a>
 	</PageNotice>
 {/if}
 

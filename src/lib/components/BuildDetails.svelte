@@ -163,9 +163,9 @@
 									decoding="async"
 								/>
 							{/if}
-							<span class="font-mono"
-								>{entry.count}x {entry._switch.name} ({entry._switch.brand})</span
-							>
+							<span class="font-mono">
+								{entry.count}x {entry._switch.name} ({entry._switch.brand})
+							</span>
 						</button>
 					</li>
 				{/each}
@@ -193,9 +193,9 @@
 									decoding="async"
 								/>
 							{/if}
-							<span class="font-mono"
-								>{entry.count}x {entry.ecPart.name} ({entry.ecPart.brand})</span
-							>
+							<span class="font-mono">
+								{entry.count}x {entry.ecPart.name} ({entry.ecPart.brand})
+							</span>
 						</button>
 					</li>
 				{/each}

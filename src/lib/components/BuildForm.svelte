@@ -632,9 +632,9 @@
 	</fieldset>
 
 	<div class="flex flex-col gap-1.5">
-		<span class="field-label"
-			>Keyboard <span aria-hidden="true" style="color: var(--danger)">*</span></span
-		>
+		<span class="field-label">
+			Keyboard <span aria-hidden="true" style="color: var(--danger)">*</span>
+		</span>
 		{#if keyboard && !keyboardPickerOpen}
 			<div
 				class="kc-card flex items-center gap-3 p-3"
@@ -752,9 +752,9 @@
 	<details class="field-group" bind:open={caseMountOpen}>
 		<summary>
 			Case mount
-			<span class="field-group-hint"
-				>— {[caseMountType, durometer].filter(Boolean).join(' · ') || 'Not set'}</span
-			>
+			<span class="field-group-hint">
+				— {[caseMountType, durometer].filter(Boolean).join(' · ') || 'Not set'}
+			</span>
 		</summary>
 		<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
 			<label class="flex flex-col gap-1.5">

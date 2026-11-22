@@ -111,9 +111,9 @@
 
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<label class="flex flex-col gap-1.5">
-			<span class="field-label"
-				>Brand <span aria-hidden="true" style="color: var(--danger)">*</span></span
-			>
+			<span class="field-label">
+				Brand <span aria-hidden="true" style="color: var(--danger)">*</span>
+			</span>
 			<input
 				name="brand"
 				type="text"
@@ -128,9 +128,9 @@
 		</label>
 
 		<label class="flex flex-col gap-1.5">
-			<span class="field-label"
-				>Name <span aria-hidden="true" style="color: var(--danger)">*</span></span
-			>
+			<span class="field-label">
+				Name <span aria-hidden="true" style="color: var(--danger)">*</span>
+			</span>
 			<input
 				name="name"
 				type="text"
