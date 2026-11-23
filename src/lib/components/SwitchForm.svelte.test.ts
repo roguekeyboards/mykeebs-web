@@ -33,7 +33,7 @@ const sw: SwitchModel = {
 	factoryLubed: true,
 	material: { topHousing: 'Polycarbonate', bottomHousing: 'Nylon', stem: 'Retired blend' },
 	force: { actuation: 45, bottomOut: 55 },
-	spring: { material: 'Stainless steel', preTravel: 1.8, totalTravel: 3.5 },
+	spring: { material: 'Stainless steel', length: 18, preTravel: 1.8, totalTravel: 3.5 },
 	purchase: {
 		vendor: 'Group buy direct',
 		price: 0.35,
@@ -173,7 +173,7 @@ describe('SwitchForm.svelte', () => {
 			factoryLubed: true,
 			material: { topHousing: undefined, bottomHousing: undefined, stem: 'POM' },
 			force: { actuation: 45, bottomOut: undefined },
-			spring: { material: undefined, preTravel: undefined, totalTravel: 3.5 },
+			spring: { material: undefined, length: undefined, preTravel: undefined, totalTravel: 3.5 },
 			purchase: {
 				vendor: undefined,
 				price: undefined,
@@ -206,7 +206,7 @@ describe('SwitchForm.svelte', () => {
 			factoryLubed: true,
 			material: { topHousing: 'Polycarbonate', bottomHousing: 'Nylon', stem: 'Retired blend' },
 			force: { actuation: 45, bottomOut: 55 },
-			spring: { material: 'Stainless steel', preTravel: 1.8, totalTravel: 3.5 },
+			spring: { material: 'Stainless steel', length: 18, preTravel: 1.8, totalTravel: 3.5 },
 			purchase: {
 				vendor: 'Group buy direct',
 				price: 0.35,
@@ -257,6 +257,28 @@ describe('SwitchForm.svelte', () => {
 		await renderForm({ initial: { ...sw, force: undefined, spring: { preTravel: 2 } } });
 
 		await expect.element(page.getByLabelText('Pre-travel (mm)')).toBeVisible();
+	});
+
+	it('opens Feel for a switch with only a spring length', async () => {
+		await renderForm({ initial: { ...sw, force: undefined, spring: { length: 18 } } });
+
+		await expect.element(page.getByLabelText('Spring length (mm)')).toHaveValue(18);
+	});
+
+	it('sends a spring with only a length', async () => {
+		const { onSubmit } = await renderForm();
+
+		await fillRequired();
+		await openSection('Feel');
+		await page.getByLabelText('Spring length (mm)').fill('18');
+		await submit();
+
+		expect(submitted(onSubmit)[0].spring).toEqual({
+			material: undefined,
+			length: 18,
+			preTravel: undefined,
+			totalTravel: undefined
+		});
 	});
 
 	it('starts with every section collapsed for a new switch', async () => {
@@ -487,6 +509,7 @@ describe('SwitchForm.svelte', () => {
 		it.each([
 			'Actuation force (g)',
 			'Bottom-out force (g)',
+			'Spring length (mm)',
 			'Pre-travel (mm)',
 			'Total travel (mm)',
 			'Price',
@@ -505,12 +528,14 @@ describe('SwitchForm.svelte', () => {
 			const { onSubmit } = await renderForm({ initial: sw });
 
 			await page.getByLabelText('Actuation force (g)').fill('');
+			await page.getByLabelText('Spring length (mm)').fill('');
 			await page.getByLabelText('Pre-travel (mm)').fill('');
 			await page.getByLabelText('Quantity').fill('');
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
 			expect(input.force?.actuation).toBeNullable();
+			expect(input.spring?.length).toBeNullable();
 			expect(input.spring?.preTravel).toBeNullable();
 			expect(input.purchase?.quantity).toBeNullable();
 		});

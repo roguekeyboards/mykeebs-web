@@ -72,3 +72,27 @@ describe('SwitchDetails.svelte image moderation', () => {
 			.not.toBeInTheDocument();
 	});
 });
+
+describe('SwitchDetails.svelte spring length', () => {
+	it('shows the stock spring length', async () => {
+		await render(SwitchDetails, {
+			sw: { ...sw(FRESH), spring: { length: 18 } },
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('Spring length')).toBeInTheDocument();
+		await expect.element(page.getByText('18mm')).toBeInTheDocument();
+	});
+
+	it('leaves the row out when no length is set', async () => {
+		await render(SwitchDetails, {
+			sw: { ...sw(FRESH), spring: { material: 'Stainless steel' } },
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('Spring material')).toBeInTheDocument();
+		await expect.element(page.getByText('Spring length')).not.toBeInTheDocument();
+	});
+});
