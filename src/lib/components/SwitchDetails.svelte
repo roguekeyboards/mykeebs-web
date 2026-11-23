@@ -114,6 +114,12 @@
 						<dd>{sw.spring.material}</dd>
 					</div>
 				{/if}
+				{#if sw.spring?.length != null}
+					<div class="spec-row">
+						<dt>Spring length</dt>
+						<dd>{sw.spring.length}mm</dd>
+					</div>
+				{/if}
 				{#if sw.spring?.preTravel != null}
 					<div class="spec-row">
 						<dt>Pre-travel</dt>

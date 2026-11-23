@@ -45,6 +45,7 @@
 	let actuation = $state<number | undefined>(seed?.force?.actuation);
 	let bottomOut = $state<number | undefined>(seed?.force?.bottomOut);
 	let springMaterial = $state(seed?.spring?.material ?? '');
+	let springLength = $state<number | undefined>(seed?.spring?.length);
 	let preTravel = $state<number | undefined>(seed?.spring?.preTravel);
 	let totalTravel = $state<number | undefined>(seed?.spring?.totalTravel);
 	let vendor = $state(seed?.purchase?.vendor ?? '');
@@ -81,6 +82,7 @@
 			seed?.force?.actuation != null ||
 			seed?.force?.bottomOut != null ||
 			seed?.spring?.material ||
+			seed?.spring?.length != null ||
 			seed?.spring?.preTravel != null ||
 			seed?.spring?.totalTravel != null
 		)
@@ -208,6 +210,7 @@
 	const initialActuation = seed?.force?.actuation;
 	const initialBottomOut = seed?.force?.bottomOut;
 	const initialSpringMaterial = seed?.spring?.material ?? '';
+	const initialSpringLength = seed?.spring?.length;
 	const initialPreTravel = seed?.spring?.preTravel;
 	const initialTotalTravel = seed?.spring?.totalTravel;
 	const initialVendor = seed?.purchase?.vendor ?? '';
@@ -233,6 +236,7 @@
 			actuation != initialActuation ||
 			bottomOut != initialBottomOut ||
 			springMaterial !== initialSpringMaterial ||
+			springLength != initialSpringLength ||
 			preTravel != initialPreTravel ||
 			totalTravel != initialTotalTravel ||
 			vendor !== initialVendor ||
@@ -268,7 +272,8 @@
 
 		const hasMaterial = topHousing.trim() || bottomHousing.trim() || stem.trim();
 		const hasForce = actuation != null || bottomOut != null;
-		const hasSpring = springMaterial.trim() || preTravel != null || totalTravel != null;
+		const hasSpring =
+			springMaterial.trim() || springLength != null || preTravel != null || totalTravel != null;
 		const hasPurchase =
 			vendor.trim() ||
 			price != null ||
@@ -300,6 +305,7 @@
 			spring: hasSpring
 				? {
 						material: springMaterial.trim() || undefined,
+						length: springLength,
 						preTravel,
 						totalTravel
 					}
@@ -538,6 +544,17 @@
 						<option {value}>{value}</option>
 					{/each}
 				</select>
+			</label>
+			<label class="flex flex-col gap-1.5">
+				<span class="field-label">Spring length (mm)</span>
+				<input
+					name="springLength"
+					type="number"
+					class="field-input"
+					min="0"
+					step="0.1"
+					bind:value={springLength}
+				/>
 			</label>
 			<label class="flex flex-col gap-1.5">
 				<span class="field-label">Pre-travel (mm)</span>
