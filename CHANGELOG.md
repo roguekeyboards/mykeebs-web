@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.5.1...v0.6.0) (2026-11-23)
+
+
+### Features
+
+* **switch:** add stock spring length ([#248](https://github.com/roguekeyboards/mykeebs-web/issues/248)) ([d60b3d1](https://github.com/roguekeyboards/mykeebs-web/commit/d60b3d1d3d2b65f498e3eb072f0cd665d5d6adc6))
+
 ## [0.5.1](https://github.com/roguekeyboards/mykeebs-web/compare/v0.5.0...v0.5.1) (2026-11-22)
 
 
