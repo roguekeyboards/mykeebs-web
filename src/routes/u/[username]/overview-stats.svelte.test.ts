@@ -16,7 +16,8 @@ vi.mock('#lib/api/client.js', () => {
 						brand: 'HMX',
 						name: 'Aperol',
 						type: 'Linear',
-						purchase: { price: 40, currency: 'USD' }
+						totalCost: 40,
+						currency: 'USD'
 					}
 				]
 			})
@@ -29,7 +30,9 @@ vi.mock('#lib/api/client.js', () => {
 						brand: 'Deskeys',
 						name: 'Domes',
 						partType: 'domes',
-						purchase: { price: 60, currency: 'USD', orderStatus: 'Delivered' }
+						orderStatus: 'Delivered',
+						totalCost: 60,
+						currency: 'USD'
 					},
 					{ id: 'e2', brand: 'Keebwerk', name: 'Sliders', partType: 'sliders' }
 				]

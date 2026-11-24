@@ -40,23 +40,16 @@ export function collectionStats(lists: {
 			status: k.purchase?.orderStatus ?? '',
 			price: k.totalCost
 		})),
-		switches: switches.map((s) => ({
-			status: s.purchase?.orderStatus ?? '',
-			price: s.purchase?.price
-		})),
-		ecParts: ecParts.map((p) => ({
-			status: p.purchase?.orderStatus ?? '',
-			price: p.purchase?.price
-		})),
+		switches: switches.map((s) => ({ status: s.orderStatus ?? '', price: s.totalCost })),
+		ecParts: ecParts.map((p) => ({ status: p.orderStatus ?? '', price: p.totalCost })),
 		keycapSets: keycapSets.map((k) => ({ status: k.orderStatus ?? '', price: k.totalCost })),
 		builds: builds.length,
 		buildsTotalCost: builds.reduce((sum, b) => sum + (b.totalCost ?? 0), 0),
 		// Undefined when mykeebs-api withheld every price, which hides the totals
 		// rather than showing a misleading $0.00.
-		currency: [
-			...[...keyboards, ...keycapSets, ...builds].map((i) => i.currency),
-			...[...switches, ...ecParts].map((i) => i.purchase?.currency)
-		].find(Boolean)
+		currency: [...keyboards, ...switches, ...ecParts, ...keycapSets, ...builds]
+			.map((i) => i.currency)
+			.find(Boolean)
 	};
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { earliestDate } from '#lib/purchases.js';
 	import { pageTitle } from '#lib/page-title.js';
 	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -213,25 +214,25 @@
 	emptyMessage="No switches yet."
 	getName={(sw) => sw.name}
 	searchFields={switchFields}
-	getOrderStatus={(sw) => sw.purchase?.orderStatus}
+	getOrderStatus={(sw) => sw.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add switch"
 	sortOptions={userContext.isOwnProfile
 		? [
 				{ label: 'Name', getValue: (sw) => sw.name },
 				{ label: 'Brand', getValue: (sw) => sw.brand },
-				{ label: 'Order status', getValue: (sw) => sw.purchase?.orderStatus },
-				{ label: 'Order date', getValue: (sw) => sw.purchase?.orderDate?.getTime() },
-				{ label: 'Delivery date', getValue: (sw) => sw.purchase?.deliveryDate?.getTime() },
-				{ label: 'Price', getValue: (sw) => sw.purchase?.price },
+				{ label: 'Order status', getValue: (sw) => sw.orderStatus },
+				{ label: 'Order date', getValue: (sw) => earliestDate(sw, 'orderDate') },
+				{ label: 'Delivery date', getValue: (sw) => earliestDate(sw, 'deliveryDate') },
+				{ label: 'Price', getValue: (sw) => sw.totalCost },
 				{ label: 'Visibility', getValue: (sw) => sw.visibility }
 			]
 		: [
 				{ label: 'Name', getValue: (sw) => sw.name },
 				{ label: 'Brand', getValue: (sw) => sw.brand },
-				{ label: 'Order status', getValue: (sw) => sw.purchase?.orderStatus },
-				{ label: 'Order date', getValue: (sw) => sw.purchase?.orderDate?.getTime() },
-				{ label: 'Delivery date', getValue: (sw) => sw.purchase?.deliveryDate?.getTime() }
+				{ label: 'Order status', getValue: (sw) => sw.orderStatus },
+				{ label: 'Order date', getValue: (sw) => earliestDate(sw, 'orderDate') },
+				{ label: 'Delivery date', getValue: (sw) => earliestDate(sw, 'deliveryDate') }
 			]}
 >
 	{#snippet card(sw)}
@@ -257,14 +258,14 @@
 				{#if sw.type}
 					<p class="text-faint font-mono text-xs">{sw.type}</p>
 				{/if}
-				{#if formatPrice(sw.purchase?.price, sw.purchase?.currency) || sw.purchase?.orderStatus || sw.visibility}
+				{#if formatPrice(sw.totalCost, sw.currency) || sw.orderStatus || sw.visibility}
 					<div class="mt-1 flex flex-wrap items-center gap-2">
 						<p class="text-faint font-mono text-xs">
-							{formatPrice(sw.purchase?.price, sw.purchase?.currency)}
+							{formatPrice(sw.totalCost, sw.currency)}
 						</p>
 						<div class="ml-auto flex shrink-0 items-center gap-1.5">
-							{#if sw.purchase?.orderStatus}
-								<OrderStatusBadge status={sw.purchase?.orderStatus} />
+							{#if sw.orderStatus}
+								<OrderStatusBadge status={sw.orderStatus} />
 							{/if}
 							<VisibilityBadge visibility={sw.visibility} />
 						</div>

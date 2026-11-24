@@ -117,13 +117,13 @@ describe('switches page', () => {
 			items: [
 				{
 					...aperol,
-					purchase: { orderDate: new Date('2024-05-01'), deliveryDate: new Date('2024-06-01') }
+					purchases: [{ orderDate: new Date('2024-05-01'), deliveryDate: new Date('2024-06-01') }]
 				},
 				{
 					...aperol,
 					id: 'sw-2',
 					name: 'Banana',
-					purchase: { orderDate: new Date('2024-02-01'), deliveryDate: new Date('2024-09-01') }
+					purchases: [{ orderDate: new Date('2024-02-01'), deliveryDate: new Date('2024-09-01') }]
 				}
 			]
 		});
@@ -136,6 +136,38 @@ describe('switches page', () => {
 
 		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Delivery date');
 		await expect.element(cards().first()).toMatchTextContent('Aperol');
+	});
+
+	it('dates a restocked switch by its earliest live purchase, and shows its summary', async () => {
+		api.listSwitches.mockResolvedValue({
+			items: [
+				{
+					...aperol,
+					purchases: [
+						{ orderDate: new Date('2024-05-01'), orderStatus: 'Delivered' },
+						{ orderDate: new Date('2024-01-01'), orderStatus: 'Cancelled' },
+						{ orderDate: new Date('2024-08-01'), orderStatus: 'Shipped' }
+					],
+					orderStatus: 'Shipped',
+					totalCost: 42.5,
+					currency: 'USD'
+				},
+				{
+					...aperol,
+					id: 'sw-2',
+					name: 'Banana',
+					purchases: [{ orderDate: new Date('2024-03-01') }]
+				}
+			]
+		});
+		await renderPage();
+		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
+
+		await expect.element(cards().first()).toMatchTextContent('$42.50');
+		await expect.element(cards().first().getByTitle('Shipped')).toBeInTheDocument();
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Order date');
+		await expect.element(cards().first()).toMatchTextContent('Banana');
 	});
 
 	it('opens the photo full size', async () => {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Switch as SwitchModel } from '@roguekeyboards/mykeebs-api-client';
-	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
+	import BulkPurchaseDetails from '#lib/components/BulkPurchaseDetails.svelte';
 	import { isPending } from '#lib/image-moderation.js';
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
@@ -136,10 +136,11 @@
 		</div>
 	{/if}
 
-	{#if sw.purchase}
-		<div>
-			<h3 class="section-label">Purchase</h3>
-			<PurchaseDetails purchase={sw.purchase} {showPrice} />
-		</div>
-	{/if}
+	<BulkPurchaseDetails
+		purchases={sw.purchases}
+		totalQuantity={sw.totalQuantity}
+		totalCost={sw.totalCost}
+		currency={sw.currency}
+		{showPrice}
+	/>
 </div>

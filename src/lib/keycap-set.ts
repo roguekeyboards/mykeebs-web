@@ -1,4 +1,5 @@
 import type { KeycapKit, KeycapSet } from '@roguekeyboards/mykeebs-api-client';
+import { earliestDate } from '#lib/purchases.js';
 
 export function primaryKitImageUrl(set: KeycapSet): string | undefined {
 	return set.kits?.find((kit) => kit.kitId === set.primaryKitId)?.image?.url;
@@ -20,11 +21,5 @@ export function earliestKitDate(
 	set: KeycapSet,
 	field: 'orderDate' | 'deliveryDate'
 ): number | undefined {
-	const kits = set.kits ?? [];
-	const live = kits.filter((kit) => kit.purchase?.orderStatus?.toLowerCase() !== 'cancelled');
-	const times = (live.length > 0 ? live : kits).flatMap((kit) => {
-		const date = kit.purchase?.[field];
-		return date ? [date.getTime()] : [];
-	});
-	return times.length > 0 ? Math.min(...times) : undefined;
+	return earliestDate({ purchases: (set.kits ?? []).map((kit) => kit.purchase ?? {}) }, field);
 }
