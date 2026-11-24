@@ -669,7 +669,7 @@ describe('keyboard builds page', () => {
 				name: 'Silicone domes',
 				partType: 'domes',
 				domes: { weight: 45 },
-				purchase: { price: 60, quantity: 110, currency: 'USD' }
+				purchases: [{ price: 60, quantity: 110, currency: 'USD' }]
 			});
 			await renderPage();
 			await page.getByRole('button', { name: /Jun 30, 2026/ }).click();

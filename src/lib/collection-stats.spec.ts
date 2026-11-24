@@ -2,12 +2,30 @@ import { describe, expect, it } from 'vitest';
 import type { ECPart, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
 import { collectionStats, countsFor, totalsFor } from './collection-stats';
 
-function sw(purchase: Switch['purchase']): Switch {
-	return { id: 's', brand: 'HMX', name: 'Aperol', type: 'Linear', purchase };
+type Summary = { orderStatus?: string; price?: number; currency?: string };
+
+function sw({ orderStatus, price, currency }: Summary): Switch {
+	return {
+		id: 's',
+		brand: 'HMX',
+		name: 'Aperol',
+		type: 'Linear',
+		orderStatus,
+		totalCost: price,
+		currency
+	};
 }
 
-function ec(purchase: ECPart['purchase']): ECPart {
-	return { id: 'e', brand: 'Deskeys', name: 'Domes', partType: 'domes', purchase };
+function ec({ orderStatus, price, currency }: Summary): ECPart {
+	return {
+		id: 'e',
+		brand: 'Deskeys',
+		name: 'Domes',
+		partType: 'domes',
+		orderStatus,
+		totalCost: price,
+		currency
+	};
 }
 
 function kb(id: string, fields: Pick<Keyboard, 'purchase' | 'totalCost' | 'currency'>): Keyboard {
@@ -21,7 +39,7 @@ function set(purchase: Pick<KeycapSet, 'orderStatus' | 'totalCost' | 'currency'>
 const empty = { keyboards: [], switches: [], ecParts: [], keycapSets: [], builds: [] };
 
 describe('collectionStats', () => {
-	it('reads a switch status and price from its purchase', () => {
+	it('reads a switch status and price from its purchase summary', () => {
 		const stats = collectionStats({
 			...empty,
 			switches: [sw({ orderStatus: 'Delivered', price: 31.5, currency: 'USD' })]
@@ -29,7 +47,7 @@ describe('collectionStats', () => {
 		expect(stats.switches).toEqual([{ status: 'Delivered', price: 31.5 }]);
 	});
 
-	it('reads an EC part status and price from its purchase', () => {
+	it('reads an EC part status and price from its purchase summary', () => {
 		const stats = collectionStats({
 			...empty,
 			ecParts: [ec({ orderStatus: 'Shipped', price: 60, currency: 'USD' })]

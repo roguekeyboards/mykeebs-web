@@ -34,14 +34,16 @@ const sw: SwitchModel = {
 	material: { topHousing: 'Polycarbonate', bottomHousing: 'Nylon', stem: 'Retired blend' },
 	force: { actuation: 45, bottomOut: 55 },
 	spring: { material: 'Stainless steel', length: 18, preTravel: 1.8, totalTravel: 3.5 },
-	purchase: {
-		vendor: 'Group buy direct',
-		price: 0.35,
-		quantity: 90,
-		orderDate: new Date('2026-02-01'),
-		deliveryDate: new Date('2026-03-10'),
-		orderStatus: 'Delivered'
-	},
+	purchases: [
+		{
+			vendor: 'Group buy direct',
+			price: 0.35,
+			quantity: 90,
+			orderDate: new Date('2026-02-01'),
+			deliveryDate: new Date('2026-03-10'),
+			orderStatus: 'Delivered'
+		}
+	],
 	notes: 'Creamy.',
 	visibility: Visibility.Public,
 	image: { url: 'https://img.example/aperol.png' }
@@ -133,7 +135,7 @@ describe('SwitchForm.svelte', () => {
 				material: undefined,
 				force: undefined,
 				spring: undefined,
-				purchase: undefined,
+				purchases: [],
 				notes: undefined,
 				visibility: Visibility.Private
 			},
@@ -174,14 +176,7 @@ describe('SwitchForm.svelte', () => {
 			material: { topHousing: undefined, bottomHousing: undefined, stem: 'POM' },
 			force: { actuation: 45, bottomOut: undefined },
 			spring: { material: undefined, length: undefined, preTravel: undefined, totalTravel: 3.5 },
-			purchase: {
-				vendor: undefined,
-				price: undefined,
-				orderDate: undefined,
-				deliveryDate: undefined,
-				orderStatus: undefined,
-				quantity: 90
-			},
+			purchases: [{ quantity: 90 }],
 			notes: 'Smooth',
 			visibility: Visibility.Authenticated
 		});
@@ -207,17 +202,25 @@ describe('SwitchForm.svelte', () => {
 			material: { topHousing: 'Polycarbonate', bottomHousing: 'Nylon', stem: 'Retired blend' },
 			force: { actuation: 45, bottomOut: 55 },
 			spring: { material: 'Stainless steel', length: 18, preTravel: 1.8, totalTravel: 3.5 },
-			purchase: {
-				vendor: 'Group buy direct',
-				price: 0.35,
-				orderDate: new Date('2026-02-01'),
-				deliveryDate: new Date('2026-03-10'),
-				orderStatus: 'Delivered',
-				quantity: 90
-			},
+			purchases: sw.purchases,
 			notes: 'Creamy.',
 			visibility: Visibility.Public
 		});
+	});
+
+	it('keeps every purchase of a restocked switch and adds another', async () => {
+		const restock = { vendor: 'NovelKeys', quantity: 20, orderStatus: 'Ordered' };
+		const { onSubmit } = await renderForm({
+			initial: { ...sw, purchases: [...sw.purchases!, restock] }
+		});
+
+		await expect.element(page.getByText('— 2 purchases')).toBeVisible();
+		await page.getByRole('button', { name: '+ Add purchase' }).click();
+		await page.getByRole('group', { name: 'Purchase 3' }).getByLabelText('Quantity').fill('10');
+		await expect.element(dirty()).toHaveTextContent('true');
+		await submit('Save changes');
+
+		expect(submitted(onSubmit)[0].purchases).toEqual([...sw.purchases!, restock, { quantity: 10 }]);
 	});
 
 	it('sends factory lubed as absent rather than false once unticked', async () => {
@@ -315,20 +318,20 @@ describe('SwitchForm.svelte', () => {
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
-			expect(input.purchase?.orderDate).toBeUndefined();
-			expect(input.purchase?.deliveryDate).toBeUndefined();
+			expect(input.purchases?.[0].orderDate).toBeUndefined();
+			expect(input.purchases?.[0].deliveryDate).toBeUndefined();
 		});
 
 		it('leaves existing dates alone on open, even if the status would not set them', async () => {
 			const { onSubmit } = await renderForm({
-				initial: { ...sw, purchase: { ...sw.purchase, orderStatus: 'Planned' } }
+				initial: { ...sw, purchases: [{ ...sw.purchases![0], orderStatus: 'Planned' }] }
 			});
 
 			await submit('Save changes');
 
 			const [input] = submitted(onSubmit);
-			expect(input.purchase?.orderDate).toEqual(new Date('2026-02-01'));
-			expect(input.purchase?.deliveryDate).toEqual(new Date('2026-03-10'));
+			expect(input.purchases?.[0].orderDate).toEqual(new Date('2026-02-01'));
+			expect(input.purchases?.[0].deliveryDate).toEqual(new Date('2026-03-10'));
 		});
 	});
 
@@ -503,7 +506,7 @@ describe('SwitchForm.svelte', () => {
 			...sw,
 			force: undefined,
 			spring: { material: 'Stainless steel' },
-			purchase: { vendor: 'NovelKeys' }
+			purchases: [{ vendor: 'NovelKeys' }]
 		};
 
 		it.each([
@@ -517,9 +520,9 @@ describe('SwitchForm.svelte', () => {
 		])('%s leaves the form clean once typed into and cleared', async (label) => {
 			await renderForm({ initial: withoutNumbers });
 
-			await page.getByLabelText(label).fill('5');
+			await page.getByLabelText(label, { exact: false }).fill('5');
 			await expect.element(dirty()).toHaveTextContent('true');
-			await page.getByLabelText(label).fill('');
+			await page.getByLabelText(label, { exact: false }).fill('');
 
 			await expect.element(dirty()).toHaveTextContent('false');
 		});
@@ -537,7 +540,7 @@ describe('SwitchForm.svelte', () => {
 			expect(input.force?.actuation).toBeNullable();
 			expect(input.spring?.length).toBeNullable();
 			expect(input.spring?.preTravel).toBeNullable();
-			expect(input.purchase?.quantity).toBeNullable();
+			expect(input.purchases?.[0].quantity).toBeNullable();
 		});
 	});
 

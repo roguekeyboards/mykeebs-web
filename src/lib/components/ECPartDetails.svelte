@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ECPart } from '@roguekeyboards/mykeebs-api-client';
-	import PurchaseDetails from '#lib/components/PurchaseDetails.svelte';
+	import BulkPurchaseDetails from '#lib/components/BulkPurchaseDetails.svelte';
 	import { isPending } from '#lib/image-moderation.js';
 	import { ecPartMaterial, ecPartTypeLabel } from '#lib/ec-parts.js';
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
@@ -86,10 +86,11 @@
 		</div>
 	{/if}
 
-	{#if part.purchase}
-		<div>
-			<h3 class="section-label">Purchase</h3>
-			<PurchaseDetails purchase={part.purchase} {showPrice} />
-		</div>
-	{/if}
+	<BulkPurchaseDetails
+		purchases={part.purchases}
+		totalQuantity={part.totalQuantity}
+		totalCost={part.totalCost}
+		currency={part.currency}
+		{showPrice}
+	/>
 </div>

@@ -28,7 +28,7 @@ const sliders: ECPart = {
 	name: 'MX sliders',
 	partType: ECPartType.Sliders,
 	sliders: { size: '2U', stem: 'MX', material: 'Retired blend' },
-	purchase: { vendor: 'Keebwerk', price: 30, quantity: 90, orderStatus: 'Planned' },
+	purchases: [{ vendor: 'Keebwerk', price: 30, quantity: 90, orderStatus: 'Planned' }],
 	notes: 'Smooth.',
 	visibility: Visibility.Public
 };
@@ -108,7 +108,7 @@ describe('ECPartForm.svelte', () => {
 				name: 'Silicone domes',
 				partType: 'domes',
 				domes: { weight: 45, material: 'Silicone', color: 'Red' },
-				purchase: undefined,
+				purchases: [],
 				notes: undefined,
 				visibility: Visibility.Private
 			},
@@ -141,7 +141,7 @@ describe('ECPartForm.svelte', () => {
 		await page.getByLabelText('Quantity').fill('110');
 		await submit();
 
-		expect(submitted(onSubmit)[0].purchase).toEqual({ quantity: 110 });
+		expect(submitted(onSubmit)[0].purchases).toEqual([{ quantity: 110 }]);
 	});
 
 	it('round-trips an existing part untouched, including values the lookups no longer offer', async () => {
@@ -159,14 +159,16 @@ describe('ECPartForm.svelte', () => {
 			name: 'MX sliders',
 			partType: 'sliders',
 			sliders: { size: '2U', stem: 'MX', material: 'Retired blend' },
-			purchase: {
-				vendor: 'Keebwerk',
-				price: 30,
-				orderDate: undefined,
-				deliveryDate: undefined,
-				orderStatus: 'Planned',
-				quantity: 90
-			},
+			purchases: [
+				{
+					vendor: 'Keebwerk',
+					price: 30,
+					orderDate: undefined,
+					deliveryDate: undefined,
+					orderStatus: 'Planned',
+					quantity: 90
+				}
+			],
 			notes: 'Smooth.',
 			visibility: Visibility.Public
 		});
@@ -182,6 +184,65 @@ describe('ECPartForm.svelte', () => {
 
 		await page.getByLabelText('Quantity').fill('');
 		await expect.element(dirty()).toHaveTextContent('true');
+	});
+
+	describe('several purchases', () => {
+		const restocked: ECPart = {
+			...sliders,
+			purchases: [
+				{ vendor: 'Keebwerk', price: 30, quantity: 90, orderStatus: 'Planned' },
+				{ vendor: 'Deskeys', price: 12, quantity: 20, orderStatus: 'Ordered' }
+			]
+		};
+
+		it('edits each purchase in its own group and sends them all', async () => {
+			const { onSubmit } = await renderForm({ initial: restocked });
+
+			const second = page.getByRole('group', { name: 'Purchase 2' });
+			await expect.element(page.getByText('— 2 purchases')).toBeVisible();
+			await expect
+				.element(second.getByLabelText('Vendor', { exact: false }))
+				.toHaveValue('Deskeys');
+			await second.getByLabelText('Quantity').fill('25');
+			await submit('Save changes');
+
+			expect(submitted(onSubmit)[0].purchases).toEqual([
+				{ vendor: 'Keebwerk', price: 30, quantity: 90, orderStatus: 'Planned' },
+				{ vendor: 'Deskeys', price: 12, quantity: 25, orderStatus: 'Ordered' }
+			]);
+		});
+
+		it('adds a purchase for a restock', async () => {
+			const { onSubmit } = await renderForm({ initial: sliders });
+
+			await page.getByRole('button', { name: '+ Add purchase' }).click();
+			await expect.element(dirty()).toHaveTextContent('false');
+			const second = page.getByRole('group', { name: 'Purchase 2' });
+			await second.getByLabelText('Vendor', { exact: false }).selectOptions('Deskeys');
+			await second.getByLabelText('Quantity').fill('20');
+			await expect.element(dirty()).toHaveTextContent('true');
+			await submit('Save changes');
+
+			expect(submitted(onSubmit)[0].purchases).toEqual([
+				{ vendor: 'Keebwerk', price: 30, quantity: 90, orderStatus: 'Planned' },
+				{ vendor: 'Deskeys', quantity: 20 }
+			]);
+		});
+
+		it('removes a purchase', async () => {
+			const { onSubmit } = await renderForm({ initial: restocked });
+
+			await page.getByRole('button', { name: 'Remove purchase 1' }).click();
+			await expect.element(dirty()).toHaveTextContent('true');
+			await expect
+				.element(page.getByRole('button', { name: /^Remove purchase/ }))
+				.not.toBeInTheDocument();
+			await submit('Save changes');
+
+			expect(submitted(onSubmit)[0].purchases).toEqual([
+				{ vendor: 'Deskeys', price: 12, quantity: 20, orderStatus: 'Ordered' }
+			]);
+		});
 	});
 
 	it('stages a photo for a new part and counts it as an edit', async () => {

@@ -3,14 +3,14 @@
 	import { pickedUploadMessage, uploadEach } from '#lib/upload.js';
 	import PendingReviewBadge from '#lib/components/PendingReviewBadge.svelte';
 	import RejectedImage from '#lib/components/RejectedImage.svelte';
-	import PurchaseFields from '#lib/components/PurchaseFields.svelte';
+	import BulkPurchaseFields from '#lib/components/BulkPurchaseFields.svelte';
 	import { untrack } from 'svelte';
 	import type { ECPart, ECPartInput, ECPartType } from '@roguekeyboards/mykeebs-api-client';
 	import { ECPartSize, ECSliderStem, Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
 	import { EC_PART_TYPES, ecPartTypeLabel } from '#lib/ec-parts.js';
-	import { purchaseDraft, purchaseInput, purchaseSummary } from '#lib/keyboard-parts.js';
+	import { bulkPurchaseDrafts, bulkPurchaseInputs, bulkPurchasesSummary } from '#lib/purchases.js';
 
 	let {
 		initial,
@@ -51,8 +51,6 @@
 			springMaterial: part?.springs?.material ?? '',
 			ringMaterial: part?.rings?.material ?? '',
 			ringThickness: part?.rings?.thickness,
-			purchase: purchaseDraft(part?.purchase),
-			quantity: part?.purchase?.quantity,
 			notes: part?.notes ?? '',
 			visibility: part?.visibility ?? Visibility.Private
 		};
@@ -60,9 +58,11 @@
 
 	const initialValues = snapshot(seed);
 	let values = $state(snapshot(seed));
+	let purchases = $state(bulkPurchaseDrafts(seed?.purchases));
+	const initialPurchases = JSON.stringify(bulkPurchaseInputs(bulkPurchaseDrafts(seed?.purchases)));
 
-	let purchaseOpen = $state(Boolean(seed?.purchase));
-	let purchaseHint = $derived(purchaseSummary(values.purchase) ?? 'Not set');
+	let purchaseOpen = $state(Boolean(seed?.purchases?.length));
+	let purchaseHint = $derived(bulkPurchasesSummary(purchases) ?? 'Not set');
 
 	let domeMaterials = $state<string[]>([]);
 	let switchMaterials = $state<string[]>([]);
@@ -158,13 +158,11 @@
 
 	// `!=` rather than `!==` so a cleared number input (null) matches undefined.
 	export function isDirty(): boolean {
-		const { purchase, ...rest } = values;
-		const { purchase: initialPurchase, ...initialRest } = initialValues;
 		return (
-			(Object.keys(rest) as (keyof typeof rest)[]).some((key) => rest[key] != initialRest[key]) ||
-			(Object.keys(purchase) as (keyof typeof purchase)[]).some(
-				(key) => purchase[key] != initialPurchase[key]
+			(Object.keys(values) as (keyof typeof values)[]).some(
+				(key) => values[key] != initialValues[key]
 			) ||
+			JSON.stringify(bulkPurchaseInputs(purchases)) !== initialPurchases ||
 			stagedImage != null
 		);
 	}
@@ -228,15 +226,12 @@
 			return;
 		}
 
-		const quantity = values.quantity ?? undefined;
-		const purchase = purchaseInput(values.purchase);
-
 		const input: ECPartInput = {
 			brand: values.brand.trim(),
 			name: values.name.trim(),
 			partType,
 			...subObject(),
-			purchase: purchase || quantity != null ? { ...purchase, quantity } : undefined,
+			purchases: bulkPurchaseInputs(purchases),
 			notes: text(values.notes),
 			visibility: values.visibility
 		};
@@ -467,24 +462,13 @@
 			Purchase
 			<span class="field-group-hint">— {purchaseHint}</span>
 		</summary>
-		<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<PurchaseFields
-				bind:purchase={values.purchase}
+		<div class="field-group-body">
+			<BulkPurchaseFields
+				bind:purchases
 				{vendors}
 				{orderStatuses}
 				priceHint="The total paid for all of them."
 			/>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Quantity</span>
-				<input
-					name="quantity"
-					type="number"
-					class="field-input"
-					min="1"
-					step="1"
-					bind:value={values.quantity}
-				/>
-			</label>
 		</div>
 	</details>
 

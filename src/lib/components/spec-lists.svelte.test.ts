@@ -62,7 +62,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 				name: 'Aperol',
 				type: 'Linear',
 				specs: { actuationForce: 45, totalTravel: 3.5 },
-				purchase
+				purchases: [purchase]
 			} as never,
 			onImageClick: vi.fn(),
 			showPrice: true
@@ -79,7 +79,7 @@ describe('spec lists hold only dt and dd in each row', () => {
 				name: 'MX sliders',
 				partType: 'sliders',
 				sliders: { size: '1U', stem: 'MX', material: 'POM' },
-				purchase
+				purchases: [purchase]
 			},
 			onImageClick: vi.fn(),
 			showPrice: true

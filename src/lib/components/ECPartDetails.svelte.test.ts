@@ -14,7 +14,7 @@ const domes: ECPart = {
 	name: 'Silicone domes',
 	partType: ECPartType.Domes,
 	domes: { weight: 45, material: 'Silicone', color: 'Red' },
-	purchase: { vendor: 'Deskeys', quantity: 110, price: 60, currency: 'USD' }
+	purchases: [{ vendor: 'Deskeys', quantity: 110, price: 60, currency: 'USD' }]
 };
 
 function specRows() {
@@ -40,9 +40,55 @@ describe('ECPartDetails.svelte', () => {
 		);
 	});
 
+	it('lists every purchase of a restocked part under the total quantity', async () => {
+		await render(ECPartDetails, {
+			part: {
+				...domes,
+				purchases: [
+					{ vendor: 'Deskeys', quantity: 110, orderStatus: 'Delivered' },
+					{ vendor: 'Keebwerk', quantity: 40, orderStatus: 'Ordered' }
+				],
+				totalQuantity: 150,
+				totalCost: 75,
+				currency: 'USD'
+			},
+			onImageClick: vi.fn(),
+			showPrice: true
+		});
+
+		await expect.element(page.getByRole('heading', { name: 'Purchases' })).toBeInTheDocument();
+		await expect.element(page.getByRole('heading', { name: 'Purchase 2' })).toBeInTheDocument();
+		expect(specRows()).toEqual(
+			expect.arrayContaining([
+				['Total quantity', '150'],
+				['Total price', '$75.00'],
+				['Vendor', 'Deskeys'],
+				['Quantity', '110'],
+				['Vendor', 'Keebwerk'],
+				['Quantity', '40']
+			])
+		);
+	});
+
+	it('hides the total price when prices are hidden', async () => {
+		await render(ECPartDetails, {
+			part: {
+				...domes,
+				purchases: [{ quantity: 110 }, { quantity: 40 }],
+				totalCost: 75,
+				currency: 'USD'
+			},
+			onImageClick: vi.fn(),
+			showPrice: false
+		});
+
+		await expect.element(page.getByRole('heading', { name: 'Purchases' })).toBeInTheDocument();
+		expect(specRows().map(([label]) => label)).not.toContain('Total price');
+	});
+
 	it('leaves out the specs section when nothing is set', async () => {
 		await render(ECPartDetails, {
-			part: { ...domes, domes: {}, purchase: undefined },
+			part: { ...domes, domes: {}, purchases: undefined },
 			onImageClick: vi.fn(),
 			showPrice: true
 		});

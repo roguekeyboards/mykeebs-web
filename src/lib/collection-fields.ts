@@ -29,8 +29,16 @@ export const switchFields: SearchField<Switch>[] = [
 		values: (sw) => [sw.material?.bottomHousing]
 	},
 	{ tag: 'stem', description: 'Stem material', values: (sw) => [sw.material?.stem] },
-	{ tag: 'vendor', description: 'Where they were bought', values: (sw) => [sw.purchase?.vendor] },
-	{ tag: 'status', description: 'Order status', values: (sw) => [sw.purchase?.orderStatus] }
+	{
+		tag: 'vendor',
+		description: 'Where they were bought',
+		values: (sw) => sw.purchases?.map((p) => p.vendor) ?? []
+	},
+	{
+		tag: 'status',
+		description: 'Order status',
+		values: (sw) => sw.purchases?.map((p) => p.orderStatus) ?? []
+	}
 ];
 
 export const ecPartFields: SearchField<ECPart>[] = [
@@ -46,9 +54,13 @@ export const ecPartFields: SearchField<ECPart>[] = [
 	{
 		tag: 'vendor',
 		description: 'Where they were bought',
-		values: (part) => [part.purchase?.vendor]
+		values: (part) => part.purchases?.map((p) => p.vendor) ?? []
 	},
-	{ tag: 'status', description: 'Order status', values: (part) => [part.purchase?.orderStatus] }
+	{
+		tag: 'status',
+		description: 'Order status',
+		values: (part) => part.purchases?.map((p) => p.orderStatus) ?? []
+	}
 ];
 
 export const keycapSetFields: SearchField<KeycapSet>[] = [

@@ -7,8 +7,9 @@
 	import type { Switch as SwitchModel, SwitchInput } from '@roguekeyboards/mykeebs-api-client';
 	import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import VisibilityPicker from './VisibilityPicker.svelte';
+	import BulkPurchaseFields from './BulkPurchaseFields.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
-	import { toDateInput, todayDateInput } from '#lib/format.js';
+	import { bulkPurchaseDrafts, bulkPurchaseInputs, bulkPurchasesSummary } from '#lib/purchases.js';
 
 	let {
 		initial,
@@ -48,31 +49,9 @@
 	let springLength = $state<number | undefined>(seed?.spring?.length);
 	let preTravel = $state<number | undefined>(seed?.spring?.preTravel);
 	let totalTravel = $state<number | undefined>(seed?.spring?.totalTravel);
-	let vendor = $state(seed?.purchase?.vendor ?? '');
-	let price = $state<number | undefined>(seed?.purchase?.price);
-	let orderDate = $state(toDateInput(seed?.purchase?.orderDate));
-	let deliveryDate = $state(toDateInput(seed?.purchase?.deliveryDate));
-	let orderStatus = $state(seed?.purchase?.orderStatus ?? '');
-	let quantity = $state<number | undefined>(seed?.purchase?.quantity);
+	let purchases = $state(bulkPurchaseDrafts(seed?.purchases));
 	let notes = $state(seed?.notes ?? '');
 	let visibility = $state<Visibility>(seed?.visibility ?? Visibility.Private);
-
-	let showOrderDate = $derived(
-		orderStatus.trim() !== '' && orderStatus.trim().toLowerCase() !== 'planned'
-	);
-	let isDelivered = $derived(orderStatus.trim().toLowerCase() === 'delivered');
-
-	// Only clears in response to a status change, never on mount: an existing
-	// item may legitimately carry dates its current status wouldn't set.
-	let lastOrderStatus = seed?.purchase?.orderStatus ?? '';
-	$effect(() => {
-		if (orderStatus === lastOrderStatus) return;
-		lastOrderStatus = orderStatus;
-		if (!showOrderDate) orderDate = '';
-		else if (!orderDate) orderDate = todayDateInput();
-		if (!isDelivered) deliveryDate = '';
-		else if (!deliveryDate) deliveryDate = todayDateInput();
-	});
 
 	let constructionOpen = $state(
 		Boolean(seed?.material?.topHousing || seed?.material?.bottomHousing || seed?.material?.stem)
@@ -87,7 +66,7 @@
 			seed?.spring?.totalTravel != null
 		)
 	);
-	let purchaseOpen = $state(Boolean(seed?.purchase));
+	let purchaseOpen = $state(Boolean(seed?.purchases?.length));
 
 	let constructionSummary = $derived(
 		[topHousing, bottomHousing, stem].filter((v) => v.trim()).join(' · ') || 'Not set'
@@ -97,10 +76,7 @@
 			.filter(Boolean)
 			.join(' · ') || 'Not set'
 	);
-	let purchaseSummary = $derived(
-		[vendor.trim() || undefined, orderStatus.trim() || undefined].filter(Boolean).join(' · ') ||
-			'Not set'
-	);
+	let purchaseSummary = $derived(bulkPurchasesSummary(purchases) ?? 'Not set');
 
 	function toNumber(value: string): number | undefined {
 		const trimmed = value.trim();
@@ -213,12 +189,7 @@
 	const initialSpringLength = seed?.spring?.length;
 	const initialPreTravel = seed?.spring?.preTravel;
 	const initialTotalTravel = seed?.spring?.totalTravel;
-	const initialVendor = seed?.purchase?.vendor ?? '';
-	const initialPrice = seed?.purchase?.price;
-	const initialOrderDate = toDateInput(seed?.purchase?.orderDate);
-	const initialDeliveryDate = toDateInput(seed?.purchase?.deliveryDate);
-	const initialOrderStatus = seed?.purchase?.orderStatus ?? '';
-	const initialQuantity = seed?.purchase?.quantity;
+	const initialPurchases = JSON.stringify(bulkPurchaseInputs(bulkPurchaseDrafts(seed?.purchases)));
 	const initialNotes = seed?.notes ?? '';
 	const initialVisibility = seed?.visibility ?? Visibility.Private;
 
@@ -239,12 +210,7 @@
 			springLength != initialSpringLength ||
 			preTravel != initialPreTravel ||
 			totalTravel != initialTotalTravel ||
-			vendor !== initialVendor ||
-			price != initialPrice ||
-			orderDate !== initialOrderDate ||
-			deliveryDate !== initialDeliveryDate ||
-			orderStatus !== initialOrderStatus ||
-			quantity != initialQuantity ||
+			JSON.stringify(bulkPurchaseInputs(purchases)) !== initialPurchases ||
 			notes !== initialNotes ||
 			visibility !== initialVisibility ||
 			stagedImage != null
@@ -274,13 +240,6 @@
 		const hasForce = actuation != null || bottomOut != null;
 		const hasSpring =
 			springMaterial.trim() || springLength != null || preTravel != null || totalTravel != null;
-		const hasPurchase =
-			vendor.trim() ||
-			price != null ||
-			orderDate.trim() ||
-			deliveryDate.trim() ||
-			orderStatus.trim() ||
-			quantity != null;
 
 		const input: SwitchInput = {
 			brand: brand.trim(),
@@ -310,16 +269,7 @@
 						totalTravel
 					}
 				: undefined,
-			purchase: hasPurchase
-				? {
-						vendor: vendor.trim() || undefined,
-						price,
-						orderDate: orderDate.trim() ? new Date(orderDate.trim()) : undefined,
-						deliveryDate: deliveryDate.trim() ? new Date(deliveryDate.trim()) : undefined,
-						orderStatus: orderStatus.trim() || undefined,
-						quantity
-					}
-				: undefined,
+			purchases: bulkPurchaseInputs(purchases),
 			notes: notes.trim() || undefined,
 			visibility
 		};
@@ -586,59 +536,13 @@
 			Purchase
 			<span class="field-group-hint">— {purchaseSummary}</span>
 		</summary>
-		<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Vendor</span>
-				<select name="vendor" class="field-select w-full" bind:value={vendor}>
-					<option value="">—</option>
-					{#each optionsWith(vendors, vendor) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Order status</span>
-				<select name="orderStatus" class="field-select w-full" bind:value={orderStatus}>
-					<option value="">—</option>
-					{#each optionsWith(orderStatuses, orderStatus) as value (value)}
-						<option {value}>{value}</option>
-					{/each}
-				</select>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Price</span>
-				<input
-					name="price"
-					type="number"
-					class="field-input"
-					min="0"
-					step="0.01"
-					bind:value={price}
-				/>
-			</label>
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Quantity</span>
-				<input
-					name="quantity"
-					type="number"
-					class="field-input"
-					min="0"
-					step="1"
-					bind:value={quantity}
-				/>
-			</label>
-			{#if showOrderDate}
-				<label class="flex flex-col gap-1.5">
-					<span class="field-label">Order date</span>
-					<input name="orderDate" type="date" class="field-input" bind:value={orderDate} />
-				</label>
-			{/if}
-			{#if isDelivered}
-				<label class="flex flex-col gap-1.5">
-					<span class="field-label">Delivery date</span>
-					<input name="deliveryDate" type="date" class="field-input" bind:value={deliveryDate} />
-				</label>
-			{/if}
+		<div class="field-group-body">
+			<BulkPurchaseFields
+				bind:purchases
+				{vendors}
+				{orderStatuses}
+				priceHint="The total paid for all of them."
+			/>
 		</div>
 	</details>
 

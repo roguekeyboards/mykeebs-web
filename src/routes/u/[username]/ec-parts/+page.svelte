@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { earliestDate } from '#lib/purchases.js';
 	import { pageTitle } from '#lib/page-title.js';
 	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -214,7 +215,7 @@
 	emptyMessage="No EC parts yet."
 	getName={(part) => part.name}
 	searchFields={ecPartFields}
-	getOrderStatus={(part) => part.purchase?.orderStatus}
+	getOrderStatus={(part) => part.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add EC part"
 	sortOptions={userContext.isOwnProfile
@@ -222,19 +223,19 @@
 				{ label: 'Name', getValue: (part) => part.name },
 				{ label: 'Brand', getValue: (part) => part.brand },
 				{ label: 'Part type', getValue: (part) => ecPartTypeLabel(part.partType) },
-				{ label: 'Order status', getValue: (part) => part.purchase?.orderStatus },
-				{ label: 'Order date', getValue: (part) => part.purchase?.orderDate?.getTime() },
-				{ label: 'Delivery date', getValue: (part) => part.purchase?.deliveryDate?.getTime() },
-				{ label: 'Price', getValue: (part) => part.purchase?.price },
+				{ label: 'Order status', getValue: (part) => part.orderStatus },
+				{ label: 'Order date', getValue: (part) => earliestDate(part, 'orderDate') },
+				{ label: 'Delivery date', getValue: (part) => earliestDate(part, 'deliveryDate') },
+				{ label: 'Price', getValue: (part) => part.totalCost },
 				{ label: 'Visibility', getValue: (part) => part.visibility }
 			]
 		: [
 				{ label: 'Name', getValue: (part) => part.name },
 				{ label: 'Brand', getValue: (part) => part.brand },
 				{ label: 'Part type', getValue: (part) => ecPartTypeLabel(part.partType) },
-				{ label: 'Order status', getValue: (part) => part.purchase?.orderStatus },
-				{ label: 'Order date', getValue: (part) => part.purchase?.orderDate?.getTime() },
-				{ label: 'Delivery date', getValue: (part) => part.purchase?.deliveryDate?.getTime() }
+				{ label: 'Order status', getValue: (part) => part.orderStatus },
+				{ label: 'Order date', getValue: (part) => earliestDate(part, 'orderDate') },
+				{ label: 'Delivery date', getValue: (part) => earliestDate(part, 'deliveryDate') }
 			]}
 >
 	{#snippet card(part)}
@@ -260,14 +261,14 @@
 				<p class="text-faint truncate font-mono text-xs">
 					{[ecPartTypeLabel(part.partType), ...ecPartSpecs(part)].join(' · ')}
 				</p>
-				{#if formatPrice(part.purchase?.price, part.purchase?.currency) || part.purchase?.orderStatus || part.visibility}
+				{#if formatPrice(part.totalCost, part.currency) || part.orderStatus || part.visibility}
 					<div class="mt-1 flex flex-wrap items-center gap-2">
 						<p class="text-faint font-mono text-xs">
-							{formatPrice(part.purchase?.price, part.purchase?.currency)}
+							{formatPrice(part.totalCost, part.currency)}
 						</p>
 						<div class="ml-auto flex shrink-0 items-center gap-1.5">
-							{#if part.purchase?.orderStatus}
-								<OrderStatusBadge status={part.purchase?.orderStatus} />
+							{#if part.orderStatus}
+								<OrderStatusBadge status={part.orderStatus} />
 							{/if}
 							<VisibilityBadge visibility={part.visibility} />
 						</div>

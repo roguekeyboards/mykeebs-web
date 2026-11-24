@@ -50,7 +50,7 @@ describe('collection fields', () => {
 			name: 'Oil King',
 			type: 'Linear',
 			material: { topHousing: 'PC', bottomHousing: 'Nylon', stem: 'POM' },
-			purchase: { vendor: 'Divinikey', orderStatus: 'Ordered' }
+			purchases: [{ vendor: 'Divinikey', orderStatus: 'Ordered' }]
 		};
 
 		expect(valuesByTag(switchFields, sw)).toEqual({
@@ -67,6 +67,24 @@ describe('collection fields', () => {
 		});
 	});
 
+	it('reads the vendor and status of every purchase', () => {
+		const sw: Switch = {
+			id: 'sw-2',
+			brand: 'Gateron',
+			name: 'Oil King',
+			type: 'Linear',
+			purchases: [
+				{ vendor: 'Divinikey', orderStatus: 'Delivered' },
+				{ vendor: 'KBDfans', orderStatus: 'Ordered' }
+			]
+		};
+		const part: ECPart = { ...sw, partType: ECPartType.Domes };
+
+		const expected = { vendor: ['Divinikey', 'KBDfans'], status: ['Delivered', 'Ordered'] };
+		expect(valuesByTag(switchFields, sw)).toMatchObject(expected);
+		expect(valuesByTag(ecPartFields, part)).toMatchObject(expected);
+	});
+
 	it('reads an EC part, whatever its part type', () => {
 		const domes: ECPart = {
 			id: 'ec-1',
@@ -74,7 +92,7 @@ describe('collection fields', () => {
 			name: 'Silicone domes',
 			partType: ECPartType.Domes,
 			domes: { weight: 45, material: 'Silicone', color: 'Red' },
-			purchase: { vendor: 'Deskeys', orderStatus: 'Delivered' }
+			purchases: [{ vendor: 'Deskeys', orderStatus: 'Delivered' }]
 		};
 		const sliders: ECPart = {
 			id: 'ec-2',
