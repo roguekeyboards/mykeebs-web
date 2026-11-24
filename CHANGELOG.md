@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.6.0...v0.7.0) (2026-11-24)
+
+
+### Features
+
+* support several purchases per switch and EC part ([#254](https://github.com/roguekeyboards/mykeebs-web/issues/254)) ([5b78b68](https://github.com/roguekeyboards/mykeebs-web/commit/5b78b68ac24b93d039ea125b68247389a5be8fd4))
+
 ## [0.6.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.5.1...v0.6.0) (2026-11-23)
 
 
