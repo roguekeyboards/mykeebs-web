@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PurchaseLike } from '#lib/format.js';
 import {
+	bulkPurchaseDateError,
 	bulkPurchaseDraft,
 	bulkPurchaseDrafts,
 	bulkPurchaseInputs,
@@ -27,6 +28,42 @@ describe('earliestDate', () => {
 		expect(earliestDate(of({ deliveryDate: jan, orderStatus: 'Cancelled' }), 'deliveryDate')).toBe(
 			jan.getTime()
 		);
+	});
+
+	it('only counts estimates on purchases still awaiting delivery', () => {
+		const items = of(
+			{ estimatedDeliveryDate: jan, orderStatus: 'Delivered' },
+			{ estimatedDeliveryDate: jan, orderStatus: 'Cancelled' },
+			{ estimatedDeliveryDate: mar, orderStatus: 'Shipped' }
+		);
+		expect(earliestDate(items, 'estimatedDeliveryDate')).toBe(mar.getTime());
+		expect(
+			earliestDate(
+				of({ estimatedDeliveryDate: jan, orderStatus: 'Delivered' }),
+				'estimatedDeliveryDate'
+			)
+		).toBeUndefined();
+	});
+});
+
+describe('bulkPurchaseDateError', () => {
+	const draft = (deliveryDate: string) => ({
+		...bulkPurchaseDraft(),
+		orderDate: '2026-03-01',
+		deliveryDate
+	});
+
+	it('names which purchase is wrong when there are several', () => {
+		expect(bulkPurchaseDateError([draft('2026-04-01'), draft('2026-02-01')])).toBe(
+			"Purchase 2: Delivery date can't be before the order date."
+		);
+	});
+
+	it('leaves the number off a single purchase, and is undefined when all are fine', () => {
+		expect(bulkPurchaseDateError([draft('2026-02-01')])).toBe(
+			"Delivery date can't be before the order date."
+		);
+		expect(bulkPurchaseDateError([draft('2026-04-01')])).toBeUndefined();
 	});
 });
 

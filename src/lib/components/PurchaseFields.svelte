@@ -2,6 +2,8 @@
 	import { untrack } from 'svelte';
 	import { todayDateInput } from '#lib/format.js';
 	import type { PurchaseDraft } from '#lib/keyboard-parts.js';
+	import { awaitingDelivery } from '#lib/estimated-delivery.js';
+	import EstimatedDeliveryField from './EstimatedDeliveryField.svelte';
 
 	let {
 		purchase = $bindable(),
@@ -25,6 +27,7 @@
 		purchase.orderStatus.trim() !== '' && purchase.orderStatus.trim().toLowerCase() !== 'planned'
 	);
 	let isDelivered = $derived(purchase.orderStatus.trim().toLowerCase() === 'delivered');
+	let awaiting = $derived(awaitingDelivery(purchase.orderStatus));
 
 	// Only clears in response to a status change, never on mount: an existing
 	// item may legitimately carry dates its current status wouldn't set.
@@ -36,6 +39,7 @@
 		else if (!purchase.orderDate) purchase.orderDate = todayDateInput();
 		if (!isDelivered) purchase.deliveryDate = '';
 		else if (!purchase.deliveryDate) purchase.deliveryDate = todayDateInput();
+		if (!awaiting) purchase.estimatedDeliveryDate = '';
 	});
 
 	function optionsWith(loaded: string[], current: string): string[] {
@@ -90,6 +94,12 @@
 			bind:value={purchase.orderDate}
 		/>
 	</label>
+{/if}
+{#if awaiting}
+	<EstimatedDeliveryField
+		bind:value={purchase.estimatedDeliveryDate}
+		name="{namePrefix}estimatedDeliveryDate"
+	/>
 {/if}
 {#if isDelivered}
 	<label class="flex flex-col gap-1.5">

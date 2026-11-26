@@ -292,6 +292,28 @@ describe('SwitchForm.svelte', () => {
 	});
 
 	describe('order dates', () => {
+		it('refuses a delivery date before its order date, opening the purchases', async () => {
+			const { onSubmit } = await renderForm({
+				initial: {
+					...sw,
+					purchases: [
+						sw.purchases![0],
+						{ ...sw.purchases![0], deliveryDate: new Date('2026-01-15') }
+					]
+				}
+			});
+			await openSection('Purchase');
+			await expect.element(page.getByLabelText('Delivery date').first()).not.toBeVisible();
+
+			await submit('Save changes');
+
+			await expect
+				.element(page.getByText("Purchase 2: Delivery date can't be before the order date."))
+				.toBeInTheDocument();
+			await expect.element(page.getByLabelText('Delivery date').first()).toBeVisible();
+			expect(onSubmit).not.toHaveBeenCalled();
+		});
+
 		it('asks for an order date, defaulting to today, once ordered', async () => {
 			await renderForm();
 			await openSection('Purchase');

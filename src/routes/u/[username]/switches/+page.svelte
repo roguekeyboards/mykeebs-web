@@ -224,6 +224,10 @@
 				{ label: 'Order status', getValue: (sw) => sw.orderStatus },
 				{ label: 'Order date', getValue: (sw) => earliestDate(sw, 'orderDate') },
 				{ label: 'Delivery date', getValue: (sw) => earliestDate(sw, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (sw) => earliestDate(sw, 'estimatedDeliveryDate')
+				},
 				{ label: 'Price', getValue: (sw) => sw.totalCost },
 				{ label: 'Visibility', getValue: (sw) => sw.visibility }
 			]
@@ -232,7 +236,11 @@
 				{ label: 'Brand', getValue: (sw) => sw.brand },
 				{ label: 'Order status', getValue: (sw) => sw.orderStatus },
 				{ label: 'Order date', getValue: (sw) => earliestDate(sw, 'orderDate') },
-				{ label: 'Delivery date', getValue: (sw) => earliestDate(sw, 'deliveryDate') }
+				{ label: 'Delivery date', getValue: (sw) => earliestDate(sw, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (sw) => earliestDate(sw, 'estimatedDeliveryDate')
+				}
 			]}
 >
 	{#snippet card(sw)}

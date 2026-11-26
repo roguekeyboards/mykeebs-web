@@ -1,6 +1,8 @@
 import type { SwitchPurchaseInput } from '@roguekeyboards/mykeebs-api-client';
 import type { PurchaseLike } from '#lib/format.js';
+import { awaitingDelivery } from '#lib/estimated-delivery.js';
 import {
+	purchaseDateError,
 	purchaseDraft,
 	purchaseInput,
 	purchaseSummary,
@@ -13,11 +15,24 @@ const isCancelled = (p: PurchaseLike) => p.orderStatus?.toLowerCase() === 'cance
 
 export function earliestDate(
 	item: WithPurchases,
-	field: 'orderDate' | 'deliveryDate'
+	field: 'orderDate' | 'deliveryDate' | 'estimatedDeliveryDate'
 ): number | undefined {
 	const purchases = item.purchases ?? [];
+	if (field === 'estimatedDeliveryDate') {
+		return earliest(
+			purchases.filter((p) => awaitingDelivery(p.orderStatus)),
+			field
+		);
+	}
 	const live = purchases.filter((p) => !isCancelled(p));
-	const times = (live.length > 0 ? live : purchases).flatMap((p) => {
+	return earliest(live.length > 0 ? live : purchases, field);
+}
+
+function earliest(
+	purchases: PurchaseLike[],
+	field: 'orderDate' | 'deliveryDate' | 'estimatedDeliveryDate'
+): number | undefined {
+	const times = purchases.flatMap((p) => {
 		const date = p[field];
 		return date ? [date.getTime()] : [];
 	});
@@ -46,6 +61,13 @@ export function bulkPurchaseInputs(drafts: BulkPurchaseDraft[]): SwitchPurchaseI
 		const quantity = draft.quantity ?? undefined;
 		return purchase || quantity != null ? [{ ...purchase, quantity }] : [];
 	});
+}
+
+export function bulkPurchaseDateError(drafts: BulkPurchaseDraft[]): string | undefined {
+	const index = drafts.findIndex((draft) => purchaseDateError(draft));
+	if (index === -1) return undefined;
+	const error = purchaseDateError(drafts[index]);
+	return drafts.length > 1 ? `Purchase ${index + 1}: ${error}` : error;
 }
 
 export function bulkPurchasesSummary(drafts: BulkPurchaseDraft[]): string | undefined {

@@ -5,6 +5,7 @@ export type PurchaseLike = {
 	quantity?: number;
 	orderDate?: Date;
 	deliveryDate?: Date;
+	estimatedDeliveryDate?: Date;
 	orderStatus?: string;
 };
 

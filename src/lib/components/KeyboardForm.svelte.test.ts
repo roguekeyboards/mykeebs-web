@@ -488,6 +488,54 @@ describe('KeyboardForm.svelte', () => {
 	});
 
 	describe('order dates', () => {
+		it('keeps an estimated delivery date through an edit', async () => {
+			const { onSubmit } = await renderForm({
+				initial: {
+					...keyboard,
+					purchase: {
+						orderStatus: 'Ordered',
+						orderDate: new Date('2026-01-15'),
+						estimatedDeliveryDate: new Date('2027-03-31')
+					}
+				}
+			});
+
+			await expect
+				.element(keyboardPurchase().getByLabelText(/^Estimated delivery/))
+				.toHaveDisplayValue('Q1 2027');
+			await submit('Save changes');
+
+			const [input] = submitted(onSubmit);
+			expect(input.purchase?.estimatedDeliveryDate).toEqual(new Date('2027-03-31'));
+		});
+
+		it("refuses a plate's delivery date before its order date", async () => {
+			const { onSubmit } = await renderForm({
+				initial: {
+					...keyboard,
+					plates: [
+						{
+							id: 'plate-1',
+							material: 'POM',
+							purchase: {
+								orderStatus: 'Delivered',
+								orderDate: new Date('2026-03-01'),
+								deliveryDate: new Date('2026-02-01')
+							}
+						}
+					]
+				}
+			});
+
+			await submit('Save changes');
+
+			await expect
+				.element(page.getByText("Plate 1: Delivery date can't be before the order date."))
+				.toBeInTheDocument();
+			await expect.element(part('Plate 1').getByLabelText('Delivery date')).toBeVisible();
+			expect(onSubmit).not.toHaveBeenCalled();
+		});
+
 		it('asks for an order date, defaulting to today, once ordered', async () => {
 			await renderForm();
 			await openSection('Purchase');

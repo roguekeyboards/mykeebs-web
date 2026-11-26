@@ -19,7 +19,7 @@ export function adjacentKitId(set: KeycapSet, kitId: string, delta: 1 | -1): str
 
 export function earliestKitDate(
 	set: KeycapSet,
-	field: 'orderDate' | 'deliveryDate'
+	field: 'orderDate' | 'deliveryDate' | 'estimatedDeliveryDate'
 ): number | undefined {
 	return earliestDate({ purchases: (set.kits ?? []).map((kit) => kit.purchase ?? {}) }, field);
 }

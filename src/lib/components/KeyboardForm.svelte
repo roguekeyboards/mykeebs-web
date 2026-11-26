@@ -16,6 +16,7 @@
 		pcbLabel,
 		plateDraft,
 		plateInput,
+		purchaseDateError,
 		purchaseDraft,
 		purchaseInput,
 		purchaseSummary,
@@ -294,6 +295,29 @@
 		if (pcbs.some((p) => !p.assembly.trim() || !p.connectivity.trim())) {
 			validationError = 'Every PCB needs an assembly and connectivity.';
 			pcbsOpen = true;
+			return;
+		}
+
+		const dateError = purchaseDateError(purchase);
+		if (dateError) {
+			validationError = dateError;
+			purchaseOpen = true;
+			return;
+		}
+
+		const plateIndex = plates.findIndex((p) => purchaseDateError(p.purchase));
+		if (plateIndex !== -1) {
+			const plate = plates[plateIndex];
+			validationError = `Plate ${plateIndex + 1}: ${purchaseDateError(plate.purchase)}`;
+			platesOpen = plate.purchaseOpen = true;
+			return;
+		}
+
+		const pcbIndex = pcbs.findIndex((p) => purchaseDateError(p.purchase));
+		if (pcbIndex !== -1) {
+			const pcb = pcbs[pcbIndex];
+			validationError = `PCB ${pcbIndex + 1}: ${purchaseDateError(pcb.purchase)}`;
+			pcbsOpen = pcb.purchaseOpen = true;
 			return;
 		}
 

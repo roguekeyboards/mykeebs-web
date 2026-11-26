@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatDate, formatPrice, type PurchaseLike } from '#lib/format.js';
+	import { awaitingDelivery, formatEstimate } from '#lib/estimated-delivery.js';
 	import OrderStatusBadge from './OrderStatusBadge.svelte';
 
 	let {
@@ -38,6 +39,12 @@
 			<div class="spec-row">
 				<dt>Ordered</dt>
 				<dd>{formatDate(purchase.orderDate)}</dd>
+			</div>
+		{/if}
+		{#if awaitingDelivery(purchase.orderStatus) && formatEstimate(purchase.estimatedDeliveryDate)}
+			<div class="spec-row">
+				<dt>Estimated delivery</dt>
+				<dd>{formatEstimate(purchase.estimatedDeliveryDate)}</dd>
 			</div>
 		{/if}
 		{#if formatDate(purchase.deliveryDate)}

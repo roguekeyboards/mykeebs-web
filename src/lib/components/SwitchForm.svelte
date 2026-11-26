@@ -9,7 +9,12 @@
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import BulkPurchaseFields from './BulkPurchaseFields.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
-	import { bulkPurchaseDrafts, bulkPurchaseInputs, bulkPurchasesSummary } from '#lib/purchases.js';
+	import {
+		bulkPurchaseDateError,
+		bulkPurchaseDrafts,
+		bulkPurchaseInputs,
+		bulkPurchasesSummary
+	} from '#lib/purchases.js';
 
 	let {
 		initial,
@@ -233,6 +238,13 @@
 
 		if (!brand.trim() || !name.trim() || !type.trim()) {
 			validationError = 'Brand, name, and type are required.';
+			return;
+		}
+
+		const dateError = bulkPurchaseDateError(purchases);
+		if (dateError) {
+			validationError = dateError;
+			purchaseOpen = true;
 			return;
 		}
 

@@ -13,6 +13,7 @@ export type PurchaseDraft = {
 	price: number | undefined;
 	orderDate: string;
 	deliveryDate: string;
+	estimatedDeliveryDate: string;
 	orderStatus: string;
 };
 
@@ -48,6 +49,7 @@ export function purchaseDraft(purchase?: Purchase): PurchaseDraft {
 		price: purchase?.price,
 		orderDate: toDateInput(purchase?.orderDate),
 		deliveryDate: toDateInput(purchase?.deliveryDate),
+		estimatedDeliveryDate: toDateInput(purchase?.estimatedDeliveryDate),
 		orderStatus: purchase?.orderStatus ?? ''
 	};
 }
@@ -56,11 +58,26 @@ export function purchaseInput(draft: PurchaseDraft): PurchaseInput | undefined {
 	const input: PurchaseInput = {
 		vendor: draft.vendor.trim() || undefined,
 		price: draft.price ?? undefined,
-		orderDate: draft.orderDate.trim() ? new Date(draft.orderDate.trim()) : undefined,
-		deliveryDate: draft.deliveryDate.trim() ? new Date(draft.deliveryDate.trim()) : undefined,
+		orderDate: toDate(draft.orderDate),
+		deliveryDate: toDate(draft.deliveryDate),
+		estimatedDeliveryDate: toDate(draft.estimatedDeliveryDate),
 		orderStatus: draft.orderStatus.trim() || undefined
 	};
 	return Object.values(input).some((v) => v !== undefined) ? input : undefined;
+}
+
+function toDate(input: string): Date | undefined {
+	return input.trim() ? new Date(input.trim()) : undefined;
+}
+
+export function purchaseDateError(draft: PurchaseDraft): string | undefined {
+	const orderDate = draft.orderDate.trim();
+	const before = (date: string) =>
+		orderDate !== '' && date.trim() !== '' && date.trim() < orderDate;
+	if (before(draft.deliveryDate)) return "Delivery date can't be before the order date.";
+	if (before(draft.estimatedDeliveryDate))
+		return "Estimated delivery can't be before the order date.";
+	return undefined;
 }
 
 export function purchaseSummary(draft: PurchaseDraft): string | undefined {

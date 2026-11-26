@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { earliestDate } from '#lib/purchases.js';
 	import { pageTitle } from '#lib/page-title.js';
 	import type { PageRequest } from '#lib/pagination.js';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -282,6 +283,11 @@
 					label: 'Delivery date',
 					getValue: (keyboard) => keyboard.purchase?.deliveryDate?.getTime()
 				},
+				{
+					label: 'Estimated delivery',
+					getValue: (keyboard) =>
+						earliestDate({ purchases: [keyboard.purchase ?? {}] }, 'estimatedDeliveryDate')
+				},
 				{ label: 'Total cost', getValue: (keyboard) => keyboard.totalCost ?? undefined },
 				{ label: 'Visibility', getValue: (keyboard) => keyboard.visibility }
 			]
@@ -293,6 +299,11 @@
 				{
 					label: 'Delivery date',
 					getValue: (keyboard) => keyboard.purchase?.deliveryDate?.getTime()
+				},
+				{
+					label: 'Estimated delivery',
+					getValue: (keyboard) =>
+						earliestDate({ purchases: [keyboard.purchase ?? {}] }, 'estimatedDeliveryDate')
 				}
 			]}
 >

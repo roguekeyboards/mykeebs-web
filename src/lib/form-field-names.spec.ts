@@ -31,13 +31,17 @@ function fieldTags(source: string): string[] {
 	});
 }
 
-const hasIdOrName = (tag: string) => /\s(id|name)=/.test(tag);
+const hasIdOrName = (tag: string) => /\s((id|name)=|\{(id|name)\})/.test(tag);
 
 describe('fieldTags', () => {
 	it('reads past `>` inside attribute expressions', () => {
 		const [tag] = fieldTags('<input onchange={(e) => (n = a > b)} name="x" /><p>');
 		expect(tag).toBe('<input onchange={(e) => (n = a > b)} name="x" />');
 		expect(hasIdOrName(tag)).toBe(true);
+	});
+
+	it('counts the {name} shorthand as a name', () => {
+		expect(hasIdOrName('<input {name} type="date" />')).toBe(true);
 	});
 
 	it('does not mistake data-name or aria-labelledby for a name or id', () => {
