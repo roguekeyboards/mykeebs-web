@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.8.0...v0.9.0) (2026-11-26)
+
+
+### Features
+
+* order tracker grouped by expected quarter ([#262](https://github.com/roguekeyboards/mykeebs-web/issues/262)) ([0ca9e5f](https://github.com/roguekeyboards/mykeebs-web/commit/0ca9e5f8c7df751c2820e8bbc407211550428594))
+
 ## [0.8.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.7.0...v0.8.0) (2026-11-26)
 
 
