@@ -218,6 +218,7 @@
 	getOrderStatus={(part) => part.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add EC part"
+	onOpen={openPart}
 	sortOptions={userContext.isOwnProfile
 		? [
 				{ label: 'Name', getValue: (part) => part.name },

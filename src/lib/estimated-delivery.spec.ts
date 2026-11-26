@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	awaitingDelivery,
 	formatEstimate,
+	quarterEndOf,
 	quarterLabel,
 	quarterOptions
 } from './estimated-delivery';
@@ -75,5 +76,14 @@ describe('awaitingDelivery', () => {
 			false,
 			false
 		]);
+	});
+});
+
+describe('quarterEndOf', () => {
+	it('is the last day of the quarter a date falls in', () => {
+		expect(quarterEndOf('2026-11-25')).toBe('2026-12-31');
+		expect(quarterEndOf('2027-04-01')).toBe('2027-06-30');
+		expect(quarterEndOf('2027-03-31')).toBe('2027-03-31');
+		expect(quarterEndOf('nope')).toBeUndefined();
 	});
 });

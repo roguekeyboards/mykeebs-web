@@ -217,6 +217,7 @@
 	getOrderStatus={(sw) => sw.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add switch"
+	onOpen={openSwitch}
 	sortOptions={userContext.isOwnProfile
 		? [
 				{ label: 'Name', getValue: (sw) => sw.name },

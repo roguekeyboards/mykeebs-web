@@ -273,6 +273,7 @@
 	getOrderStatus={(keyboard) => keyboard.purchase?.orderStatus}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add keyboard"
+	onOpen={openKeyboard}
 	sortOptions={userContext.isOwnProfile
 		? [
 				{ label: 'Name', getValue: (keyboard) => keyboard.name },

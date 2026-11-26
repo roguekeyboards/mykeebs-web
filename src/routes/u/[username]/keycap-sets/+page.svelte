@@ -399,6 +399,7 @@
 	getOrderStatus={(set) => set.orderStatus ?? undefined}
 	onAdd={userContext.isOwnProfile ? openCreate : undefined}
 	addLabel="Add keycap set"
+	onOpen={openSet}
 	sortOptions={userContext.isOwnProfile
 		? [
 				{ label: 'Name', getValue: (set) => set.name },
