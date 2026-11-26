@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.7.0...v0.8.0) (2026-11-26)
+
+
+### Features
+
+* estimated delivery date on purchases ([#260](https://github.com/roguekeyboards/mykeebs-web/issues/260)) ([049c05e](https://github.com/roguekeyboards/mykeebs-web/commit/049c05e21241027b3b21aac5653ac729553550ef))
+
 ## [0.7.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.6.0...v0.7.0) (2026-11-24)
 
 
