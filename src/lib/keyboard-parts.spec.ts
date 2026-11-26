@@ -6,6 +6,7 @@ import {
 	plateDraft,
 	plateInput,
 	plateLabel,
+	purchaseDateError,
 	purchaseDraft,
 	purchaseInput,
 	purchaseSummary
@@ -38,11 +39,42 @@ describe('purchaseInput', () => {
 		});
 	});
 
+	it('carries an estimated delivery date', () => {
+		const estimate = { orderStatus: 'Ordered', estimatedDeliveryDate: new Date('2027-03-31') };
+		expect(purchaseInput(purchaseDraft(estimate))).toEqual(estimate);
+		expect(purchaseInput(purchaseDraft({ estimatedDeliveryDate: new Date('2027-03-31') }))).toEqual(
+			{ estimatedDeliveryDate: new Date('2027-03-31') }
+		);
+	});
+
 	it('is undefined when nothing is filled in', () => {
 		expect(purchaseInput(purchaseDraft())).toBeUndefined();
 		expect(
 			purchaseInput({ ...purchaseDraft(), vendor: '  ', price: null as never })
 		).toBeUndefined();
+	});
+});
+
+describe('purchaseDateError', () => {
+	const draft = (dates: Partial<ReturnType<typeof purchaseDraft>>) => ({
+		...purchaseDraft(),
+		orderDate: '2026-03-01',
+		...dates
+	});
+
+	it('rejects a delivery or estimated delivery before the order date', () => {
+		expect(purchaseDateError(draft({ deliveryDate: '2026-02-28' }))).toBe(
+			"Delivery date can't be before the order date."
+		);
+		expect(purchaseDateError(draft({ estimatedDeliveryDate: '2025-12-31' }))).toBe(
+			"Estimated delivery can't be before the order date."
+		);
+	});
+
+	it('allows the same day, a later day, or no order date to compare against', () => {
+		expect(purchaseDateError(draft({ deliveryDate: '2026-03-01' }))).toBeUndefined();
+		expect(purchaseDateError(draft({ estimatedDeliveryDate: '2026-06-30' }))).toBeUndefined();
+		expect(purchaseDateError(draft({ orderDate: '', deliveryDate: '2020-01-01' }))).toBeUndefined();
 	});
 });
 

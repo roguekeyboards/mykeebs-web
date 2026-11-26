@@ -138,6 +138,29 @@ describe('switches page', () => {
 		await expect.element(cards().first()).toMatchTextContent('Aperol');
 	});
 
+	it('lets visitors sort by estimated delivery', async () => {
+		api.listSwitches.mockResolvedValue({
+			items: [
+				{
+					...aperol,
+					purchases: [{ orderStatus: 'Ordered', estimatedDeliveryDate: new Date('2027-06-30') }]
+				},
+				{
+					...aperol,
+					id: 'sw-2',
+					name: 'Banana',
+					purchases: [{ orderStatus: 'Ordered', estimatedDeliveryDate: new Date('2027-03-31') }]
+				}
+			]
+		});
+		await renderPage(false);
+		const cards = () => page.getByRole('button', { name: /Aperol|Banana/ });
+		await expect.element(cards().first()).toMatchTextContent('Aperol');
+
+		await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Estimated delivery');
+		await expect.element(cards().first()).toMatchTextContent('Banana');
+	});
+
 	it('dates a restocked switch by its earliest live purchase, and shows its summary', async () => {
 		api.listSwitches.mockResolvedValue({
 			items: [

@@ -226,6 +226,10 @@
 				{ label: 'Order status', getValue: (part) => part.orderStatus },
 				{ label: 'Order date', getValue: (part) => earliestDate(part, 'orderDate') },
 				{ label: 'Delivery date', getValue: (part) => earliestDate(part, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (part) => earliestDate(part, 'estimatedDeliveryDate')
+				},
 				{ label: 'Price', getValue: (part) => part.totalCost },
 				{ label: 'Visibility', getValue: (part) => part.visibility }
 			]
@@ -235,7 +239,11 @@
 				{ label: 'Part type', getValue: (part) => ecPartTypeLabel(part.partType) },
 				{ label: 'Order status', getValue: (part) => part.orderStatus },
 				{ label: 'Order date', getValue: (part) => earliestDate(part, 'orderDate') },
-				{ label: 'Delivery date', getValue: (part) => earliestDate(part, 'deliveryDate') }
+				{ label: 'Delivery date', getValue: (part) => earliestDate(part, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (part) => earliestDate(part, 'estimatedDeliveryDate')
+				}
 			]}
 >
 	{#snippet card(part)}

@@ -406,6 +406,10 @@
 				{ label: 'Order status', getValue: (set) => set.orderStatus ?? undefined },
 				{ label: 'Order date', getValue: (set) => earliestKitDate(set, 'orderDate') },
 				{ label: 'Delivery date', getValue: (set) => earliestKitDate(set, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (set) => earliestKitDate(set, 'estimatedDeliveryDate')
+				},
 				{ label: 'Total cost', getValue: (set) => set.totalCost ?? undefined },
 				{ label: 'Visibility', getValue: (set) => set.visibility }
 			]
@@ -414,7 +418,11 @@
 				{ label: 'Brand', getValue: (set) => set.brand },
 				{ label: 'Order status', getValue: (set) => set.orderStatus ?? undefined },
 				{ label: 'Order date', getValue: (set) => earliestKitDate(set, 'orderDate') },
-				{ label: 'Delivery date', getValue: (set) => earliestKitDate(set, 'deliveryDate') }
+				{ label: 'Delivery date', getValue: (set) => earliestKitDate(set, 'deliveryDate') },
+				{
+					label: 'Estimated delivery',
+					getValue: (set) => earliestKitDate(set, 'estimatedDeliveryDate')
+				}
 			]}
 >
 	{#snippet card(set)}

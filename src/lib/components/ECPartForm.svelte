@@ -10,7 +10,12 @@
 	import VisibilityPicker from './VisibilityPicker.svelte';
 	import { lookupsApi } from '#lib/api/client.js';
 	import { EC_PART_TYPES, ecPartTypeLabel } from '#lib/ec-parts.js';
-	import { bulkPurchaseDrafts, bulkPurchaseInputs, bulkPurchasesSummary } from '#lib/purchases.js';
+	import {
+		bulkPurchaseDateError,
+		bulkPurchaseDrafts,
+		bulkPurchaseInputs,
+		bulkPurchasesSummary
+	} from '#lib/purchases.js';
 
 	let {
 		initial,
@@ -223,6 +228,13 @@
 		const partType = values.partType;
 		if (!values.brand.trim() || !values.name.trim() || !partType) {
 			validationError = 'Brand, name, and part type are required.';
+			return;
+		}
+
+		const dateError = bulkPurchaseDateError(purchases);
+		if (dateError) {
+			validationError = dateError;
+			purchaseOpen = true;
 			return;
 		}
 

@@ -46,4 +46,41 @@ describe('KeycapKitDetails.svelte', () => {
 
 		await expect.element(page.getByText('No image')).toBeInTheDocument();
 	});
+
+	it.each([
+		['2027-03-31', 'Q1 2027'],
+		['2027-02-14', 'Feb 14, 2027']
+	])('shows an estimated delivery of %s as %s', async (date, shown) => {
+		await render(KeycapKitDetails, {
+			name: 'Base',
+			image: undefined,
+			imageFailed: false,
+			onImageError: vi.fn(),
+			onImageClick: vi.fn(),
+			purchase: { orderStatus: 'Ordered', estimatedDeliveryDate: new Date(date) },
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('Estimated delivery')).toBeInTheDocument();
+		await expect.element(page.getByText(shown)).toBeInTheDocument();
+	});
+
+	it('leaves a stale estimate off a delivered kit', async () => {
+		await render(KeycapKitDetails, {
+			name: 'Base',
+			image: undefined,
+			imageFailed: false,
+			onImageError: vi.fn(),
+			onImageClick: vi.fn(),
+			purchase: {
+				orderStatus: 'Delivered',
+				deliveryDate: new Date('2027-02-01'),
+				estimatedDeliveryDate: new Date('2027-03-31')
+			},
+			showPrice: true
+		});
+
+		await expect.element(page.getByText('Feb 1, 2027')).toBeInTheDocument();
+		await expect.element(page.getByText('Estimated delivery')).not.toBeInTheDocument();
+	});
 });

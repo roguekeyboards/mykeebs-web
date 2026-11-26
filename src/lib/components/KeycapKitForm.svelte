@@ -6,7 +6,8 @@
 	import { untrack } from 'svelte';
 	import type { KeycapKit, KeycapKitInput } from '@roguekeyboards/mykeebs-api-client';
 	import { lookupsApi } from '#lib/api/client.js';
-	import { toDateInput, todayDateInput } from '#lib/format.js';
+	import { purchaseDateError, purchaseDraft, purchaseInput } from '#lib/keyboard-parts.js';
+	import PurchaseFields from './PurchaseFields.svelte';
 
 	let {
 		initial,
@@ -32,36 +33,11 @@
 	const seed = untrack(() => initial);
 
 	let name = $state(seed?.name ?? '');
-	let vendor = $state(seed?.purchase?.vendor ?? '');
-	let price = $state<number | undefined>(seed?.purchase?.price);
-	let orderDate = $state(toDateInput(seed?.purchase?.orderDate));
-	let deliveryDate = $state(toDateInput(seed?.purchase?.deliveryDate));
-	let orderStatus = $state(seed?.purchase?.orderStatus ?? '');
+	let purchase = $state(purchaseDraft(seed?.purchase));
 	let primary = $state(untrack(() => isPrimary));
-
-	let showOrderDate = $derived(
-		orderStatus.trim() !== '' && orderStatus.trim().toLowerCase() !== 'planned'
-	);
-	let isDelivered = $derived(orderStatus.trim().toLowerCase() === 'delivered');
-
-	// Only clears in response to a status change, never on mount: an existing
-	// kit may legitimately carry dates its current status wouldn't set.
-	let lastOrderStatus = seed?.purchase?.orderStatus ?? '';
-	$effect(() => {
-		if (orderStatus === lastOrderStatus) return;
-		lastOrderStatus = orderStatus;
-		if (!showOrderDate) orderDate = '';
-		else if (!orderDate) orderDate = todayDateInput();
-		if (!isDelivered) deliveryDate = '';
-		else if (!deliveryDate) deliveryDate = todayDateInput();
-	});
 
 	let vendors = $state<string[]>([]);
 	let orderStatuses = $state<string[]>([]);
-
-	function optionsWith(loaded: string[], current: string): string[] {
-		return current && !loaded.includes(current) ? [current, ...loaded] : loaded;
-	}
 
 	$effect(() => {
 		Promise.all([
@@ -137,21 +113,13 @@
 	}
 
 	const initialName = seed?.name ?? '';
-	const initialVendor = seed?.purchase?.vendor ?? '';
-	const initialPrice = seed?.purchase?.price;
-	const initialOrderDate = toDateInput(seed?.purchase?.orderDate);
-	const initialDeliveryDate = toDateInput(seed?.purchase?.deliveryDate);
-	const initialOrderStatus = seed?.purchase?.orderStatus ?? '';
+	const initialPurchase = JSON.stringify(purchaseInput(purchaseDraft(seed?.purchase)));
 	const initialPrimary = untrack(() => isPrimary);
 
 	export function isDirty(): boolean {
 		return (
 			name !== initialName ||
-			vendor !== initialVendor ||
-			price != initialPrice ||
-			orderDate !== initialOrderDate ||
-			deliveryDate !== initialDeliveryDate ||
-			orderStatus !== initialOrderStatus ||
+			JSON.stringify(purchaseInput(purchase)) !== initialPurchase ||
 			primary !== initialPrimary ||
 			stagedImage != null
 		);
@@ -177,24 +145,15 @@
 			return;
 		}
 
-		const hasPurchase =
-			vendor.trim() ||
-			price != null ||
-			orderDate.trim() ||
-			deliveryDate.trim() ||
-			orderStatus.trim();
+		const dateError = purchaseDateError(purchase);
+		if (dateError) {
+			validationError = dateError;
+			return;
+		}
 
 		const input: KeycapKitInput = {
 			name: name.trim(),
-			purchase: hasPurchase
-				? {
-						vendor: vendor.trim() || undefined,
-						price,
-						orderDate: orderDate.trim() ? new Date(orderDate.trim()) : undefined,
-						deliveryDate: deliveryDate.trim() ? new Date(deliveryDate.trim()) : undefined,
-						orderStatus: orderStatus.trim() || undefined
-					}
-				: undefined,
+			purchase: purchaseInput(purchase),
 			// Omitted rather than sent as false, so saving an untouched kit never
 			// clears another kit's primary designation.
 			primary: primary || (isPrimary ? false : undefined)
@@ -282,47 +241,7 @@
 	</label>
 
 	<div class="field-group-body grid grid-cols-1 gap-4 sm:grid-cols-2">
-		<label class="flex flex-col gap-1.5">
-			<span class="field-label">Vendor</span>
-			<select name="vendor" class="field-select w-full" bind:value={vendor}>
-				<option value="">—</option>
-				{#each optionsWith(vendors, vendor) as value (value)}
-					<option {value}>{value}</option>
-				{/each}
-			</select>
-		</label>
-		<label class="flex flex-col gap-1.5">
-			<span class="field-label">Order status</span>
-			<select name="orderStatus" class="field-select w-full" bind:value={orderStatus}>
-				<option value="">—</option>
-				{#each optionsWith(orderStatuses, orderStatus) as value (value)}
-					<option {value}>{value}</option>
-				{/each}
-			</select>
-		</label>
-		<label class="flex flex-col gap-1.5">
-			<span class="field-label">Price</span>
-			<input
-				name="price"
-				type="number"
-				class="field-input"
-				min="0"
-				step="0.01"
-				bind:value={price}
-			/>
-		</label>
-		{#if showOrderDate}
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Order date</span>
-				<input name="orderDate" type="date" class="field-input" bind:value={orderDate} />
-			</label>
-		{/if}
-		{#if isDelivered}
-			<label class="flex flex-col gap-1.5">
-				<span class="field-label">Delivery date</span>
-				<input name="deliveryDate" type="date" class="field-input" bind:value={deliveryDate} />
-			</label>
-		{/if}
+		<PurchaseFields bind:purchase {vendors} {orderStatuses} />
 	</div>
 
 	{#if validationError}
