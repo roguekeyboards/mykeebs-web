@@ -100,7 +100,15 @@
 					{
 						href: resolve('/u/[username]/builds', { username: view.profile.username }),
 						label: 'Builds'
-					}
+					},
+					...(isOwnProfile
+						? [
+								{
+									href: resolve('/u/[username]/orders', { username: view.profile.username }),
+									label: 'Orders'
+								}
+							]
+						: [])
 				]
 			: []
 	);
@@ -116,7 +124,10 @@
 			{ route: '/u/[username]/switches', username, label: 'Switches' },
 			{ route: '/u/[username]/ec-parts', username, label: 'EC Parts' },
 			{ route: '/u/[username]/keycap-sets', username, label: 'Keycap Sets' },
-			{ route: '/u/[username]/builds', username, label: 'Builds' }
+			{ route: '/u/[username]/builds', username, label: 'Builds' },
+			...(isOwnProfile
+				? [{ route: '/u/[username]/orders' as const, username, label: 'Orders' }]
+				: [])
 		];
 		return () => {
 			if (profileSubNav) profileSubNav.items = [];

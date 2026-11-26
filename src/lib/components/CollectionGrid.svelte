@@ -1,4 +1,6 @@
 <script lang="ts" generics="T">
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import { updateWhere } from '#lib/stale-images.js';
 	import { fetchAllPages, type PageRequest } from '#lib/pagination.js';
 	import {
@@ -33,6 +35,7 @@
 		getOrderStatus,
 		onAdd,
 		addLabel,
+		onOpen,
 		card
 	}: {
 		userId: string;
@@ -45,6 +48,7 @@
 		getOrderStatus?: (item: T) => string | undefined;
 		onAdd?: () => void;
 		addLabel?: string;
+		onOpen?: (item: T) => void;
 		card: Snippet<[T]>;
 	} = $props();
 
@@ -89,10 +93,22 @@
 			if (token !== loadToken) return;
 			items = allItems;
 			loadedUserId = requestedUserId;
+			openRequestedItem();
 		} catch {
 			if (token !== loadToken) return;
 			loadFailed = true;
 		}
+	}
+
+	function openRequestedItem() {
+		const key = page.url.searchParams.get('open');
+		if (key === null) return;
+		const url = new URL(page.url.href);
+		url.searchParams.delete('open');
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- same page, query only
+		replaceState(url, page.state);
+		const item = items.find((i) => itemKey(i) === key);
+		if (item) onOpen?.(item);
 	}
 
 	// Lets parents reload without remounting, which would reset filter/sort/search.

@@ -13,6 +13,7 @@ import ECPartsPage from './ec-parts/+page.svelte';
 import KeycapSetsPage from './keycap-sets/+page.svelte';
 import BuildsPage from './builds/+page.svelte';
 import KeyboardBuildsPage from './builds/[keyboardId]/+page.svelte';
+import OrdersPage from './orders/+page.svelte';
 
 vi.mock('$app/state', () => ({
 	page: {
@@ -48,7 +49,8 @@ describe('user page titles', () => {
 		['switches', SwitchesPage, 'Switches · @rogue.serenity · mykeebs'],
 		['EC parts', ECPartsPage, 'EC parts · @rogue.serenity · mykeebs'],
 		['keycap sets', KeycapSetsPage, 'Keycap sets · @rogue.serenity · mykeebs'],
-		['builds', BuildsPage, 'Builds · @rogue.serenity · mykeebs']
+		['builds', BuildsPage, 'Builds · @rogue.serenity · mykeebs'],
+		['orders', OrdersPage, 'Orders · @rogue.serenity · mykeebs']
 	])('titles %s', async (_, component, expected) => {
 		await render(WithUserContext, { component });
 
@@ -106,5 +108,28 @@ describe('user layout tabs', () => {
 		await expect
 			.element(tabs.getByRole('link', { name: 'Keyboards' }))
 			.not.toHaveAttribute('aria-current');
+	});
+
+	it.each([
+		['shows the owner', 'user-1', true],
+		['hides from everyone else', 'user-2', false]
+	])('%s an Orders tab', async (_, userId, shown) => {
+		vi.mocked(profilesApi.getProfile).mockResolvedValue({
+			userId,
+			username: 'rogue.serenity',
+			discoverable: true
+		} as never);
+
+		await render(UserLayout, { children });
+
+		const tabs = page.getByRole('navigation', { name: 'Profile' });
+		await expect.element(tabs.getByRole('link', { name: 'Builds' })).toBeInTheDocument();
+		if (shown) {
+			await expect
+				.element(tabs.getByRole('link', { name: 'Orders' }))
+				.toHaveAttribute('href', '/u/rogue.serenity/orders');
+		} else {
+			await expect.element(tabs.getByRole('link', { name: 'Orders' })).not.toBeInTheDocument();
+		}
 	});
 });

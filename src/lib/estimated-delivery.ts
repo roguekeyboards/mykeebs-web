@@ -18,6 +18,11 @@ function quarterEnd({ year, quarter }: YearQuarter): string {
 	return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${day}`;
 }
 
+export function quarterEndOf(date: string): string | undefined {
+	const parsed = parse(date);
+	return parsed && quarterEnd(parsed);
+}
+
 export function quarterLabel(date: string): string | undefined {
 	const parsed = parse(date);
 	if (!parsed || quarterEnd(parsed) !== date) return undefined;
