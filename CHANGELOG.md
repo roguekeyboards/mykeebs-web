@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.10.0...v0.11.0) (2026-11-27)
+
+
+### Features
+
+* keep collection filters and sort in the URL ([#269](https://github.com/roguekeyboards/mykeebs-web/issues/269)) ([e7e0f82](https://github.com/roguekeyboards/mykeebs-web/commit/e7e0f82e3d7de62770bd5efb58302b6d90296491))
+* share button on item dialogs ([#271](https://github.com/roguekeyboards/mykeebs-web/issues/271)) ([df2f04b](https://github.com/roguekeyboards/mykeebs-web/commit/df2f04bd44c94f8efa546812801af5f139d77b18))
+
 ## [0.10.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.9.0...v0.10.0) (2026-11-27)
 
 
