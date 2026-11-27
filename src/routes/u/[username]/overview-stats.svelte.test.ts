@@ -2,7 +2,11 @@ import { page } from 'vitest/browser';
 import { expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
+import { page as fakePage } from '#lib/components/test-support/fake-page.svelte.js';
 import OverviewPage from './+page.svelte';
+
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 
 vi.mock('#lib/api/client.js', () => {
 	const empty = async () => ({ items: [] });
@@ -50,4 +54,16 @@ it('counts EC parts in their own tile and in the total spent', async () => {
 	await expect.element(tile).toHaveAttribute('href', '/u/rogue.serenity/ec-parts');
 	await expect.element(tile).toMatchTextContent(/EC Parts\s*2\s*\$60\.00/);
 	await expect.element(page.getByText(/^Total spent:/)).toMatchTextContent('$100.00');
+});
+
+it('restores the status filter from the address', async () => {
+	fakePage.url = new URL('http://localhost/u/rogue.serenity?status=delivered');
+	await render(WithUserContext, { component: OverviewPage });
+
+	await expect
+		.element(page.getByRole('button', { name: 'Delivered' }))
+		.toHaveAttribute('aria-pressed', 'true');
+	await expect
+		.element(page.getByRole('link', { name: /EC Parts/ }))
+		.toMatchTextContent(/EC Parts\s*1\s/);
 });

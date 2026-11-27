@@ -524,6 +524,18 @@ select:focus-visible {
 	text-overflow: ellipsis;
 }
 
+.search-chip-edit {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	min-width: 0;
+	cursor: text;
+}
+
+.search-chip-edit:hover .search-chip-value {
+	text-decoration: underline;
+}
+
 .search-chip-remove {
 	flex-shrink: 0;
 	display: inline-flex;

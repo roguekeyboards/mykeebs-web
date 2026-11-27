@@ -5,6 +5,8 @@ import WithUserContext from '#lib/components/test-support/WithUserContext.svelte
 import OverviewPage from './+page.svelte';
 import '../../layout.css';
 
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 vi.mock('#lib/api/client.js', () => {
 	const empty = async () => ({ items: [] });
 	return {

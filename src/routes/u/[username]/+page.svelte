@@ -11,6 +11,8 @@
 	import { formatPrice } from '#lib/format.js';
 	import { getUserContext } from '#lib/user-context.js';
 	import { resolve } from '$app/paths';
+	import { syncViewWithUrl } from '#lib/url-view.svelte.js';
+	import { DEFAULT_VIEW, type View } from '#lib/view-params.js';
 	import {
 		STATUS_FILTERS,
 		statusFilterIcon,
@@ -29,6 +31,11 @@
 	const showPrices = $derived(userContext.showPrice);
 
 	let statusFilter = $state<StatusFilter>('all');
+	statusFilter = syncViewWithUrl(
+		() => ({ tags: [], sorts: [] }),
+		(): View => ({ ...DEFAULT_VIEW, status: statusFilter }),
+		(view) => (statusFilter = view.status)
+	).status;
 
 	let stats = $state<CollectionStats | null>(null);
 	let countsLoading = $state(false);

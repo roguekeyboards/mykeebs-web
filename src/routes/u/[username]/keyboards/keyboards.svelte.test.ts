@@ -12,6 +12,8 @@ import { deferred, openDialogs, settled } from '#lib/components/test-support/def
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeyboardsPage from './+page.svelte';
 
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.

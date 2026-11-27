@@ -12,6 +12,8 @@
 		type SearchField
 	} from '#lib/collection-filter.js';
 	import CollectionSearch from './CollectionSearch.svelte';
+	import { syncViewWithUrl } from '#lib/url-view.svelte.js';
+	import { sortSlug, type View } from '#lib/view-params.js';
 	import type { Snippet } from 'svelte';
 	import { ArrowDown, ArrowUp, Plus } from '@lucide/svelte';
 	import {
@@ -72,6 +74,32 @@
 
 	let sortIndex = $state(0);
 	let sortDescending = $state(false);
+
+	// The first sort is the default, so it never needs to be in the address.
+	const sortSlugs = $derived(sortOptions.map((option) => sortSlug(option.label)));
+
+	function applyView(view: View) {
+		statusFilter = view.status;
+		fieldFilters = view.filters;
+		filterText = view.text;
+		filterExpanded = view.filters.length > 0 || view.text !== '';
+		sortIndex = view.sort ? Math.max(sortSlugs.indexOf(view.sort), 0) : 0;
+		sortDescending = view.descending;
+	}
+
+	applyView(
+		syncViewWithUrl(
+			() => ({ tags: searchFields.map((field) => field.tag), sorts: sortSlugs.slice(1) }),
+			() => ({
+				status: statusFilter,
+				filters: fieldFilters,
+				text: filterText,
+				sort: sortIndex > 0 ? (sortSlugs[sortIndex] ?? null) : null,
+				descending: sortDescending
+			}),
+			applyView
+		)
+	);
 
 	let sortedItems = $derived.by(() => {
 		const option = sortOptions[sortIndex];

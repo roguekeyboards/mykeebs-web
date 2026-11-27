@@ -1,4 +1,5 @@
 <script lang="ts" generics="T">
+	import { tick } from 'svelte';
 	import { Search, X } from '@lucide/svelte';
 	import {
 		fieldSuggestions,
@@ -35,6 +36,9 @@
 	let dismissed = $state(false);
 	let activeIndex = $state(-1);
 	let announcement = $state('');
+	// The chip being edited, taken out of the chips while its `tag:value` is back in the text field.
+	let editing = $state<{ index: number; filter: FieldFilter } | null>(null);
+	let showAllValues = $state(false);
 
 	const typing = $derived(parseFieldQuery(text, fields));
 
@@ -44,7 +48,7 @@
 			const chipped = new Set(
 				filters.filter((filter) => filter.tag === tag).map((filter) => filter.value.toLowerCase())
 			);
-			return fieldSuggestions(items, typing.field, typing.query)
+			return fieldSuggestions(items, typing.field, showAllValues ? '' : typing.query)
 				.filter((value) => !chipped.has(value.toLowerCase()))
 				.map((value, index) => ({
 					id: `${uid}-value-${index}`,
@@ -73,17 +77,65 @@
 		requestAnimationFrame(() => input?.focus());
 	}
 
-	function addFilter(filter: FieldFilter) {
-		filters = [...filters, filter];
+	function insertFilter(filter: FieldFilter) {
+		const at = editing ? Math.min(editing.index, filters.length) : filters.length;
+		filters = [...filters.slice(0, at), filter, ...filters.slice(at)];
+		editing = null;
+		showAllValues = false;
 		text = '';
+	}
+
+	function addFilter(filter: FieldFilter) {
+		const unchanged =
+			editing?.filter.tag === filter.tag &&
+			editing.filter.value.toLowerCase() === filter.value.toLowerCase();
+		insertFilter(unchanged && editing ? editing.filter : filter);
 		announcement = `Added filter ${filter.tag}: ${filter.value}`;
 	}
 
 	function removeFilter(index: number) {
 		const removed = filters[index];
 		filters = filters.filter((_, i) => i !== index);
+		if (editing && index < editing.index) editing.index--;
 		announcement = `Removed filter ${removed.tag}: ${removed.value}`;
 		input?.focus();
+	}
+
+	function removeChip(filter: FieldFilter) {
+		finishEdit();
+		const index = filters.indexOf(filter);
+		if (index >= 0) removeFilter(index);
+	}
+
+	async function editChip(filter: FieldFilter) {
+		finishEdit();
+		const index = filters.indexOf(filter);
+		if (index < 0) return;
+		filters = filters.filter((_, i) => i !== index);
+		editing = { index, filter };
+		showAllValues = true;
+		dismissed = false;
+		text = `${filter.tag}:${filter.value}`;
+		await tick();
+		input?.focus();
+		input?.setSelectionRange(filter.tag.length + 1, text.length);
+	}
+
+	function cancelEdit() {
+		if (editing) insertFilter(editing.filter);
+	}
+
+	// Leaving the field keeps an edited value as its chip, and an emptied one as no chip.
+	function finishEdit() {
+		if (!editing) return;
+		const value = typing?.query.trim();
+		if (typing && value) {
+			addFilter({ tag: typing.field.tag, value });
+		} else {
+			if (typing) text = '';
+			editing = null;
+			showAllValues = false;
+		}
 	}
 
 	function pick(option: Option) {
@@ -123,9 +175,9 @@
 			}
 			case 'Tab': {
 				// Completes what's typed with the highlighted suggestion, or the first one. With
-				// nothing typed (a bare `tag:` included), Tab moves focus as usual.
+				// nothing typed (a bare `tag:` or a chip's untouched value included), Tab moves focus.
 				const option = options[Math.max(activeIndex, 0)];
-				const typed = typing ? typing.query.trim() : text.trim();
+				const typed = !showAllValues && (typing ? typing.query.trim() : text.trim());
 				if (panelOpen && option && !event.shiftKey && (activeIndex >= 0 || typed)) {
 					event.preventDefault();
 					pick(option);
@@ -134,7 +186,9 @@
 			}
 			case 'Escape':
 				event.preventDefault();
-				if (panelOpen) {
+				if (editing) {
+					cancelEdit();
+				} else if (panelOpen) {
 					dismissed = true;
 				} else if (text && filters.length > 0) {
 					// Typed text goes first, so one Escape doesn't also throw away the chips.
@@ -157,6 +211,7 @@
 
 	function handleBlur() {
 		focused = false;
+		finishEdit();
 		if (!text && filters.length === 0) expanded = false;
 	}
 </script>
@@ -171,15 +226,27 @@
 		>
 			{#each filters as filter, index (`${index}:${filter.tag}:${filter.value}`)}
 				<span class="search-chip">
-					<span class="font-mono">{filter.tag}:</span>
-					<span class="search-chip-value">{filter.value}</span>
+					<button
+						type="button"
+						class="search-chip-edit"
+						aria-label="Edit filter {filter.tag}: {filter.value}"
+						onmousedown={(event) => event.preventDefault()}
+						onclick={(event) => {
+							event.stopPropagation();
+							editChip(filter);
+						}}
+					>
+						<span class="font-mono">{filter.tag}:</span>
+						<span class="search-chip-value">{filter.value}</span>
+					</button>
 					<button
 						type="button"
 						class="search-chip-remove"
 						aria-label="Remove filter {filter.tag}: {filter.value}"
+						onmousedown={(event) => event.preventDefault()}
 						onclick={(event) => {
 							event.stopPropagation();
-							removeFilter(index);
+							removeChip(filter);
 						}}
 					>
 						<X class="h-3 w-3" />
@@ -202,7 +269,10 @@
 				bind:value={text}
 				onfocus={() => (focused = true)}
 				onblur={handleBlur}
-				oninput={() => (dismissed = false)}
+				oninput={() => {
+					dismissed = false;
+					showAllValues = false;
+				}}
 				onkeydown={handleKeydown}
 			/>
 		</div>

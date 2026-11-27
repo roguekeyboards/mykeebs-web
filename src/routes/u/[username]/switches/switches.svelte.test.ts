@@ -13,6 +13,8 @@ import WithUserContext from '#lib/components/test-support/WithUserContext.svelte
 import SwitchesPage from './+page.svelte';
 import { MAX_IMAGE_BYTES } from '#lib/image-errors.js';
 
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
 		new File(

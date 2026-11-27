@@ -1,10 +1,23 @@
 import { cdp, page, userEvent } from 'vitest/browser';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createRawSnippet } from 'svelte';
 import CollectionGrid from './CollectionGrid.svelte';
 import { deferred, settled } from './test-support/deferred.js';
+import { page as fakePage } from './test-support/fake-page.svelte.js';
+import { replaceState } from '$app/navigation';
 import '../../routes/layout.css';
+
+vi.mock('$app/state', () => import('./test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
+
+beforeEach(() => {
+	fakePage.url = new URL('http://localhost/u/rogue.serenity/keyboards');
+	vi.mocked(replaceState).mockReset();
+	vi.mocked(replaceState).mockImplementation(async (url) => {
+		fakePage.url = new URL(String(url));
+	});
+});
 
 type Item = { id: string; name: string; brand: string; price?: number; status?: string };
 
@@ -489,6 +502,105 @@ describe('CollectionGrid.svelte', () => {
 
 			await expect.element(filterBox()).toHaveValue('b');
 		});
+
+		describe('editing a chip', () => {
+			const chips = () =>
+				page
+					.getByRole('button', { name: /^Edit filter/ })
+					.all()
+					.map((chip) => chip.element().getAttribute('aria-label'));
+
+			async function chipBowl() {
+				await openSearch();
+				await option(/brand:/).click();
+				await option('Bowl').click();
+			}
+
+			it('puts its value back in the box, selected, suggesting every value', async () => {
+				await chipBowl();
+				await userEvent.keyboard('status:deliv{Enter}');
+
+				await page.getByRole('button', { name: 'Edit filter brand: Bowl' }).click();
+
+				await expect.element(filterBox()).toHaveValue('brand:Bowl');
+				await expect.element(filterBox()).toHaveFocus();
+				const box = filterBox().element() as HTMLInputElement;
+				expect([box.selectionStart, box.selectionEnd]).toEqual([6, 10]);
+				await expect.element(option('Typeface')).toBeInTheDocument();
+
+				await option('Typeface').click();
+
+				expect(chips()).toEqual(['Edit filter brand: Typeface', 'Edit filter status: deliv']);
+				expect(await shown()).toEqual(['Kafka']);
+			});
+
+			it('leaves the value alone when Tab moves on before anything is typed', async () => {
+				await openSearch();
+				await option(/brand:/).click();
+				await option('KBDFans').click();
+
+				await page.getByRole('button', { name: 'Edit filter brand: KBDFans' }).click();
+				await userEvent.keyboard('{Tab}');
+
+				expect(chips()).toEqual(['Edit filter brand: KBDFans']);
+			});
+
+			it("finishes the edit when another chip's buttons are clicked", async () => {
+				await chipBowl();
+				await userEvent.keyboard('status:deliv{Enter}');
+
+				await page.getByRole('button', { name: 'Edit filter brand: Bowl' }).click();
+				await userEvent.keyboard('kbd');
+				await page.getByRole('button', { name: 'Remove filter status: deliv' }).click();
+
+				expect(chips()).toEqual(['Edit filter brand: kbd']);
+
+				await page.getByRole('button', { name: 'Edit filter brand: kbd' }).click();
+				await expect.element(filterBox()).toHaveValue('brand:kbd');
+			});
+
+			it('replaces the value with what is typed', async () => {
+				await chipBowl();
+
+				await page.getByRole('button', { name: 'Edit filter brand: Bowl' }).click();
+				await userEvent.keyboard('kbd{Enter}');
+
+				expect(chips()).toEqual(['Edit filter brand: kbd']);
+				expect(await shown()).toEqual(['Agar']);
+			});
+
+			it('puts the chip back as it was on Escape', async () => {
+				await chipBowl();
+
+				await page.getByRole('button', { name: 'Edit filter brand: Bowl' }).click();
+				await userEvent.keyboard('kbd{Escape}');
+
+				expect(chips()).toEqual(['Edit filter brand: Bowl']);
+				await expect.element(filterBox()).toHaveValue('');
+				expect(await shown()).toEqual(['Manta']);
+			});
+
+			it('keeps an edited value when focus leaves, and drops an emptied one', async () => {
+				await chipBowl();
+
+				await page.getByRole('button', { name: 'Edit filter brand: Bowl' }).click();
+				await userEvent.keyboard('kbd');
+				(filterBox().element() as HTMLInputElement).blur();
+
+				await expect
+					.element(page.getByRole('button', { name: 'Edit filter brand: kbd' }))
+					.toBeInTheDocument();
+
+				await page.getByRole('button', { name: 'Edit filter brand: kbd' }).click();
+				await userEvent.keyboard('{Backspace}');
+				(filterBox().element() as HTMLInputElement).blur();
+
+				await expect
+					.element(page.getByRole('button', { name: /^Edit filter/ }))
+					.not.toBeInTheDocument();
+				expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']);
+			});
+		});
 	});
 
 	describe('sorting', () => {
@@ -561,6 +673,120 @@ describe('CollectionGrid.svelte', () => {
 			await shown();
 
 			await expect.element(page.getByRole('button', { name: /^Add/ })).not.toBeInTheDocument();
+		});
+	});
+
+	describe('the address', () => {
+		const searchFields = [
+			{ tag: 'brand', description: 'Who makes it', values: (item: Item) => [item.brand] }
+		];
+		const at = (search: string) =>
+			(fakePage.url = new URL(`http://localhost/u/rogue.serenity/keyboards${search}`));
+
+		it('restores the status and filters from it', async () => {
+			at('?status=delivered&f=brand:=Bowl');
+			await renderGrid({ searchFields });
+
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Manta']));
+			await expect
+				.element(page.getByRole('button', { name: 'Remove filter brand: Bowl' }))
+				.toBeInTheDocument();
+			await expect
+				.element(page.getByRole('button', { name: 'Delivered' }))
+				.toHaveAttribute('aria-pressed', 'true');
+		});
+
+		it('restores typed filters and text as substring matches', async () => {
+			at('?f=brand:ow&q=man');
+			await renderGrid({ searchFields });
+
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Manta']));
+			await expect.element(page.getByRole('combobox', { name: 'Filter' })).toHaveValue('man');
+		});
+
+		it('restores the sort and its direction from it', async () => {
+			at('?sort=price&desc=1');
+			await renderGrid();
+
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Manta', 'Agar', 'Kafka']));
+			await expect
+				.element(page.getByRole('combobox', { name: 'Sort by' }))
+				.toHaveDisplayValue('Price');
+		});
+
+		it("ignores what it doesn't recognise", async () => {
+			at('?status=lost&f=colour:red&f=brand:&sort=weight&desc=yes');
+			await renderGrid({ searchFields });
+
+			expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']);
+			await expect
+				.element(page.getByRole('button', { name: /Remove filter/ }))
+				.not.toBeInTheDocument();
+			await expect
+				.element(page.getByRole('button', { name: 'Sort descending' }))
+				.toBeInTheDocument();
+		});
+
+		it('puts changes in it, leaving its other parameters alone', async () => {
+			at('?ref=chat');
+			await renderGrid({ searchFields });
+			await shown();
+
+			await page.getByRole('button', { name: 'Delivered' }).click();
+			await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Price');
+			await page.getByRole('button', { name: 'Filter' }).click();
+			await page.getByRole('option', { name: /brand:/ }).click();
+			await page.getByRole('option', { name: 'Bowl' }).click();
+
+			await vi.waitFor(() =>
+				expect(fakePage.url.search).toBe('?ref=chat&status=delivered&f=brand%3A%3DBowl&sort=price')
+			);
+		});
+
+		it('leaves defaults out of it', async () => {
+			at('?status=delivered&sort=price&desc=1');
+			await renderGrid();
+			await shown();
+
+			await page.getByRole('button', { name: 'All' }).click();
+			await page.getByRole('combobox', { name: 'Sort by' }).selectOptions('Name');
+			await page.getByRole('button', { name: 'Sort ascending' }).click();
+
+			await vi.waitFor(() => expect(fakePage.url.search).toBe(''));
+		});
+
+		it('waits for a pause in typing before updating it', async () => {
+			await renderGrid({ searchFields });
+			await shown();
+			await page.getByRole('button', { name: 'Filter' }).click();
+
+			await userEvent.keyboard('kaf');
+
+			await vi.waitFor(() => expect(fakePage.url.search).toBe('?q=kaf'));
+			expect(replaceState).toHaveBeenCalledTimes(1);
+		});
+
+		it('drops a change still waiting to be written when it navigates away', async () => {
+			await renderGrid();
+			await shown();
+
+			await page.getByRole('button', { name: 'Delivered' }).click();
+			fakePage.url = new URL('http://localhost/u/someone.else/keyboards');
+
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']));
+			await new Promise((resolve) => setTimeout(resolve, 400));
+			expect(replaceState).not.toHaveBeenCalled();
+		});
+
+		it('follows a navigation to a new address', async () => {
+			at('?status=delivered');
+			await renderGrid();
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Kafka', 'Manta']));
+
+			at('');
+
+			await vi.waitFor(async () => expect(await shown()).toEqual(['Agar', 'Kafka', 'Manta']));
+			expect(replaceState).not.toHaveBeenCalled();
 		});
 	});
 });

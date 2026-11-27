@@ -7,6 +7,8 @@ import { deferred, openDialogs, settled } from '#lib/components/test-support/def
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import KeycapSetsPage from './+page.svelte';
 
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) =>
 		new File([file], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })
