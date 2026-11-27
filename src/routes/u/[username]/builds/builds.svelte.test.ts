@@ -6,6 +6,8 @@ import { buildsApi, keyboardsApi } from '#lib/api/client.js';
 import WithUserContext from '#lib/components/test-support/WithUserContext.svelte';
 import BuildsPage from './+page.svelte';
 
+vi.mock('$app/state', () => import('#lib/components/test-support/fake-page.svelte.js'));
+vi.mock('$app/navigation', () => ({ replaceState: vi.fn() }));
 vi.mock('#lib/image-resize.js', () => ({
 	prepareImage: async (file: File) => {
 		// The first photo finishes converting last, so out-of-order uploads would show.
