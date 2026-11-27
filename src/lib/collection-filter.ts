@@ -15,6 +15,7 @@ export type SearchField<T> = {
 	tag: string;
 	description: string;
 	values: (item: T) => (string | null | undefined)[];
+	matches?: (item: T, value: string) => boolean;
 };
 
 // A value picked from the suggestions matches exactly; a typed one matches as a substring.
@@ -51,6 +52,7 @@ export function filterByFields<T>(
 	return items.filter((item) =>
 		filters.every((filter) => {
 			const field = fields.find((candidate) => candidate.tag === filter.tag);
+			if (field?.matches) return field.matches(item, filter.value);
 			const needle = filter.value.trim().toLowerCase();
 			const matches = (value: string) =>
 				filter.exact ? value.trim().toLowerCase() === needle : value.toLowerCase().includes(needle);
@@ -94,6 +96,19 @@ export function searchCollection<T>(
 	if (!typing) return filterByFields(searchItems(items, text), fields, filters);
 	const typed = typing.query.trim() ? [{ tag: typing.field.tag, value: typing.query }] : [];
 	return filterByFields(items, fields, [...filters, ...typed]);
+}
+
+// `available:90` keeps items with at least 90 free; anything but a whole number keeps none.
+export function atLeast(quantity: number, value: string): boolean {
+	const trimmed = value.trim();
+	return /^\d+$/.test(trimmed) && quantity >= Number(trimmed);
+}
+
+export function yesOrNo(value: string): boolean | undefined {
+	const answer = value.trim().toLowerCase();
+	if (['yes', 'y', 'true'].includes(answer)) return true;
+	if (['no', 'n', 'false'].includes(answer)) return false;
+	return undefined;
 }
 
 export function compareValues(a: SortValue, b: SortValue): number {

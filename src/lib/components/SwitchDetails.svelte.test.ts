@@ -9,7 +9,14 @@ const FRESH =
 	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 function sw(url: string): Switch {
-	return { id: 'sw', brand: 'HMX', name: 'Aperol', type: 'Linear', image: { url } };
+	return {
+		id: 'sw',
+		brand: 'HMX',
+		availableQuantity: 0,
+		name: 'Aperol',
+		type: 'Linear',
+		image: { url }
+	};
 }
 
 describe('SwitchDetails.svelte', () => {

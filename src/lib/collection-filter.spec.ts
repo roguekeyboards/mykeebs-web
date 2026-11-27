@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+	atLeast,
+	yesOrNo,
 	compareValues,
 	fieldSuggestions,
 	filterByFields,
@@ -242,10 +244,47 @@ describe('filterByFields', () => {
 		).toEqual([]);
 	});
 
+	it("uses a field's own match in place of its values", () => {
+		const kitCount: SearchField<Set> = {
+			tag: 'kits',
+			description: 'At least this many kits',
+			values: () => [],
+			matches: (set, value) => atLeast(set.kits?.length ?? 0, value)
+		};
+
+		expect(
+			setNames(filterByFields([olivia, modern, nord], [kitCount], [{ tag: 'kits', value: '2' }]))
+		).toEqual(['Olivia']);
+	});
+
 	it('ignores a filter on a field the page no longer offers', () => {
 		expect(filterByFields([olivia], setFields, [{ tag: 'profile', value: 'cherry' }])).toEqual([
 			olivia
 		]);
+	});
+});
+
+describe('atLeast', () => {
+	it('is true for a whole number up to the quantity', () => {
+		expect(atLeast(90, '90')).toBe(true);
+		expect(atLeast(90, ' 0 ')).toBe(true);
+		expect(atLeast(90, '91')).toBe(false);
+	});
+
+	it('is false for anything but a whole number', () => {
+		for (const value of ['', ' ', 'yes', '-1', '7.5', '70x'])
+			expect(atLeast(90, value)).toBe(false);
+	});
+});
+
+describe('yesOrNo', () => {
+	it('reads yes, y and true as yes, and no, n and false as no, ignoring case', () => {
+		for (const value of ['yes', ' Y ', 'TRUE']) expect(yesOrNo(value)).toBe(true);
+		for (const value of ['no', 'N', ' false ']) expect(yesOrNo(value)).toBe(false);
+	});
+
+	it('is undefined for anything else', () => {
+		for (const value of ['', 'ye', 'o', 'maybe']) expect(yesOrNo(value)).toBeUndefined();
 	});
 });
 

@@ -7,7 +7,7 @@ function kit(kitId: string, url?: string): KeycapKit {
 }
 
 function set(primaryKitId: string | undefined, kits?: KeycapKit[]): KeycapSet {
-	return { id: 's', brand: 'GMK', name: 'Olivia', primaryKitId, kits };
+	return { id: 's', brand: 'GMK', available: false, name: 'Olivia', primaryKitId, kits };
 }
 
 describe('primaryKitImageUrl', () => {

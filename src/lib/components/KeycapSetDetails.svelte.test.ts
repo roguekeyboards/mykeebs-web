@@ -16,7 +16,8 @@ function set(overrides: Partial<KeycapSet> = {}): KeycapSet {
 		kits: [{ kitId: 'base', name: 'Base' }],
 		totalCost: 51,
 		currency: 'USD',
-		...overrides
+		...overrides,
+		available: overrides.available ?? false
 	};
 }
 

@@ -26,6 +26,7 @@ const lookups: Record<string, string[]> = {
 const sw: SwitchModel = {
 	id: 'sw-1',
 	brand: 'HMX',
+	availableQuantity: 0,
 	manufacturer: 'Huano',
 	name: 'Aperol',
 	type: 'Linear',

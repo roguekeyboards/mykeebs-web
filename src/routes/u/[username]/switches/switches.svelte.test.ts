@@ -47,6 +47,7 @@ const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAA
 const aperol: Switch = {
 	id: 'sw-1',
 	brand: 'HMX',
+	availableQuantity: 0,
 	name: 'Aperol',
 	type: 'Linear',
 	visibility: Visibility.Public,
@@ -100,6 +101,26 @@ describe('switches page', () => {
 		await expect.element(page.getByRole('button', { name: 'Add switch' })).toBeInTheDocument();
 		await expect.element(page.getByRole('option', { name: 'Price' })).toBeInTheDocument();
 		await expect.element(page.getByRole('option', { name: 'Visibility' })).toBeInTheDocument();
+	});
+
+	it('filters to the switches with at least the typed number free, for visitors too', async () => {
+		api.listSwitches.mockResolvedValue({
+			items: [
+				{ ...aperol, availableQuantity: 90 },
+				{ ...aperol, id: 'sw-2', name: 'Oil King', availableQuantity: 40 }
+			]
+		});
+		await renderPage(false);
+		await expect.element(page.getByRole('button', { name: /Oil King/ })).toBeInTheDocument();
+
+		await page.getByRole('button', { name: 'Filter' }).click();
+		await userEvent.type(page.getByRole('combobox', { name: 'Filter' }), 'available:70{Enter}');
+
+		await expect
+			.element(page.getByRole('button', { name: 'Remove filter available: 70' }))
+			.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: /Oil King/ })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: /Aperol/ })).toBeInTheDocument();
 	});
 
 	it('hides adding, editing, deleting, and private sorts from visitors', async () => {
@@ -474,6 +495,7 @@ describe('switches page', () => {
 		const oilKing: Switch = {
 			id: 'sw-2',
 			brand: 'Gateron',
+			availableQuantity: 0,
 			name: 'Oil King',
 			type: 'Linear',
 			visibility: Visibility.Public
