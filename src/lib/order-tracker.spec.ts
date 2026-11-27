@@ -121,6 +121,7 @@ describe('ordersAwaitingDelivery', () => {
 				{
 					id: 'set-1',
 					brand: 'GMK',
+					available: false,
 					name: 'Olivia',
 					kits: [
 						{ kitId: 'base', name: 'Base', purchase: { orderStatus: 'Ordered' } },
@@ -132,6 +133,7 @@ describe('ordersAwaitingDelivery', () => {
 				{
 					id: 'sw-1',
 					brand: 'HMX',
+					availableQuantity: 0,
 					name: 'Aperol',
 					type: 'Linear',
 					purchases: [
@@ -216,7 +218,13 @@ describe('sectionsByQuarter', () => {
 			ordersAwaitingDelivery({
 				...empty,
 				keycapSets: [
-					{ id: 'set-1', brand: 'GMK', name: 'Olivia', kits: [{ kitId: name, name, purchase }] }
+					{
+						id: 'set-1',
+						brand: 'GMK',
+						available: false,
+						name: 'Olivia',
+						kits: [{ kitId: name, name, purchase }]
+					}
 				]
 			});
 		const orders = [

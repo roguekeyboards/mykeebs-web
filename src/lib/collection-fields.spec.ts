@@ -46,6 +46,7 @@ describe('collection fields', () => {
 		const sw: Switch = {
 			id: 'sw-1',
 			brand: 'Gateron',
+			availableQuantity: 0,
 			manufacturer: 'Gateron',
 			name: 'Oil King',
 			type: 'Linear',
@@ -63,14 +64,31 @@ describe('collection fields', () => {
 			bottom: ['Nylon'],
 			stem: ['POM'],
 			vendor: ['Divinikey'],
-			status: ['Ordered']
+			status: ['Ordered'],
+			available: []
 		});
+	});
+
+	it('keeps switches with at least the asked-for number free', () => {
+		const available = switchFields.find((field) => field.tag === 'available')!;
+		const sw: Switch = {
+			id: 'sw-3',
+			brand: 'HMX',
+			name: 'Aperol',
+			type: 'Linear',
+			availableQuantity: 90
+		};
+
+		expect(available.matches?.(sw, '90')).toBe(true);
+		expect(available.matches?.(sw, ' 70 ')).toBe(true);
+		expect(available.matches?.(sw, '91')).toBe(false);
 	});
 
 	it('reads the vendor and status of every purchase', () => {
 		const sw: Switch = {
 			id: 'sw-2',
 			brand: 'Gateron',
+			availableQuantity: 0,
 			name: 'Oil King',
 			type: 'Linear',
 			purchases: [
@@ -122,6 +140,7 @@ describe('collection fields', () => {
 		const set: KeycapSet = {
 			id: 'set-1',
 			brand: 'GMK',
+			available: false,
 			name: 'Olivia',
 			profile: 'Cherry',
 			material: 'DualShot ABS',
@@ -139,8 +158,21 @@ describe('collection fields', () => {
 			material: ['DualShot ABS'],
 			kit: ['Base', 'Novelties'],
 			vendor: ['NovelKeys', 'Dixie Mech'],
-			status: ['Shipped']
+			status: ['Shipped'],
+			available: ['no']
 		});
+		expect(valuesByTag(keycapSetFields, { ...set, available: true }).available).toEqual(['yes']);
+	});
+
+	it('keeps keycap sets by whether they are free for a new build', () => {
+		const available = keycapSetFields.find((field) => field.tag === 'available')!;
+		const free: KeycapSet = { id: 'set-3', brand: 'GMK', name: 'Olivia', available: true };
+		const used: KeycapSet = { ...free, available: false };
+
+		expect(available.matches?.(free, 'yes')).toBe(true);
+		expect(available.matches?.(free, 'no')).toBe(false);
+		expect(available.matches?.(used, 'false')).toBe(true);
+		expect(available.matches?.(used, 'o')).toBe(false);
 	});
 
 	it("reads a build's keyboard, and the parts, keycap sets and types of all its builds", () => {
@@ -191,7 +223,7 @@ describe('collection fields', () => {
 
 	it('gives nothing for fields an item leaves out', () => {
 		const bare: Keyboard = { id: 'kb-2', brand: 'Bowl', name: 'Manta' };
-		const set: KeycapSet = { id: 'set-2', brand: 'SWG', name: 'Nord' };
+		const set: KeycapSet = { id: 'set-2', brand: 'SWG', available: false, name: 'Nord' };
 
 		expect(valuesByTag(keyboardFields, bare).size).toEqual([undefined]);
 		expect(valuesByTag(keycapSetFields, set).kit).toEqual([]);

@@ -271,6 +271,7 @@ describe('stale-url refresh with moderation state', () => {
 		const shown: Switch = {
 			id: 'sw',
 			brand: 'HMX',
+			availableQuantity: 0,
 			name: 'Aperol',
 			type: 'Linear',
 			image: pending
@@ -284,6 +285,7 @@ describe('stale-url refresh with moderation state', () => {
 		const shown: KeycapSet = {
 			id: 's',
 			brand: 'GMK',
+			available: false,
 			name: 'Olivia',
 			kits: [{ kitId: 'base', name: 'Base', image: pending }]
 		};
@@ -297,6 +299,7 @@ describe('withFreshImage', () => {
 	const sw = (name: string, url?: string): Switch => ({
 		id: 'sw',
 		brand: 'HMX',
+		availableQuantity: 0,
 		name,
 		type: 'Linear',
 		image: url ? { url } : undefined
@@ -321,6 +324,7 @@ describe('withFreshKitImages', () => {
 	const set = (name: string, kits: [string, string?][]): KeycapSet => ({
 		id: 's',
 		brand: 'GMK',
+		available: false,
 		name,
 		kits: kits.map(([kitId, url]) => ({ kitId, name: kitId, image: url ? { url } : undefined }))
 	});

@@ -44,6 +44,7 @@ beforeEach(() => {
 			{
 				id: 'set-1',
 				brand: 'GMK',
+				available: false,
 				name: 'Olivia',
 				kits: [
 					{
@@ -65,6 +66,7 @@ beforeEach(() => {
 			{
 				id: 'sw-1',
 				brand: 'HMX',
+				availableQuantity: 0,
 				name: 'Aperol',
 				type: 'Linear',
 				purchases: [{ orderStatus: 'Ordered', quantity: 90, price: 30, currency: 'USD' }]

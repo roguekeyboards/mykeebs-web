@@ -687,6 +687,7 @@ describe('keyboard builds page', () => {
 			vi.mocked(keycapSetsApi.getKeycapSet).mockResolvedValue({
 				id: 'set-1',
 				brand: 'GMK',
+				available: false,
 				name: 'Fremen',
 				kits: [{ kitId: 'base', name: 'Base' }]
 			});
@@ -704,6 +705,7 @@ describe('keyboard builds page', () => {
 			vi.mocked(keycapSetsApi.getKeycapSet).mockResolvedValue({
 				id: 'set-1',
 				brand: 'GMK',
+				available: false,
 				name: 'Fremen',
 				kits: []
 			});

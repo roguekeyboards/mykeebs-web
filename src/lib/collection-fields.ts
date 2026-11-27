@@ -1,6 +1,6 @@
 import type { ECPart, Keyboard, KeycapSet, Switch } from '@roguekeyboards/mykeebs-api-client';
 import { ecPartMaterial, ecPartTypeLabel } from '#lib/ec-parts.js';
-import type { SearchField } from '#lib/collection-filter.js';
+import { atLeast, yesOrNo, type SearchField } from '#lib/collection-filter.js';
 import type { KeyboardBuildGroup } from '#lib/build-groups.js';
 
 export const keyboardFields: SearchField<Keyboard>[] = [
@@ -38,6 +38,12 @@ export const switchFields: SearchField<Switch>[] = [
 		tag: 'status',
 		description: 'Order status',
 		values: (sw) => sw.purchases?.map((p) => p.orderStatus) ?? []
+	},
+	{
+		tag: 'available',
+		description: 'At least this many free for a new build',
+		values: () => [],
+		matches: (sw, value) => atLeast(sw.availableQuantity, value)
 	}
 ];
 
@@ -78,7 +84,13 @@ export const keycapSetFields: SearchField<KeycapSet>[] = [
 		description: 'Where any kit was bought',
 		values: (set) => set.kits?.map((kit) => kit.purchase?.vendor) ?? []
 	},
-	{ tag: 'status', description: 'Order status', values: (set) => [set.orderStatus] }
+	{ tag: 'status', description: 'Order status', values: (set) => [set.orderStatus] },
+	{
+		tag: 'available',
+		description: 'Free for a new build: yes or no',
+		values: (set) => [set.available ? 'yes' : 'no'],
+		matches: (set, value) => yesOrNo(value) === set.available
+	}
 ];
 
 export const buildFields: SearchField<KeyboardBuildGroup>[] = [

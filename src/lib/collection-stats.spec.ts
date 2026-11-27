@@ -8,6 +8,7 @@ function sw({ orderStatus, price, currency }: Summary): Switch {
 	return {
 		id: 's',
 		brand: 'HMX',
+		availableQuantity: 0,
 		name: 'Aperol',
 		type: 'Linear',
 		orderStatus,
@@ -33,7 +34,7 @@ function kb(id: string, fields: Pick<Keyboard, 'purchase' | 'totalCost' | 'curre
 }
 
 function set(purchase: Pick<KeycapSet, 'orderStatus' | 'totalCost' | 'currency'>): KeycapSet {
-	return { id: 'c', brand: 'GMK', name: 'Olivia', ...purchase };
+	return { id: 'c', brand: 'GMK', available: false, name: 'Olivia', ...purchase };
 }
 
 const empty = { keyboards: [], switches: [], ecParts: [], keycapSets: [], builds: [] };

@@ -34,6 +34,7 @@ const api = vi.mocked(keycapSetsApi);
 const olivia: KeycapSet = {
 	id: 'set-1',
 	brand: 'GMK',
+	available: false,
 	name: 'Olivia',
 	primaryKitId: 'base',
 	kits: [
@@ -93,6 +94,7 @@ describe('keycap sets page', () => {
 		const nord: KeycapSet = {
 			id: 'set-2',
 			brand: 'SWG',
+			available: false,
 			name: 'Nord',
 			kits: [{ kitId: 'base', name: 'Base' }]
 		};
@@ -106,6 +108,20 @@ describe('keycap sets page', () => {
 
 		await expect.element(page.getByRole('button', { name: /Nord/ })).not.toBeInTheDocument();
 		await expect.element(page.getByRole('button', { name: /Olivia/ })).toBeInTheDocument();
+	});
+
+	it('filters to the sets free for a new build, for visitors too', async () => {
+		const nord: KeycapSet = { id: 'set-2', brand: 'SWG', name: 'Nord', available: true, kits: [] };
+		api.listKeycapSets.mockResolvedValue({ items: [olivia, nord] });
+		await renderPage(false);
+		await expect.element(page.getByRole('button', { name: /Olivia/ })).toBeInTheDocument();
+
+		await page.getByRole('button', { name: 'Filter' }).click();
+		await page.getByRole('option', { name: /available:/ }).click();
+		await page.getByRole('option', { name: 'yes' }).click();
+
+		await expect.element(page.getByRole('button', { name: /Olivia/ })).not.toBeInTheDocument();
+		await expect.element(page.getByRole('button', { name: /Nord/ })).toBeInTheDocument();
 	});
 
 	it('offers the owner cost and visibility sorts that visitors do not get', async () => {
@@ -148,6 +164,7 @@ describe('keycap sets page', () => {
 				{
 					id: 'set-2',
 					brand: 'GMK',
+					available: false,
 					name: 'Botanical',
 					kits: [kit('base', '2024-02-01', '2024-12-01'), kit('novs', '2024-02-15', '2025-03-01')]
 				}
@@ -166,7 +183,13 @@ describe('keycap sets page', () => {
 
 	describe('creating a set', () => {
 		it('creates the set and opens it so kits can be added next', async () => {
-			const created: KeycapSet = { id: 'set-2', brand: 'GMK', name: 'Botanical', kits: [] };
+			const created: KeycapSet = {
+				id: 'set-2',
+				brand: 'GMK',
+				available: false,
+				name: 'Botanical',
+				kits: []
+			};
 			api.createKeycapSet.mockResolvedValue(created);
 			await renderPage();
 
@@ -641,7 +664,13 @@ describe('keycap sets page', () => {
 		});
 
 		describe('a late result for something that was closed', () => {
-			const nocturne: KeycapSet = { id: 'set-2', brand: 'GMK', name: 'Nocturne', kits: [] };
+			const nocturne: KeycapSet = {
+				id: 'set-2',
+				brand: 'GMK',
+				available: false,
+				name: 'Nocturne',
+				kits: []
+			};
 			const kitFile = () => page.elementLocator(document.querySelector('input[type="file"]')!);
 			const png = new File(['png'], 'kit.png', { type: 'image/png' });
 
