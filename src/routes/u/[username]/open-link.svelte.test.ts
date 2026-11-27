@@ -76,3 +76,39 @@ describe('a link to one item', () => {
 		expect(String(url)).toBe(`http://localhost/u/rogue.serenity/${list}`);
 	});
 });
+
+describe('sharing an item', () => {
+	it.each([
+		['keyboards', KeyboardsPage],
+		['switches', SwitchesPage],
+		['ec-parts', ECPartsPage],
+		['keycap-sets', KeycapSetsPage]
+	])('copies a link to it from the %s page, keeping the filters', async (list, component) => {
+		const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+		location.url = new URL(`http://localhost/u/rogue.serenity/${list}?q=bra`);
+		await render(WithUserContext, { component });
+
+		await page.getByRole('button', { name: /Bravo/ }).click();
+		await page.getByRole('button', { name: 'Share link to Bravo' }).click();
+
+		expect(writeText).toHaveBeenCalledWith(
+			`http://localhost/u/rogue.serenity/${list}?q=bra&open=b`
+		);
+		await expect
+			.element(page.getByRole('status').filter({ hasText: 'Link copied' }))
+			.toBeInTheDocument();
+	});
+});
+
+describe('a link to an item that is not there', () => {
+	it('says so instead of opening nothing', async () => {
+		location.url = new URL('http://localhost/u/rogue.serenity/switches?open=gone');
+
+		await render(WithUserContext, { component: SwitchesPage });
+
+		await expect
+			.element(page.getByRole('alert').filter({ hasText: "That item isn't available" }))
+			.toBeInTheDocument();
+		await expect.element(page.getByRole('dialog')).not.toBeInTheDocument();
+	});
+});

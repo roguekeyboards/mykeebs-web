@@ -12,6 +12,7 @@
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
 	import { keyboardFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
 	import type { KeyboardParts } from '#lib/keyboard-parts.js';
@@ -361,6 +362,11 @@
 	{#snippet headerExtra()}
 		{#if modal.mode === 'view'}
 			<VisibilityBadge visibility={modal.keyboard.visibility} />
+			<ShareButton
+				id={modal.keyboard.id ?? ''}
+				title={modal.keyboard.name}
+				visibility={modal.keyboard.visibility}
+			/>
 		{/if}
 	{/snippet}
 	{#if modal.mode === 'view'}

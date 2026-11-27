@@ -12,6 +12,7 @@
 		type SearchField
 	} from '#lib/collection-filter.js';
 	import CollectionSearch from './CollectionSearch.svelte';
+	import PageNotice from './PageNotice.svelte';
 	import { syncViewWithUrl } from '#lib/url-view.svelte.js';
 	import { sortSlug, type View } from '#lib/view-params.js';
 	import type { Snippet } from 'svelte';
@@ -62,6 +63,7 @@
 	let filterText = $state('');
 	let fieldFilters = $state<FieldFilter[]>([]);
 	let filterExpanded = $state(false);
+	let missingItem = $state(false);
 
 	let filteredItems = $derived(
 		searchCollection(
@@ -129,6 +131,7 @@
 	}
 
 	function openRequestedItem() {
+		missingItem = false;
 		const key = page.url.searchParams.get('open');
 		if (key === null) return;
 		const url = new URL(page.url.href);
@@ -137,6 +140,7 @@
 		replaceState(url, page.state);
 		const item = items.find((i) => itemKey(i) === key);
 		if (item) onOpen?.(item);
+		else missingItem = true;
 	}
 
 	// Lets parents reload without remounting, which would reset filter/sort/search.
@@ -168,6 +172,11 @@
 		<p class="px-4 pt-4 text-center text-sm" role="alert" style="color: var(--danger)">
 			Could not refresh this list, so it may be out of date.
 		</p>
+	{/if}
+	{#if missingItem}
+		<PageNotice onDismiss={() => (missingItem = false)}>
+			That item isn't available. It may be private, or it may have been deleted.
+		</PageNotice>
 	{/if}
 	{#if getOrderStatus}
 		<div class="mt-4 flex justify-center px-4">

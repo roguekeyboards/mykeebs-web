@@ -12,6 +12,7 @@
 	import CollectionGrid from '#lib/components/CollectionGrid.svelte';
 	import { ecPartFields } from '#lib/collection-fields.js';
 	import Modal from '#lib/components/Modal.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
 	import DeleteBlocked from '#lib/components/DeleteBlocked.svelte';
 	import { deleteFailure } from '#lib/delete-blocked.js';
 	import { stagedUploadOutcome, uploadImage, uploadEach } from '#lib/upload.js';
@@ -297,6 +298,11 @@
 	{#snippet headerExtra()}
 		{#if modal.mode === 'view'}
 			<VisibilityBadge visibility={modal.part.visibility} />
+			<ShareButton
+				id={modal.part.id ?? ''}
+				title={modal.part.name}
+				visibility={modal.part.visibility}
+			/>
 		{/if}
 	{/snippet}
 	{#if modal.mode === 'view'}

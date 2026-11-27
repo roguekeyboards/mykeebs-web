@@ -26,7 +26,8 @@
 </script>
 
 <div>
-	<h2 class="heading-lg pr-20 text-2xl break-words">{set.name}</h2>
+	<span class="header-controls-room" aria-hidden="true"></span>
+	<h2 class="heading-lg text-2xl break-words">{set.name}</h2>
 	<p class="text-muted">{set.brand}</p>
 	{#if set.profile || set.material}
 		<p class="text-faint mt-1 font-mono text-sm">
