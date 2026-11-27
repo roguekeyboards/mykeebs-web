@@ -503,6 +503,20 @@ select:focus-visible {
 	display: none;
 }
 
+/* Keeps an item dialog's heading clear of the badge, Share and Close buttons in its
+   top-right corner: beside them where there's room, below them on a narrow screen. */
+.header-controls-room {
+	float: right;
+	width: 100%;
+	height: 2.25rem;
+}
+
+@media (min-width: 40rem) {
+	.header-controls-room {
+		width: 8rem;
+	}
+}
+
 .search-chip {
 	display: inline-flex;
 	align-items: center;

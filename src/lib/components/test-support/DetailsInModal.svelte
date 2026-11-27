@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
-	import { ArrowLeft, ArrowRight } from '@lucide/svelte';
+	import { ArrowLeft, ArrowRight, Share2 } from '@lucide/svelte';
 	import { Visibility } from '@roguekeyboards/mykeebs-api-client';
 	import Modal from '../Modal.svelte';
 	import VisibilityBadge from '../VisibilityBadge.svelte';
@@ -24,6 +24,7 @@
 			<button type="button" class="btn-icon" aria-label="Next kit"><ArrowRight /></button>
 		{:else}
 			<VisibilityBadge visibility={Visibility.Public} />
+			<button type="button" class="btn-icon" aria-label="Share"><Share2 /></button>
 		{/if}
 	{/snippet}
 	<Details {...detailsProps} />

@@ -48,7 +48,8 @@
 		<RejectedImage reason={sw.image.rejectionReason} class="h-24 w-24 shrink-0" />
 	{/if}
 	<div class="w-full min-w-0">
-		<h2 class="heading-lg pr-20 text-2xl break-words">{sw.name}</h2>
+		<span class="header-controls-room" aria-hidden="true"></span>
+		<h2 class="heading-lg text-2xl break-words">{sw.name}</h2>
 		<p class="text-muted">{[sw.brand, sw.manufacturer].filter(Boolean).join(' · ')}</p>
 		<p class="text-faint mt-1 font-mono text-sm">
 			{[sw.type, sw.factoryLubed ? 'Factory lubed' : undefined].filter(Boolean).join(' · ')}
