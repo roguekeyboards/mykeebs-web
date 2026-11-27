@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.9.0...v0.10.0) (2026-11-27)
+
+
+### Features
+
+* available filter on switches and keycap sets ([#265](https://github.com/roguekeyboards/mykeebs-web/issues/265)) ([43a7704](https://github.com/roguekeyboards/mykeebs-web/commit/43a77041eafeb4f0587cc52e6baabb5d71a06d3f))
+
 ## [0.9.0](https://github.com/roguekeyboards/mykeebs-web/compare/v0.8.0...v0.9.0) (2026-11-26)
 
 
